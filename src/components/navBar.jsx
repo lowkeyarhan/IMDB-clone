@@ -1,8 +1,7 @@
-import "../styles/navBar.css";
+import "../styles/navbar.css";
 import "../styles/search.css";
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import Logo from "../assets/film-projector-icon-2048x2048-7cuzbiwu.png";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGithub, faLinkedin } from "@fortawesome/free-brands-svg-icons";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
