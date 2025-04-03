@@ -34,8 +34,29 @@
   width: 300px;
 }
 .movie_card:hover {
-  transform: translateY(-10px);
+  transform: translateY(-10px) scale(1.05);
   box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+  z-index: 10;
+}
+.movie_card:before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 255, 255, 0.1) 0%,
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 1;
+  pointer-events: none;
+}
+.movie_card:hover:before {
+  opacity: 1;
 }
 .movie_card img {
   height: 100%;

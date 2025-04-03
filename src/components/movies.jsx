@@ -1,11 +1,13 @@
 import "../styles/movies.css";
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Pagination from "./pagination";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart, faBookmark } from "@fortawesome/free-solid-svg-icons";
 import Notification from "./Notification";
 
 function Movies() {
+  const navigate = useNavigate();
   const [movies, setMovies] = useState([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
@@ -83,7 +85,12 @@ function Movies() {
     }
   };
 
-  const toggleFavorite = (movie) => {
+  const handleMovieClick = (movieId) => {
+    navigate(`/movie/${movieId}`);
+  };
+
+  const toggleFavorite = (e, movie) => {
+    e.stopPropagation(); // Prevent click from bubbling to parent
     const currentFavorites =
       JSON.parse(localStorage.getItem("favorites")) || [];
     const movieExists = currentFavorites.some((item) => item.id === movie.id);
@@ -114,7 +121,8 @@ function Movies() {
     localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
   };
 
-  const toggleWatchlist = (movie) => {
+  const toggleWatchlist = (e, movie) => {
+    e.stopPropagation(); // Prevent click from bubbling to parent
     const currentWatchlist =
       JSON.parse(localStorage.getItem("watchlist")) || [];
     const movieExists = currentWatchlist.some((item) => item.id === movie.id);
@@ -150,7 +158,11 @@ function Movies() {
       <h1 id="trending-section">Trending now</h1>
       <div className="movies_container">
         {movies.map((movie) => (
-          <div className="movie_card" key={movie.id}>
+          <div
+            className="movie_card"
+            key={movie.id}
+            onClick={() => handleMovieClick(movie.id)}
+          >
             <img src={getImageUrl(movie.poster_path)} alt={movie.title} />
             <div className="movie_info">
               <h3>{movie.title}</h3>
@@ -170,7 +182,7 @@ function Movies() {
                 className={`favorite_btn ${
                   favorites.includes(movie.id) ? "active" : ""
                 }`}
-                onClick={() => toggleFavorite(movie)}
+                onClick={(e) => toggleFavorite(e, movie)}
                 title={
                   favorites.includes(movie.id)
                     ? "Remove from Favorites"
@@ -188,7 +200,7 @@ function Movies() {
                 className={`watchlist_btn ${
                   watchlist.includes(movie.id) ? "active" : ""
                 }`}
-                onClick={() => toggleWatchlist(movie)}
+                onClick={(e) => toggleWatchlist(e, movie)}
                 title={
                   watchlist.includes(movie.id)
                     ? "Remove from Watchlist"

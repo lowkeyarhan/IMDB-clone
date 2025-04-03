@@ -6,6 +6,7 @@ import Home from "./pages/Home.jsx";
 import Favorites from "./pages/Favorites.jsx";
 import Watchlist from "./pages/Watchlist.jsx";
 import Search from "./pages/Search.jsx";
+import MovieDetails from "./pages/MovieDetails.jsx";
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/favorites" element={<Favorites />} />
         <Route path="/watchlist" element={<Watchlist />} />
         <Route path="/search" element={<Search />} />
+        <Route path="/movie/:id" element={<MovieDetails />} />
       </Routes>
     </>
   );

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import "../styles/savedMovies.css";
 import Notification from "../components/Notification";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -10,6 +11,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 function Watchlist() {
+  const navigate = useNavigate();
   const [watchlist, setWatchlist] = useState([]);
   const [notification, setNotification] = useState({
     visible: false,
@@ -64,7 +66,12 @@ function Watchlist() {
     });
   };
 
-  const markAsWatched = (movieId, movieTitle) => {
+  const handleMovieClick = (movieId) => {
+    navigate(`/movie/${movieId}`);
+  };
+
+  const markAsWatched = (e, movieId, movieTitle) => {
+    e.stopPropagation(); // Prevent click from bubbling to parent
     const updatedWatchlist = watchlist.filter((movie) => movie.id !== movieId);
     setWatchlist(updatedWatchlist);
     localStorage.setItem("watchlist", JSON.stringify(updatedWatchlist));
@@ -93,7 +100,11 @@ function Watchlist() {
       ) : (
         <div className="saved_movies_container">
           {watchlist.map((movie) => (
-            <div className="saved_movie_card" key={movie.id}>
+            <div
+              className="saved_movie_card"
+              key={movie.id}
+              onClick={() => handleMovieClick(movie.id)}
+            >
               {movie.poster_path && (
                 <img src={movie.poster_path} alt={movie.title} />
               )}
@@ -114,7 +125,7 @@ function Watchlist() {
                 </div>
                 <button
                   className="watched_btn"
-                  onClick={() => markAsWatched(movie.id, movie.title)}
+                  onClick={(e) => markAsWatched(e, movie.id, movie.title)}
                 >
                   <FontAwesomeIcon icon={faCheck} /> Mark as Watched
                 </button>

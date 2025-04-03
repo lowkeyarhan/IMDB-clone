@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import "../styles/savedMovies.css";
 import "../styles/search.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -13,6 +13,7 @@ import {
 import Notification from "../components/Notification";
 
 function Search() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -124,7 +125,12 @@ function Search() {
     searchMovies();
   }, [query, API_KEY]);
 
-  const toggleFavorite = (movie) => {
+  const handleMovieClick = (movieId) => {
+    navigate(`/movie/${movieId}`);
+  };
+
+  const toggleFavorite = (e, movie) => {
+    e.stopPropagation(); // Prevent click from bubbling to parent
     const currentFavorites =
       JSON.parse(localStorage.getItem("favorites")) || [];
     const movieExists = currentFavorites.some((item) => item.id === movie.id);
@@ -157,7 +163,8 @@ function Search() {
     localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
   };
 
-  const toggleWatchlist = (movie) => {
+  const toggleWatchlist = (e, movie) => {
+    e.stopPropagation(); // Prevent click from bubbling to parent
     const currentWatchlist =
       JSON.parse(localStorage.getItem("watchlist")) || [];
     const movieExists = currentWatchlist.some((item) => item.id === movie.id);
@@ -215,7 +222,11 @@ function Search() {
       ) : (
         <div className="saved_movies_container search_results_grid">
           {searchResults.map((movie) => (
-            <div className="saved_movie_card" key={movie.id}>
+            <div
+              className="saved_movie_card"
+              key={movie.id}
+              onClick={() => handleMovieClick(movie.id)}
+            >
               {favorites.includes(movie.id) && (
                 <div className="favorite_badge">
                   <FontAwesomeIcon icon={faHeart} />
@@ -248,49 +259,43 @@ function Search() {
                 </div>
                 {movie.overview && (
                   <p className="movie_overview">
-                    {movie.overview.length > 120
-                      ? `${movie.overview.slice(0, 120)}...`
+                    {movie.overview.length > 150
+                      ? `${movie.overview.substring(0, 150)}...`
                       : movie.overview}
                   </p>
                 )}
-                <div className="search_action_buttons">
+                <div className="search_actions">
                   <button
-                    className={`favorite_action_btn ${
+                    className={`action_btn favorite_action ${
                       favorites.includes(movie.id) ? "active" : ""
                     }`}
-                    onClick={() => toggleFavorite(movie)}
+                    onClick={(e) => toggleFavorite(e, movie)}
                     title={
                       favorites.includes(movie.id)
                         ? "Remove from Favorites"
                         : "Add to Favorites"
                     }
-                    aria-label={
-                      favorites.includes(movie.id)
-                        ? "Remove from Favorites"
-                        : "Add to Favorites"
-                    }
                   >
-                    <FontAwesomeIcon icon={faHeart} />{" "}
-                    {favorites.includes(movie.id) ? "Remove" : "Favorite"}
+                    <FontAwesomeIcon icon={faHeart} />
+                    {favorites.includes(movie.id)
+                      ? "Remove Favorite"
+                      : "Add to Favorites"}
                   </button>
                   <button
-                    className={`watchlist_action_btn ${
+                    className={`action_btn watchlist_action ${
                       watchlist.includes(movie.id) ? "active" : ""
                     }`}
-                    onClick={() => toggleWatchlist(movie)}
+                    onClick={(e) => toggleWatchlist(e, movie)}
                     title={
                       watchlist.includes(movie.id)
                         ? "Remove from Watchlist"
                         : "Add to Watchlist"
                     }
-                    aria-label={
-                      watchlist.includes(movie.id)
-                        ? "Remove from Watchlist"
-                        : "Add to Watchlist"
-                    }
                   >
-                    <FontAwesomeIcon icon={faBookmark} />{" "}
-                    {watchlist.includes(movie.id) ? "Remove" : "Watchlist"}
+                    <FontAwesomeIcon icon={faBookmark} />
+                    {watchlist.includes(movie.id)
+                      ? "Remove from Watchlist"
+                      : "Add to Watchlist"}
                   </button>
                 </div>
               </div>

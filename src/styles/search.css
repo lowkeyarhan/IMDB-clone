@@ -126,54 +126,60 @@
 }
 
 /* Action buttons for search results */
-.search_action_buttons {
+.search_actions {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   margin-top: auto;
 }
 
-.favorite_action_btn,
-.watchlist_action_btn {
+.action_btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 8px;
+  gap: 8px;
+  padding: 10px;
   border: none;
   border-radius: 4px;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  text-align: center;
 }
 
-.favorite_action_btn {
-  background-color: var(--primary-accent);
+.favorite_action {
+  background-color: #e50914;
   color: white;
 }
 
-.watchlist_action_btn {
+.watchlist_action {
   background-color: rgba(109, 109, 110, 0.7);
   color: white;
 }
 
-.favorite_action_btn:hover {
+.favorite_action:hover {
   background-color: #f40612;
 }
 
-.watchlist_action_btn:hover {
+.watchlist_action:hover {
   background-color: rgba(109, 109, 110, 0.9);
 }
 
-.favorite_action_btn.active {
+.favorite_action.active {
   background-color: #2b2b2b;
-  color: var(--primary-accent);
+  color: #e50914;
+  border: 1px solid #e50914;
 }
 
-.watchlist_action_btn.active {
+.watchlist_action.active {
   background-color: #2b2b2b;
   color: white;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.action_btn svg {
+  font-size: 1rem;
 }
 
 /* Responsive adjustments */
@@ -187,10 +193,13 @@
     gap: 15px;
   }
 
-  .favorite_action_btn,
-  .watchlist_action_btn {
+  .action_btn {
     font-size: 0.8rem;
-    padding: 6px;
+    padding: 8px;
+  }
+
+  .action_btn svg {
+    font-size: 0.9rem;
   }
 }
 
@@ -212,5 +221,14 @@
   .movie_overview {
     font-size: 0.8rem;
     -webkit-line-clamp: 2;
+  }
+
+  .action_btn {
+    font-size: 0.75rem;
+    padding: 6px;
+  }
+
+  .action_btn svg {
+    font-size: 0.8rem;
   }
 }

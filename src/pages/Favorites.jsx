@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import "../styles/savedMovies.css";
 import Notification from "../components/Notification";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -10,6 +11,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 function Favorites() {
+  const navigate = useNavigate();
   const [favorites, setFavorites] = useState([]);
   const [notification, setNotification] = useState({
     visible: false,
@@ -63,7 +65,12 @@ function Favorites() {
     });
   };
 
-  const removeFromFavorites = (movieId, movieTitle) => {
+  const handleMovieClick = (movieId) => {
+    navigate(`/movie/${movieId}`);
+  };
+
+  const removeFromFavorites = (e, movieId, movieTitle) => {
+    e.stopPropagation(); // Prevent click from bubbling to parent
     const updatedFavorites = favorites.filter((movie) => movie.id !== movieId);
     setFavorites(updatedFavorites);
     localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
@@ -87,7 +94,11 @@ function Favorites() {
       ) : (
         <div className="saved_movies_container">
           {favorites.map((movie) => (
-            <div className="saved_movie_card" key={movie.id}>
+            <div
+              className="saved_movie_card"
+              key={movie.id}
+              onClick={() => handleMovieClick(movie.id)}
+            >
               <div className="favorite_badge">
                 <FontAwesomeIcon icon={faHeart} />
               </div>
@@ -111,7 +122,7 @@ function Favorites() {
                 </div>
                 <button
                   className="remove_btn"
-                  onClick={() => removeFromFavorites(movie.id, movie.title)}
+                  onClick={(e) => removeFromFavorites(e, movie.id, movie.title)}
                 >
                   <FontAwesomeIcon icon={faTrash} /> Remove
                 </button>
