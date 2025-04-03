@@ -1,0 +1,137 @@
+import React, { useState, useEffect } from "react";
+import "../styles/savedMovies.css";
+import Notification from "../components/Notification";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faCalendarDays,
+  faStar,
+  faCheck,
+  faPlayCircle,
+} from "@fortawesome/free-solid-svg-icons";
+
+function Watchlist() {
+  const [watchlist, setWatchlist] = useState([]);
+  const [notification, setNotification] = useState({
+    visible: false,
+    message: "",
+    type: "",
+  });
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const options = { year: "numeric", month: "short", day: "numeric" };
+    return new Date(dateString).toLocaleDateString(undefined, options);
+  };
+
+  // Format vote average safely
+  const formatVoteAverage = (vote) => {
+    if (!vote) return "N/A";
+    try {
+      if (typeof vote === "string" && vote.includes(".")) {
+        return vote;
+      }
+      return Number(vote).toFixed(1);
+    } catch (error) {
+      return vote;
+    }
+  };
+
+  useEffect(() => {
+    try {
+      const savedWatchlist =
+        JSON.parse(localStorage.getItem("watchlist")) || [];
+      setWatchlist(savedWatchlist);
+    } catch (error) {
+      console.error("Error loading watchlist from localStorage:", error);
+      setWatchlist([]);
+    }
+  }, []);
+
+  // Show notification
+  const showNotification = (message, type) => {
+    setNotification({
+      visible: true,
+      message,
+      type,
+    });
+  };
+
+  // Hide notification
+  const hideNotification = () => {
+    setNotification({
+      ...notification,
+      visible: false,
+    });
+  };
+
+  const markAsWatched = (movieId, movieTitle) => {
+    const updatedWatchlist = watchlist.filter((movie) => movie.id !== movieId);
+    setWatchlist(updatedWatchlist);
+    localStorage.setItem("watchlist", JSON.stringify(updatedWatchlist));
+
+    const watched = JSON.parse(localStorage.getItem("watched")) || [];
+    const movieToMove = watchlist.find((movie) => movie.id === movieId);
+    if (movieToMove) {
+      localStorage.setItem(
+        "watched",
+        JSON.stringify([...watched, movieToMove])
+      );
+    }
+
+    showNotification(`"${movieTitle}" marked as watched`, "watched");
+  };
+
+  return (
+    <div className="saved_container">
+      <h1>My Watchlist</h1>
+
+      {watchlist.length === 0 ? (
+        <div className="empty_message">
+          <p>Oppsie! Your watchlist is looking impressively… empty.</p>
+          <p className="mt-2">Browse movies and add them to get started!</p>
+        </div>
+      ) : (
+        <div className="saved_movies_container">
+          {watchlist.map((movie) => (
+            <div className="saved_movie_card" key={movie.id}>
+              {movie.poster_path && (
+                <img src={movie.poster_path} alt={movie.title} />
+              )}
+              <div className="saved_movie_info">
+                <h3>{movie.title}</h3>
+                <div className="saved_movie_details">
+                  <span className="release_date">
+                    <FontAwesomeIcon
+                      icon={faCalendarDays}
+                      className="release_icon"
+                    />{" "}
+                    {formatDate(movie.release_date) || "N/A"}
+                  </span>
+                  <span className="rating">
+                    <FontAwesomeIcon icon={faStar} className="rating_icon" />{" "}
+                    {formatVoteAverage(movie.vote_average)}
+                  </span>
+                </div>
+                <button
+                  className="watched_btn"
+                  onClick={() => markAsWatched(movie.id, movie.title)}
+                >
+                  <FontAwesomeIcon icon={faCheck} /> Mark as Watched
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <Notification
+        message={notification.message}
+        type={notification.type}
+        visible={notification.visible}
+        onClose={hideNotification}
+      />
+    </div>
+  );
+}
+
+export default Watchlist;

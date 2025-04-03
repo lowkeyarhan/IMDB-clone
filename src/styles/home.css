@@ -1,0 +1,175 @@
+.home-loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #0a0a0a;
+  color: #fff;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 9999;
+}
+
+/* Projector animation container */
+.projector-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  perspective: 1000px;
+}
+
+/* Projector body */
+.projector-body {
+  width: 120px;
+  height: 70px;
+  background: linear-gradient(#444, #222);
+  border-radius: 10px;
+  position: relative;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+  transform-style: preserve-3d;
+  animation: projector-vibrate 0.5s ease-in-out infinite alternate;
+}
+
+/* Projector lens */
+.projector-lens {
+  width: 40px;
+  height: 40px;
+  background-color: #111;
+  border-radius: 50%;
+  position: absolute;
+  left: -20px;
+  top: 15px;
+  border: 5px solid #333;
+  overflow: hidden;
+}
+
+/* Lens inner reflection */
+.lens-inner {
+  width: 15px;
+  height: 15px;
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  animation: lens-flare 2s ease-in-out infinite;
+}
+
+/* Projector light beam */
+.projector-light-beam {
+  position: absolute;
+  width: 200px;
+  height: 0;
+  border-top: 60px solid transparent;
+  border-bottom: 60px solid transparent;
+  border-left: 280px solid rgba(255, 255, 255, 0.05);
+  left: 120px;
+  top: -25px;
+  transform-origin: left;
+  animation: light-flicker 0.1s ease-in-out infinite alternate;
+}
+
+/* Film strip */
+.film-strip {
+  display: flex;
+  gap: 5px;
+  animation: film-moving 2s linear infinite;
+  margin-top: 30px;
+}
+
+/* Film cells */
+.film-cell {
+  width: 30px;
+  height: 30px;
+  background-color: #333;
+  border-radius: 3px;
+  position: relative;
+  border: 2px solid #555;
+  overflow: hidden;
+}
+
+.film-cell::before,
+.film-cell::after {
+  content: "";
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  background-color: #0a0a0a;
+  border-radius: 1px;
+}
+
+.film-cell::before {
+  top: -3px;
+  left: 5px;
+}
+
+.film-cell::after {
+  bottom: -3px;
+  left: 5px;
+}
+
+/* Loading text */
+.loading-text {
+  font-family: "Arial", sans-serif;
+  font-size: 18px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  margin-top: 20px;
+  color: #e50914;
+  text-shadow: 0 0 5px rgba(229, 9, 20, 0.7);
+  animation: text-pulse 1.5s ease-in-out infinite;
+}
+
+/* Animations */
+@keyframes projector-vibrate {
+  0% {
+    transform: rotate(-1deg) translateY(0);
+  }
+  100% {
+    transform: rotate(1deg) translateY(-2px);
+  }
+}
+
+@keyframes light-flicker {
+  0%,
+  100% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes lens-flare {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes film-moving {
+  0% {
+    transform: translateX(50px);
+  }
+  100% {
+    transform: translateX(-50px);
+  }
+}
+
+@keyframes text-pulse {
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}

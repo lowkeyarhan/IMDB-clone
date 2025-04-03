@@ -1,0 +1,168 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(109, 109, 110, 0.5) rgba(20, 20, 20, 0.2);
+}
+
+:root {
+  --primary-dark: #0a0812;
+  --primary-light: #f5f5f7;
+  --primary-accent: #e50914; /* Netflix red */
+  --secondary-accent: #564ca3;
+  --text-color: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --card-bg: #1f1f1f;
+  --card-hover: #1f1f1f;
+  --gradient-dark: linear-gradient(
+    to bottom,
+    rgba(20, 20, 20, 0),
+    rgba(10, 8, 18, 1)
+  );
+}
+
+body {
+  background-color: var(--primary-dark);
+  font-family: "Roboto", "Segoe UI", "Helvetica Neue", sans-serif;
+  color: var(--text-color);
+  overflow-x: hidden;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+p {
+  margin-bottom: 1rem;
+}
+
+a {
+  color: var(--text-color);
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+a:hover {
+  color: var(--primary-accent);
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(20, 20, 20, 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(109, 109, 110, 0.5);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-accent);
+  border-color: var(--primary-accent);
+}
+
+/* Firefox scrollbar */
+*:hover {
+  scrollbar-color: var(--primary-accent) rgba(20, 20, 20, 0.2);
+}
+
+/* Container styles */
+.container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Animation for page transitions */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.parent_container {
+  animation: fadeIn 0.3s ease-in-out;
+  min-height: 100vh;
+}
+
+/* Layout helpers */
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.text-center {
+  text-align: center;
+}
+
+/* Spacing utilities */
+.mb-1 {
+  margin-bottom: 0.25rem;
+}
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+.mb-4 {
+  margin-bottom: 1rem;
+}
+.mb-8 {
+  margin-bottom: 2rem;
+}
+.mt-1 {
+  margin-top: 0.25rem;
+}
+.mt-2 {
+  margin-top: 0.5rem;
+}
+.mt-4 {
+  margin-top: 1rem;
+}
+.mt-8 {
+  margin-top: 2rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 0.5rem;
+  }
+}
