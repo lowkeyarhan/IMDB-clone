@@ -10,6 +10,7 @@
   left: 0;
   width: 100%;
   z-index: 9999;
+  overflow: hidden;
 }
 
 /* Projector animation container */
@@ -19,6 +20,8 @@
   align-items: center;
   gap: 20px;
   perspective: 1000px;
+  position: relative;
+  left: -30px;
 }
 
 /* Projector body */
@@ -171,5 +174,132 @@
   }
   50% {
     opacity: 1;
+  }
+}
+
+/* Mobile styles */
+@media (max-width: 1000px) {
+  .projector-container {
+    left: -25px;
+  }
+
+  .projector-body {
+    width: 80px;
+    height: 50px;
+  }
+
+  .projector-lens {
+    width: 30px;
+    height: 30px;
+    left: -15px;
+    top: 10px;
+    border: 3px solid #333;
+  }
+
+  .lens-inner {
+    width: 12px;
+    height: 12px;
+    top: 4px;
+    left: 4px;
+  }
+
+  .projector-light-beam {
+    width: 150px;
+    border-top: 45px solid transparent;
+    border-bottom: 45px solid transparent;
+    border-left: 210px solid rgba(255, 255, 255, 0.05);
+    left: 80px;
+    top: -20px;
+  }
+
+  .film-strip {
+    gap: 4px;
+    margin-top: 20px;
+  }
+
+  .film-cell {
+    width: 20px;
+    height: 20px;
+  }
+
+  .film-cell::before,
+  .film-cell::after {
+    width: 5px;
+    height: 5px;
+  }
+
+  .film-cell::before {
+    top: -2px;
+    left: 3px;
+  }
+
+  .film-cell::after {
+    bottom: -2px;
+    left: 3px;
+  }
+
+  .loading-text {
+    font-size: 14px;
+    margin-top: 15px;
+  }
+}
+
+@media (max-width: 600px) {
+  .projector-container {
+    transform: scale(0.9);
+    gap: 15px;
+    left: -20px;
+  }
+
+  .projector-light-beam {
+    width: 120px;
+    border-top: 40px solid transparent;
+    border-bottom: 40px solid transparent;
+    border-left: 180px solid rgba(255, 255, 255, 0.05);
+  }
+}
+
+@media (max-width: 400px) {
+  .projector-container {
+    transform: scale(0.8);
+    gap: 12px;
+    left: -15px;
+  }
+
+  .projector-light-beam {
+    width: 100px;
+    border-top: 35px solid transparent;
+    border-bottom: 35px solid transparent;
+    border-left: 150px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .film-strip {
+    margin-top: 15px;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 378px) {
+  .projector-container {
+    transform: scale(0.7);
+    gap: 10px;
+    left: -12px;
+  }
+
+  .projector-light-beam {
+    width: 90px;
+    border-top: 30px solid transparent;
+    border-bottom: 30px solid transparent;
+    border-left: 130px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .loading-text {
+    font-size: 12px;
+    margin-top: 12px;
+  }
+
+  .film-cell {
+    width: 18px;
+    height: 18px;
   }
 }

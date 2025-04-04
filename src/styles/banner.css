@@ -52,7 +52,7 @@
 
 .banner_contents {
   margin-left: 5%;
-  padding-top: 35%;
+  padding-top: 40%;
   height: 190px;
   position: relative;
   z-index: 3;
@@ -116,7 +116,7 @@
 /* Improved slider dots */
 .slider_dots {
   position: absolute;
-  bottom: 10%;
+  bottom: 5%;
   right: 5%;
   display: flex;
   justify-content: flex-end;
@@ -150,15 +150,15 @@
   background-color: #f40612;
 }
 
-/* Media queries for responsiveness */
-@media screen and (max-width: 768px) {
+/* Mobile styles */
+@media (max-width: 1000px) {
   .banner_container {
-    height: 70vh;
+    height: 65vh;
   }
-  
+
   .banner_contents {
     max-width: 80%;
-    padding-top: 50%;
+    padding-top: 70%;
   }
 
   .banner_title {
@@ -172,14 +172,15 @@
   .banner_button {
     font-size: 0.9rem;
     padding: 0.5rem 1.5rem;
+    border-radius: 5px;
   }
 
   .banner_image::before {
-    width: 15%;
+    width: 20%;
   }
 
   .slider_dots {
-    bottom: 8%;
+    /* bottom: 8%; */
     right: 50%;
     transform: translateX(50%);
     justify-content: center;
@@ -196,48 +197,45 @@
   }
 }
 
-@media screen and (max-width: 480px) {
+/* Extra small screens */
+@media (max-width: 378px) {
   .banner_container {
     height: 60vh;
   }
-  
+
   .banner_contents {
-    max-width: 100%;
-    padding-top: 60%;
-    padding-left: 5%;
-    padding-right: 5%;
+    max-width: 90%;
+    padding-top: 55%;
   }
 
   .banner_title {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     margin-bottom: 0.5rem;
   }
-  
+
   .banner_description {
     font-size: 0.8rem;
-    margin-top: 0.5rem;
-  }
-  
-  .banner_buttons {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-  
-  .banner_button {
-    width: 100%;
-    justify-content: center;
-    padding: 0.5rem 1rem;
-    margin-right: 0;
+    margin-top: 0.7rem;
+    -webkit-line-clamp: 3;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
-  .banner_image::before {
-    display: none;
+  .banner_buttons {
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+
+  .banner_button {
+    font-size: 0.8rem;
+    padding: 0.4rem 1.2rem;
   }
 
   .slider_dots {
-    bottom: 6%;
     padding: 4px 8px;
+    padding-bottom: 10px;
+    bottom: 0%;
   }
 
   .dot {

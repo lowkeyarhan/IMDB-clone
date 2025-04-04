@@ -3,6 +3,7 @@ import "../styles/Footer.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faGithub,
+  faInstagram,
   faLinkedin,
   faTwitter,
 } from "@fortawesome/free-brands-svg-icons";
@@ -43,7 +44,7 @@ function Footer() {
               rel="noopener noreferrer"
               className="social-icon"
             >
-              <FontAwesomeIcon icon={faTwitter} />
+              <FontAwesomeIcon icon={faInstagram} />
             </a>
           </div>
         </div>

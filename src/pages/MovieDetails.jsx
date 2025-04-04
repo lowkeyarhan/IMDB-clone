@@ -203,10 +203,12 @@ function MovieDetails() {
             <p className="tagline">{movie.tagline}</p>
             <div className="hero-actions">
               <button className="play-button" onClick={handlePlayTrailer}>
-                <FontAwesomeIcon icon={faPlay} /> Play Trailer
+                <FontAwesomeIcon icon={faPlay} />
+                Trailer
               </button>
               <button className="play-button play-movie-button">
-                <FontAwesomeIcon icon={faPlay} /> Play Movie
+                <FontAwesomeIcon icon={faPlay} />
+                Movie
               </button>
               <button
                 className={`icon-button favorite-button ${

@@ -34,7 +34,7 @@
   width: 300px;
 }
 .movie_card:hover {
-  transform: scale(1.025);
+  transform: scale(1.015);
   box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
   z-index: 10;
 }
@@ -63,10 +63,10 @@
   width: 100%;
   border-radius: 20px;
   object-fit: cover;
-  transition: transform 0.5s ease;
+  transition: transform 0.7s ease;
 }
 .movie_card:hover img {
-  transform: scale(1.025);
+  transform: scale(1.02);
 }
 .movie_info {
   position: absolute;
@@ -175,49 +175,6 @@
   transform: none !important;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .pagination_container {
-    gap: 10px;
-    padding: 20px 0;
-  }
-
-  .pagination_container div {
-    padding: 6px 15px;
-  }
-
-  .pgno {
-    min-width: 35px;
-    font-size: 0.9rem;
-  }
-
-  .navbtn {
-    font-size: 0.9rem;
-    padding: 6px 12px !important;
-  }
-}
-
-@media (max-width: 480px) {
-  .pagination_container {
-    gap: 8px;
-    padding: 15px 0;
-  }
-
-  .pagination_container div {
-    padding: 5px 12px;
-  }
-
-  .pgno {
-    min-width: 30px;
-    font-size: 0.85rem;
-  }
-
-  .navbtn {
-    font-size: 0.85rem;
-    padding: 5px 10px !important;
-  }
-}
-
 /* Improved styles for the action buttons */
 .action_buttons {
   position: absolute;
@@ -306,4 +263,125 @@
   }
 }
 
-/* End of action buttons styles */
+/* Mobile styles */
+@media (max-width: 1000px) {
+  .movies_container {
+    padding: 15px 20px 30px;
+  }
+
+  .movie_card {
+    height: 270px;
+    width: 170px;
+    border-radius: 8px;
+  }
+
+  .movie_card:hover {
+    transform: none;
+  }
+
+  .movie_card:hover .movie_info {
+    transform: none;
+    display: none;
+  }
+
+  .action_buttons {
+    display: none;
+  }
+
+  .movie_card img {
+    border-radius: initial;
+  }
+
+  .movie_card img:hover {
+    transform: none;
+  }
+
+  .movie_info h3 {
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+  }
+
+  .release_date,
+  .rating {
+    font-size: 0.8rem;
+  }
+
+  .pagination_container {
+    gap: 10px;
+    padding: 20px 0;
+  }
+
+  .pagination_container div {
+    padding: 6px 15px;
+  }
+
+  .pgno {
+    min-width: 35px;
+    font-size: 0.9rem;
+  }
+
+  .navbtn {
+    font-size: 0.9rem;
+    padding: 6px 12px !important;
+  }
+
+  .favorite_btn,
+  .watchlist_btn {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 378px) {
+  .movies_container {
+    padding: 10px 10px 20px;
+  }
+
+  .movie_card {
+    height: 220px;
+    width: 140px;
+  }
+
+  .parent_container h1 {
+    padding: 40px 0 20px;
+    font-size: 1.7rem;
+  }
+
+  .movie_info h3 {
+    font-size: 1rem;
+    margin-bottom: 5px;
+  }
+
+  .release_date,
+  .rating {
+    font-size: 0.75rem;
+  }
+
+  .pagination_container {
+    gap: 6px;
+    padding: 15px 0;
+  }
+
+  .pagination_container div {
+    padding: 5px 10px;
+  }
+
+  .pgno {
+    min-width: 30px;
+    font-size: 0.85rem;
+  }
+
+  .navbtn {
+    font-size: 0.85rem;
+    padding: 5px 10px !important;
+  }
+
+  .favorite_btn,
+  .watchlist_btn {
+    width: 35px;
+    height: 35px;
+    font-size: 0.9rem;
+  }
+}

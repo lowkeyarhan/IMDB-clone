@@ -22,7 +22,7 @@
   background-color: var(--card-bg);
   max-width: 600px;
   margin: 40px auto 0;
-  border-radius: 4px;
+  border-radius: 8px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
   line-height: 1.6;
 }
@@ -197,10 +197,11 @@
   transform: scale(0.98);
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
+/* Mobile styles */
+@media (max-width: 1000px) {
   .saved_container {
     padding-top: 100px;
+    padding: 90px 3% 40px;
   }
 
   .saved_container h1 {
@@ -219,24 +220,34 @@
   .saved_movie_details span {
     font-size: 0.75rem;
   }
+
+  .saved_movie_info h3 {
+    font-size: 0.9rem;
+  }
+
+  .remove_btn,
+  .watched_btn {
+    font-size: 0.85rem;
+    padding: 7px 8px;
+  }
+  .empty_message p {
+    font-size: 1rem;
+  }
 }
 
-@media (max-width: 480px) {
+/* Extra small screens */
+@media (max-width: 378px) {
   .saved_container {
-    padding: 90px 3% 40px;
+    padding: 80px 3% 30px;
   }
 
   .saved_container h1 {
-    font-size: 1.8rem;
+    font-size: 1.7rem;
   }
 
   .saved_movies_container {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: 10px;
-  }
-
-  .saved_movie_info h3 {
-    font-size: 0.9rem;
   }
 
   .saved_movie_details {
@@ -247,9 +258,17 @@
     font-size: 0.7rem;
   }
 
+  .saved_movie_info h3 {
+    font-size: 0.85rem;
+  }
+
   .remove_btn,
   .watched_btn {
     font-size: 0.8rem;
-    padding: 6px 8px;
+    padding: 6px 7px;
+  }
+
+  .empty_message p {
+    font-size: 0.9rem;
   }
 }

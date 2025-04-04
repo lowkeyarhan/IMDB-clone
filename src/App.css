@@ -164,8 +164,8 @@ button {
   margin-top: 2rem;
 }
 
-/* Responsive design */
-@media (max-width: 768px) {
+/* Mobile styles */
+@media (max-width: 1000px) {
   .container {
     padding: 0 0.5rem;
   }
@@ -185,31 +185,6 @@ button {
   body {
     font-size: 14px;
   }
-}
-
-@media (max-width: 480px) {
-  .container {
-    padding: 0 0.25rem;
-  }
-
-  h1 {
-    font-size: 1.5rem;
-    margin-bottom: 0.75rem;
-  }
-
-  h2 {
-    font-size: 1.3rem;
-    margin-bottom: 0.75rem;
-  }
-
-  h3 {
-    font-size: 1.1rem;
-    margin-bottom: 0.5rem;
-  }
-
-  p {
-    margin-bottom: 0.75rem;
-  }
 
   .mb-8 {
     margin-bottom: 1.5rem;
@@ -217,5 +192,28 @@ button {
 
   .mt-8 {
     margin-top: 1.5rem;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 378px) {
+  .container {
+    padding: 0 0.3rem;
+  }
+
+  h1 {
+    font-size: 1.6rem;
+  }
+
+  h2 {
+    font-size: 1.3rem;
+  }
+
+  h3 {
+    font-size: 1.1rem;
+  }
+
+  body {
+    font-size: 13px;
   }
 }
