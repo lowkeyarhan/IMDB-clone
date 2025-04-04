@@ -204,6 +204,9 @@ function MovieDetails() {
               <button className="play-button" onClick={handlePlayTrailer}>
                 <FontAwesomeIcon icon={faPlay} /> Play Trailer
               </button>
+              <button className="play-button play-movie-button">
+                <FontAwesomeIcon icon={faPlay} /> Play Movie
+              </button>
               <button
                 className={`icon-button favorite-button ${
                   favorites.includes(movie.id) ? "active" : ""

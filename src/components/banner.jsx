@@ -1,6 +1,7 @@
 import "../styles/banner.css";
 import React, { useState, useEffect } from "react";
 import Notification from "./Notification";
+import { useNavigate } from "react-router-dom";
 
 function Banner() {
   const [movies, setMovies] = useState([]);
@@ -11,6 +12,7 @@ function Banner() {
     type: "",
     visible: false,
   });
+  const navigate = useNavigate();
 
   const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
   const BASE_URL = "https://api.themoviedb.org/3";
@@ -104,6 +106,13 @@ function Banner() {
     setNotification({ ...notification, visible: false });
   };
 
+  // Navigate to movie details
+  const handlePlayClick = () => {
+    if (movies.length > 0) {
+      navigate(`/movie/${movies[currentSlide].id}`);
+    }
+  };
+
   if (movies.length === 0) return null;
 
   return (
@@ -126,7 +135,7 @@ function Banner() {
               movies[currentSlide].original_name}
           </h1>
           <div className="banner_buttons">
-            <button className="banner_button play">
+            <button className="banner_button play" onClick={handlePlayClick}>
               <i className="fas fa-play"></i> Play
             </button>
             <button

@@ -101,7 +101,6 @@
 
 .banner_button:hover {
   opacity: 0.85;
-  transform: scale(1.05);
 }
 
 .banner_button.play {
@@ -153,8 +152,13 @@
 
 /* Media queries for responsiveness */
 @media screen and (max-width: 768px) {
+  .banner_container {
+    height: 70vh;
+  }
+  
   .banner_contents {
     max-width: 80%;
+    padding-top: 50%;
   }
 
   .banner_title {
@@ -193,14 +197,38 @@
 }
 
 @media screen and (max-width: 480px) {
+  .banner_container {
+    height: 60vh;
+  }
+  
   .banner_contents {
     max-width: 100%;
+    padding-top: 60%;
     padding-left: 5%;
     padding-right: 5%;
   }
 
   .banner_title {
     font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .banner_description {
+    font-size: 0.8rem;
+    margin-top: 0.5rem;
+  }
+  
+  .banner_buttons {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .banner_button {
+    width: 100%;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    margin-right: 0;
   }
 
   .banner_image::before {
