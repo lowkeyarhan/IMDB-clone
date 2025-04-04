@@ -9,6 +9,8 @@ import {
   faSearch,
   faCalendarDays,
   faStar,
+  faFilm,
+  faTv,
 } from "@fortawesome/free-solid-svg-icons";
 import Notification from "../components/Notification";
 
@@ -77,12 +79,12 @@ function Search() {
   useEffect(() => {
     const savedFavorites = JSON.parse(localStorage.getItem("favorites")) || [];
     const savedWatchlist = JSON.parse(localStorage.getItem("watchlist")) || [];
-    setFavorites(savedFavorites.map((movie) => movie.id));
-    setWatchlist(savedWatchlist.map((movie) => movie.id));
+    setFavorites(savedFavorites.map((item) => item.id));
+    setWatchlist(savedWatchlist.map((item) => item.id));
   }, []);
 
   useEffect(() => {
-    const searchMovies = async () => {
+    const searchContent = async () => {
       if (!query) {
         setSearchResults([]);
         setLoading(false);
@@ -94,7 +96,8 @@ function Search() {
       setError(null);
 
       try {
-        const url = `${BASE_URL}/search/movie?api_key=${API_KEY}&query=${encodeURIComponent(
+        // Use multi-search to get both movies and TV shows
+        const url = `${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(
           query
         )}&include_adult=false`;
 
@@ -107,14 +110,18 @@ function Search() {
         const data = await response.json();
 
         if (data.results && Array.isArray(data.results)) {
-          setSearchResults(data.results);
+          // Filter to only keep movies and TV shows
+          const filteredResults = data.results.filter(
+            (item) => item.media_type === "movie" || item.media_type === "tv"
+          );
+          setSearchResults(filteredResults);
         } else {
           setSearchResults([]);
           setError("Invalid response format from API");
         }
       } catch (error) {
-        console.error("Error searching movies:", error);
-        setError(`Failed to search movies: ${error.message}`);
+        console.error("Error searching content:", error);
+        setError(`Failed to search: ${error.message}`);
         setSearchResults([]);
       } finally {
         setLoading(false);
@@ -122,76 +129,82 @@ function Search() {
     };
 
     // Search immediately without delay
-    searchMovies();
+    searchContent();
   }, [query, API_KEY]);
 
-  const handleMovieClick = (movieId) => {
-    navigate(`/movie/${movieId}`);
+  const handleItemClick = (item) => {
+    if (item.media_type === "movie") {
+      navigate(`/movie/${item.id}`);
+    } else if (item.media_type === "tv") {
+      navigate(`/tv/${item.id}`);
+    }
   };
 
-  const toggleFavorite = (e, movie) => {
+  const toggleFavorite = (e, item) => {
     e.stopPropagation(); // Prevent click from bubbling to parent
     const currentFavorites =
       JSON.parse(localStorage.getItem("favorites")) || [];
-    const movieExists = currentFavorites.some((item) => item.id === movie.id);
+    const itemExists = currentFavorites.some((fav) => fav.id === item.id);
 
     let updatedFavorites;
-    if (movieExists) {
-      updatedFavorites = currentFavorites.filter(
-        (item) => item.id !== movie.id
-      );
-      setFavorites(favorites.filter((id) => id !== movie.id));
-      showNotification(
-        `Removed "${movie.title}" from favorites`,
-        "favorite-remove"
-      );
+    const title = item.media_type === "movie" ? item.title : item.name;
+    const releaseDate =
+      item.media_type === "movie" ? item.release_date : item.first_air_date;
+
+    if (itemExists) {
+      updatedFavorites = currentFavorites.filter((fav) => fav.id !== item.id);
+      setFavorites(favorites.filter((id) => id !== item.id));
+      showNotification(`Removed "${title}" from favorites`, "favorite-remove");
     } else {
-      const movieToAdd = {
-        id: movie.id,
-        title: movie.title,
-        poster_path: getImageUrl(movie.poster_path),
-        release_date: formatDate(movie.release_date),
-        vote_average: movie.vote_average
-          ? formatVoteAverage(movie.vote_average)
+      const itemToAdd = {
+        id: item.id,
+        title: title,
+        poster_path: getImageUrl(item.poster_path),
+        release_date: formatDate(releaseDate),
+        vote_average: item.vote_average
+          ? formatVoteAverage(item.vote_average)
           : "N/A",
+        media_type: item.media_type,
       };
-      updatedFavorites = [...currentFavorites, movieToAdd];
-      setFavorites([...favorites, movie.id]);
-      showNotification(`Added "${movie.title}" to favorites`, "favorite-add");
+      updatedFavorites = [...currentFavorites, itemToAdd];
+      setFavorites([...favorites, item.id]);
+      showNotification(`Added "${title}" to favorites`, "favorite-add");
     }
 
     localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
   };
 
-  const toggleWatchlist = (e, movie) => {
+  const toggleWatchlist = (e, item) => {
     e.stopPropagation(); // Prevent click from bubbling to parent
     const currentWatchlist =
       JSON.parse(localStorage.getItem("watchlist")) || [];
-    const movieExists = currentWatchlist.some((item) => item.id === movie.id);
+    const itemExists = currentWatchlist.some((watch) => watch.id === item.id);
 
     let updatedWatchlist;
-    if (movieExists) {
+    const title = item.media_type === "movie" ? item.title : item.name;
+    const releaseDate =
+      item.media_type === "movie" ? item.release_date : item.first_air_date;
+
+    if (itemExists) {
       updatedWatchlist = currentWatchlist.filter(
-        (item) => item.id !== movie.id
+        (watch) => watch.id !== item.id
       );
-      setWatchlist(watchlist.filter((id) => id !== movie.id));
-      showNotification(
-        `Removed "${movie.title}" from watchlist`,
-        "watchlist-remove"
-      );
+      setWatchlist(watchlist.filter((id) => id !== item.id));
+      showNotification(`Removed "${title}" from watchlist`, "watchlist-remove");
     } else {
-      const movieToAdd = {
-        id: movie.id,
-        title: movie.title,
-        poster_path: getImageUrl(movie.poster_path),
-        release_date: formatDate(movie.release_date),
-        vote_average: movie.vote_average
-          ? formatVoteAverage(movie.vote_average)
+      const itemToAdd = {
+        id: item.id,
+        title: title,
+        poster_path: getImageUrl(item.poster_path),
+        release_date: formatDate(releaseDate),
+        vote_average: item.vote_average
+          ? formatVoteAverage(item.vote_average)
           : "N/A",
+        media_type: item.media_type,
       };
-      updatedWatchlist = [...currentWatchlist, movieToAdd];
-      setWatchlist([...watchlist, movie.id]);
-      showNotification(`Added "${movie.title}" to watchlist`, "watchlist-add");
+      updatedWatchlist = [...currentWatchlist, itemToAdd];
+      setWatchlist([...watchlist, item.id]);
+      showNotification(`Added "${title}" to watchlist`, "watchlist-add");
     }
 
     localStorage.setItem("watchlist", JSON.stringify(updatedWatchlist));
@@ -204,7 +217,7 @@ function Search() {
       {loading ? (
         <div className="loading">
           <div className="loader"></div>
-          <p>Searching movies...</p>
+          <p>Searching...</p>
         </div>
       ) : error ? (
         <div className="error_message">
@@ -214,86 +227,95 @@ function Search() {
       ) : searchResults.length === 0 ? (
         <div className="empty_message">
           {query ? (
-            <p>No movies found for "{query}". Try a different search term.</p>
+            <p>No results found for "{query}". Try a different search term.</p>
           ) : (
-            <p>Enter a movie title in the search bar to find movies.</p>
+            <p>Enter a title in the search bar to find movies and TV shows.</p>
           )}
         </div>
       ) : (
         <div className="saved_movies_container search_results_grid">
-          {searchResults.map((movie) => (
+          {searchResults.map((item) => (
             <div
               className="saved_movie_card"
-              key={movie.id}
-              onClick={() => handleMovieClick(movie.id)}
+              key={item.id}
+              onClick={() => handleItemClick(item)}
             >
-              {favorites.includes(movie.id) && (
+              <div className="media_type_badge">
+                <FontAwesomeIcon
+                  icon={item.media_type === "movie" ? faFilm : faTv}
+                />
+              </div>
+              {favorites.includes(item.id) && (
                 <div className="favorite_badge">
                   <FontAwesomeIcon icon={faHeart} />
                 </div>
               )}
               <img
                 src={
-                  movie.poster_path
-                    ? getImageUrl(movie.poster_path)
+                  item.poster_path
+                    ? getImageUrl(item.poster_path)
                     : "https://via.placeholder.com/300x450?text=No+Image"
                 }
-                alt={movie.title}
+                alt={item.media_type === "movie" ? item.title : item.name}
               />
               <div className="saved_movie_info">
-                <h3>{movie.title}</h3>
+                <h3>{item.media_type === "movie" ? item.title : item.name}</h3>
                 <div className="saved_movie_details">
                   <span className="release_date">
                     <FontAwesomeIcon
                       icon={faCalendarDays}
                       className="release_icon"
                     />{" "}
-                    {movie.release_date
-                      ? formatDate(movie.release_date)
+                    {item.media_type === "movie"
+                      ? item.release_date
+                        ? formatDate(item.release_date)
+                        : "N/A"
+                      : item.first_air_date
+                      ? formatDate(item.first_air_date)
                       : "N/A"}
                   </span>
                   <span className="rating">
                     <FontAwesomeIcon icon={faStar} className="rating_icon" />{" "}
-                    {formatVoteAverage(movie.vote_average)}
+                    {formatVoteAverage(item.vote_average)}
                   </span>
                 </div>
-                {movie.overview && (
+                {item.overview && (
                   <p className="movie_overview">
-                    {movie.overview.length > 150
-                      ? `${movie.overview.substring(0, 150)}...`
-                      : movie.overview}
+                    {item.overview.length > 150
+                      ? `${item.overview.substring(0, 150)}...`
+                      : item.overview}
                   </p>
                 )}
                 <div className="search_actions">
                   <button
                     className={`action_btn favorite_action ${
-                      favorites.includes(movie.id) ? "active" : ""
+                      favorites.includes(item.id) ? "active" : ""
                     }`}
-                    onClick={(e) => toggleFavorite(e, movie)}
+                    onClick={(e) => toggleFavorite(e, item)}
                     title={
-                      favorites.includes(movie.id)
+                      favorites.includes(item.id)
                         ? "Remove from Favorites"
                         : "Add to Favorites"
                     }
                   >
                     <FontAwesomeIcon icon={faHeart} />
-                    {favorites.includes(movie.id)
+                    {favorites.includes(item.id)
                       ? "Remove Favorite"
                       : "Add to Favorites"}
                   </button>
                   <button
                     className={`action_btn watchlist_action ${
-                      watchlist.includes(movie.id) ? "active" : ""
+                      watchlist.includes(item.id) ? "active" : ""
                     }`}
-                    onClick={(e) => toggleWatchlist(e, movie)}
+                    onClick={(e) => toggleWatchlist(e, item)}
                     title={
-                      watchlist.includes(movie.id)
+                      watchlist.includes(item.id)
                         ? "Remove from Watchlist"
                         : "Add to Watchlist"
                     }
                   >
                     <FontAwesomeIcon icon={faBookmark} />
-                    {watchlist.includes(movie.id)
+                    {watchlist.includes(item.id)
                       ? "Remove from Watchlist"
                       : "Add to Watchlist"}
                   </button>

@@ -730,10 +730,6 @@
     font-size: 1.3rem;
   }
 
-  .similar-grid {
-    grid-template-columns: 1fr;
-  }
-
   .details-container {
     padding: 0 3% 30px;
   }
@@ -750,5 +746,77 @@
 
   .cast-character {
     font-size: 0.8rem;
+  }
+}
+
+/* Seasons Section */
+.seasons-section {
+  margin-top: 40px;
+  animation: fade-in 0.5s ease-out;
+}
+
+.seasons-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 25px;
+  margin-top: 20px;
+}
+
+.season-item {
+  display: flex;
+  background-color: rgba(30, 30, 30, 0.7);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  height: 180px;
+}
+
+.season-image {
+  width: 120px;
+  height: 180px;
+  flex-shrink: 0;
+}
+
+.season-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.season-info {
+  padding: 15px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.season-name {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0 0 10px 0;
+  color: #fff;
+}
+
+.season-details {
+  display: flex;
+  gap: 15px;
+  font-size: 0.9rem;
+  color: #aaa;
+  margin-bottom: 10px;
+}
+
+.season-overview {
+  font-size: 0.9rem;
+  color: #ddd;
+  margin: 0;
+  line-height: 1.4;
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .seasons-list {
+    grid-template-columns: 1fr;
   }
 }

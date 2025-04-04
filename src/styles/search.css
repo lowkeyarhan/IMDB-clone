@@ -123,6 +123,8 @@
   -webkit-box-orient: vertical;
   text-align: left;
   line-height: 1.4;
+  flex: 0 0 auto;
+  max-height: 4.5em;
 }
 
 /* Action buttons for search results */
@@ -146,6 +148,7 @@
   cursor: pointer;
   transition: all 0.2s ease;
   text-align: center;
+  color: white;
 }
 
 .favorite_action {
@@ -231,5 +234,37 @@
   .movie_overview {
     font-size: 0.75rem;
     margin: 6px 0 10px;
+  }
+}
+
+.media_type_badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  transition: background-color 0.3s ease;
+}
+
+.media_type_badge:hover {
+  background-color: rgba(0, 0, 0, 0.9);
+}
+
+/* Extra small screens */
+@media (max-width: 600px) {
+  .action_btn {
+    font-size: 0.7rem;
+    padding: 6px;
+  }
+
+  .action_btn svg {
+    font-size: 0.8rem;
   }
 }

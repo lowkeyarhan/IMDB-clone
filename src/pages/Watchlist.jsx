@@ -8,6 +8,8 @@ import {
   faStar,
   faCheck,
   faPlayCircle,
+  faFilm,
+  faTv,
 } from "@fortawesome/free-solid-svg-icons";
 
 function Watchlist() {
@@ -66,26 +68,20 @@ function Watchlist() {
     });
   };
 
-  const handleMovieClick = (movieId) => {
-    navigate(`/movie/${movieId}`);
+  const handleItemClick = (item) => {
+    const mediaType = item.media_type || "movie"; // Default to movie for backward compatibility
+    navigate(`/${mediaType}/${item.id}`);
   };
 
-  const markAsWatched = (e, movieId, movieTitle) => {
+  const markAsWatched = (e, itemId, itemTitle) => {
     e.stopPropagation(); // Prevent click from bubbling to parent
-    const updatedWatchlist = watchlist.filter((movie) => movie.id !== movieId);
+    const updatedWatchlist = watchlist.filter((item) => item.id !== itemId);
     setWatchlist(updatedWatchlist);
     localStorage.setItem("watchlist", JSON.stringify(updatedWatchlist));
-
-    const watched = JSON.parse(localStorage.getItem("watched")) || [];
-    const movieToMove = watchlist.find((movie) => movie.id === movieId);
-    if (movieToMove) {
-      localStorage.setItem(
-        "watched",
-        JSON.stringify([...watched, movieToMove])
-      );
-    }
-
-    showNotification(`"${movieTitle}" marked as watched`, "watched");
+    showNotification(
+      `"${itemTitle}" marked as watched and removed from watchlist`,
+      "watchlist-remove"
+    );
   };
 
   return (
@@ -94,38 +90,47 @@ function Watchlist() {
 
       {watchlist.length === 0 ? (
         <div className="empty_message">
-          <p>Oppsie! Your watchlist is looking impressively… empty.</p>
-          <p className="mt-2">Browse movies and add them to get started!</p>
+          <p>Your watchlist is currently empty.</p>
+          <p className="mt-2">
+            Add movies and TV shows to your watchlist to keep track of what you
+            want to watch!
+          </p>
         </div>
       ) : (
         <div className="saved_movies_container">
-          {watchlist.map((movie) => (
+          {watchlist.map((item) => (
             <div
               className="saved_movie_card"
-              key={movie.id}
-              onClick={() => handleMovieClick(movie.id)}
+              key={item.id}
+              onClick={() => handleItemClick(item)}
             >
-              {movie.poster_path && (
-                <img src={movie.poster_path} alt={movie.title} />
+              <div className="media_type_badge">
+                <FontAwesomeIcon
+                  icon={item.media_type === "tv" ? faTv : faFilm}
+                  title={item.media_type === "tv" ? "TV Show" : "Movie"}
+                />
+              </div>
+              {item.poster_path && (
+                <img src={item.poster_path} alt={item.title} />
               )}
               <div className="saved_movie_info">
-                <h3>{movie.title}</h3>
+                <h3>{item.title}</h3>
                 <div className="saved_movie_details">
                   <span className="release_date">
                     <FontAwesomeIcon
                       icon={faCalendarDays}
                       className="release_icon"
                     />{" "}
-                    {formatDate(movie.release_date) || "N/A"}
+                    {formatDate(item.release_date) || "N/A"}
                   </span>
                   <span className="rating">
                     <FontAwesomeIcon icon={faStar} className="rating_icon" />{" "}
-                    {formatVoteAverage(movie.vote_average)}
+                    {formatVoteAverage(item.vote_average)}
                   </span>
                 </div>
                 <button
                   className="watched_btn"
-                  onClick={(e) => markAsWatched(e, movie.id, movie.title)}
+                  onClick={(e) => markAsWatched(e, item.id, item.title)}
                 >
                   <FontAwesomeIcon icon={faCheck} /> Mark as Watched
                 </button>

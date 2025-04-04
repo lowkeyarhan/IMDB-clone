@@ -8,6 +8,8 @@ import {
   faStar,
   faTrash,
   faHeart,
+  faFilm,
+  faTv,
 } from "@fortawesome/free-solid-svg-icons";
 
 function Favorites() {
@@ -65,17 +67,18 @@ function Favorites() {
     });
   };
 
-  const handleMovieClick = (movieId) => {
-    navigate(`/movie/${movieId}`);
+  const handleItemClick = (item) => {
+    const mediaType = item.media_type || "movie"; // Default to movie for backward compatibility
+    navigate(`/${mediaType}/${item.id}`);
   };
 
-  const removeFromFavorites = (e, movieId, movieTitle) => {
+  const removeFromFavorites = (e, itemId, itemTitle) => {
     e.stopPropagation(); // Prevent click from bubbling to parent
-    const updatedFavorites = favorites.filter((movie) => movie.id !== movieId);
+    const updatedFavorites = favorites.filter((item) => item.id !== itemId);
     setFavorites(updatedFavorites);
     localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
     showNotification(
-      `"${movieTitle}" removed from favorites`,
+      `"${itemTitle}" removed from favorites`,
       "favorite-remove"
     );
   };
@@ -88,41 +91,47 @@ function Favorites() {
         <div className="empty_message">
           <p>Oh ohhh! Your favorites list is looking a bit empty.</p>
           <p className="mt-2">
-            Mark movies you love as favorites to see them here!
+            Mark movies and TV shows you love as favorites to see them here!
           </p>
         </div>
       ) : (
         <div className="saved_movies_container">
-          {favorites.map((movie) => (
+          {favorites.map((item) => (
             <div
               className="saved_movie_card"
-              key={movie.id}
-              onClick={() => handleMovieClick(movie.id)}
+              key={item.id}
+              onClick={() => handleItemClick(item)}
             >
+              <div className="media_type_badge">
+                <FontAwesomeIcon
+                  icon={item.media_type === "tv" ? faTv : faFilm}
+                  title={item.media_type === "tv" ? "TV Show" : "Movie"}
+                />
+              </div>
               <div className="favorite_badge">
                 <FontAwesomeIcon icon={faHeart} />
               </div>
-              {movie.poster_path && (
-                <img src={movie.poster_path} alt={movie.title} />
+              {item.poster_path && (
+                <img src={item.poster_path} alt={item.title} />
               )}
               <div className="saved_movie_info">
-                <h3>{movie.title}</h3>
+                <h3>{item.title}</h3>
                 <div className="saved_movie_details">
                   <span className="release_date">
                     <FontAwesomeIcon
                       icon={faCalendarDays}
                       className="release_icon"
                     />{" "}
-                    {formatDate(movie.release_date) || "N/A"}
+                    {formatDate(item.release_date) || "N/A"}
                   </span>
                   <span className="rating">
                     <FontAwesomeIcon icon={faStar} className="rating_icon" />{" "}
-                    {formatVoteAverage(movie.vote_average)}
+                    {formatVoteAverage(item.vote_average)}
                   </span>
                 </div>
                 <button
                   className="remove_btn"
-                  onClick={(e) => removeFromFavorites(e, movie.id, movie.title)}
+                  onClick={(e) => removeFromFavorites(e, item.id, item.title)}
                 >
                   <FontAwesomeIcon icon={faTrash} /> Remove
                 </button>

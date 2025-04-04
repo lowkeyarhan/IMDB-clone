@@ -52,18 +52,25 @@
 
 .banner_contents {
   margin-left: 5%;
-  padding-top: 40%;
-  height: 190px;
+  padding-top: 30%;
+  height: auto;
   position: relative;
   z-index: 3;
-  max-width: 40%;
+  max-width: 45%;
 }
 
 .banner_title {
-  font-size: 3rem;
+  font-size: 2.5rem;
   font-weight: 800;
   margin-bottom: 1rem;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.45);
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.2;
 }
 
 .banner_description {
@@ -74,6 +81,10 @@
   max-width: 100%;
   color: rgba(255, 255, 255, 0.9);
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* Netflix-style buttons */
@@ -157,16 +168,21 @@
   }
 
   .banner_contents {
-    max-width: 80%;
-    padding-top: 70%;
+    max-width: 85%;
+    padding-top: 75%;
+    margin-left: 5%;
   }
 
   .banner_title {
-    font-size: 2rem;
+    font-size: 1.8rem;
+    -webkit-line-clamp: 2;
+    line-height: 1.2;
   }
 
   .banner_description {
     font-size: 0.9rem;
+    -webkit-line-clamp: 3;
+    margin-top: 0.8rem;
   }
 
   .banner_button {
@@ -180,7 +196,6 @@
   }
 
   .slider_dots {
-    /* bottom: 8%; */
     right: 50%;
     transform: translateX(50%);
     justify-content: center;
@@ -205,21 +220,20 @@
 
   .banner_contents {
     max-width: 90%;
-    padding-top: 55%;
+    padding-top: 45%;
+    margin-left: 5%;
   }
 
   .banner_title {
-    font-size: 1.6rem;
+    font-size: 1.5rem;
     margin-bottom: 0.5rem;
+    line-height: 1.2;
   }
 
   .banner_description {
     font-size: 0.8rem;
     margin-top: 0.7rem;
-    -webkit-line-clamp: 3;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    line-height: 1.4;
   }
 
   .banner_buttons {

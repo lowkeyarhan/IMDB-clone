@@ -1,11 +1,19 @@
 import React, { useState, useEffect } from "react";
 import Banner from "../components/banner.jsx";
 import Movies from "../components/movies.jsx";
+import TVShows from "../components/tvShows.jsx";
+import Pagination from "../components/pagination.jsx";
 import Footer from "../components/Footer.jsx";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faFilm, faTv } from "@fortawesome/free-solid-svg-icons";
 import "../styles/home.css";
 
 function Home() {
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(10); // Default value
+  const [activeSection, setActiveSection] = useState("movies"); // Default to movies
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoading(false);
@@ -13,6 +21,31 @@ function Home() {
 
     return () => clearTimeout(timer);
   }, []);
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+
+    // Scroll to the active section
+    const sectionId =
+      activeSection === "movies" ? "trending-section" : "tvshows-section";
+    const section = document.getElementById(sectionId);
+    if (section) {
+      section.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  const handleTotalPagesUpdate = (pages, section) => {
+    if (section === activeSection) {
+      setTotalPages(pages);
+    }
+  };
+
+  const handleTabChange = (section) => {
+    if (section !== activeSection) {
+      setActiveSection(section);
+      setCurrentPage(1); // Reset to page 1 when changing sections
+    }
+  };
 
   return (
     <>
@@ -37,7 +70,51 @@ function Home() {
       ) : (
         <>
           <Banner />
-          <Movies />
+
+          <div className="content-tabs">
+            <div className="tabs-container">
+              <button
+                className={`tab ${activeSection === "movies" ? "active" : ""}`}
+                onClick={() => handleTabChange("movies")}
+              >
+                <FontAwesomeIcon icon={faFilm} /> Movies
+              </button>
+              <button
+                className={`tab ${activeSection === "tvshows" ? "active" : ""}`}
+                onClick={() => handleTabChange("tvshows")}
+              >
+                <FontAwesomeIcon icon={faTv} /> TV Shows
+              </button>
+            </div>
+          </div>
+
+          {activeSection === "movies" && (
+            <Movies
+              currentPage={currentPage}
+              onTotalPagesUpdate={(pages) =>
+                handleTotalPagesUpdate(pages, "movies")
+              }
+              setActiveSection={() => {}}
+            />
+          )}
+
+          {activeSection === "tvshows" && (
+            <TVShows
+              currentPage={currentPage}
+              onTotalPagesUpdate={(pages) =>
+                handleTotalPagesUpdate(pages, "tvshows")
+              }
+              setActiveSection={() => {}}
+            />
+          )}
+
+          <div className="pagination-wrapper">
+            <Pagination
+              currentPage={currentPage}
+              onPageChange={handlePageChange}
+              totalPages={totalPages}
+            />
+          </div>
           <Footer />
         </>
       )}

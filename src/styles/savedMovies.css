@@ -272,3 +272,15 @@
     font-size: 0.9rem;
   }
 }
+
+.search_results_grid .saved_movie_card {
+  min-height: 450px;
+  display: flex;
+  flex-direction: column;
+}
+
+.search_results_grid .saved_movie_info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}

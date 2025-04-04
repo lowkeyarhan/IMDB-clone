@@ -5,9 +5,9 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart, faBookmark } from "@fortawesome/free-solid-svg-icons";
 import Notification from "./Notification";
 
-function Movies({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
+function TVShows({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
   const navigate = useNavigate();
-  const [movies, setMovies] = useState([]);
+  const [shows, setShows] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [watchlist, setWatchlist] = useState([]);
   const [notification, setNotification] = useState({
@@ -59,15 +59,15 @@ function Movies({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
     setWatchlist(savedWatchlist.map((item) => item.id));
   }, []);
 
-  // Fetch movies when page changes
+  // Fetch TV shows when page changes
   useEffect(() => {
-    const fetchMovies = async () => {
+    const fetchTVShows = async () => {
       try {
         const response = await fetch(
-          `${BASE_URL}/trending/movie/week?api_key=${API_KEY}&page=${currentPage}`
+          `${BASE_URL}/tv/popular?api_key=${API_KEY}&page=${currentPage}`
         );
         const data = await response.json();
-        setMovies(data.results);
+        setShows(data.results);
 
         // Update total pages in the parent component
         if (onTotalPagesUpdate) {
@@ -75,11 +75,11 @@ function Movies({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
           onTotalPagesUpdate(maxPages);
         }
       } catch (error) {
-        console.error("Error fetching trending movies:", error);
+        console.error("Error fetching popular TV shows:", error);
       }
     };
 
-    fetchMovies();
+    fetchTVShows();
 
     // Set this as the active section when it's being viewed
     if (setActiveSection) {
@@ -87,71 +87,67 @@ function Movies({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
     }
   }, [currentPage, API_KEY, onTotalPagesUpdate, setActiveSection]);
 
-  const handleMovieClick = (movieId) => {
-    navigate(`/movie/${movieId}`);
+  const handleShowClick = (showId) => {
+    navigate(`/tv/${showId}`);
   };
 
-  const toggleFavorite = (e, movie) => {
+  const toggleFavorite = (e, show) => {
     e.stopPropagation(); // Prevent click from bubbling to parent
     const currentFavorites =
       JSON.parse(localStorage.getItem("favorites")) || [];
-    const movieExists = currentFavorites.some((item) => item.id === movie.id);
+    const showExists = currentFavorites.some((item) => item.id === show.id);
 
     let updatedFavorites;
-    if (movieExists) {
-      updatedFavorites = currentFavorites.filter(
-        (item) => item.id !== movie.id
-      );
-      setFavorites(favorites.filter((id) => id !== movie.id));
+    if (showExists) {
+      updatedFavorites = currentFavorites.filter((item) => item.id !== show.id);
+      setFavorites(favorites.filter((id) => id !== show.id));
       showNotification(
-        `Removed "${movie.title}" from favorites`,
+        `Removed "${show.name}" from favorites`,
         "favorite-remove"
       );
     } else {
-      const movieToAdd = {
-        id: movie.id,
-        title: movie.title,
-        poster_path: getImageUrl(movie.poster_path),
-        release_date: formatDate(movie.release_date),
-        vote_average: movie.vote_average.toFixed(1),
-        media_type: "movie",
+      const showToAdd = {
+        id: show.id,
+        title: show.name,
+        poster_path: getImageUrl(show.poster_path),
+        release_date: formatDate(show.first_air_date),
+        vote_average: show.vote_average.toFixed(1),
+        media_type: "tv",
       };
-      updatedFavorites = [...currentFavorites, movieToAdd];
-      setFavorites([...favorites, movie.id]);
-      showNotification(`Added "${movie.title}" to favorites`, "favorite-add");
+      updatedFavorites = [...currentFavorites, showToAdd];
+      setFavorites([...favorites, show.id]);
+      showNotification(`Added "${show.name}" to favorites`, "favorite-add");
     }
 
     localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
   };
 
-  const toggleWatchlist = (e, movie) => {
+  const toggleWatchlist = (e, show) => {
     e.stopPropagation(); // Prevent click from bubbling to parent
     const currentWatchlist =
       JSON.parse(localStorage.getItem("watchlist")) || [];
-    const movieExists = currentWatchlist.some((item) => item.id === movie.id);
+    const showExists = currentWatchlist.some((item) => item.id === show.id);
 
     let updatedWatchlist;
-    if (movieExists) {
-      updatedWatchlist = currentWatchlist.filter(
-        (item) => item.id !== movie.id
-      );
-      setWatchlist(watchlist.filter((id) => id !== movie.id));
+    if (showExists) {
+      updatedWatchlist = currentWatchlist.filter((item) => item.id !== show.id);
+      setWatchlist(watchlist.filter((id) => id !== show.id));
       showNotification(
-        `Removed "${movie.title}" from watchlist`,
+        `Removed "${show.name}" from watchlist`,
         "watchlist-remove"
       );
     } else {
-      const movieToAdd = {
-        id: movie.id,
-        title: movie.title,
-        poster_path: getImageUrl(movie.poster_path),
-        release_date: formatDate(movie.release_date),
-        vote_average: movie.vote_average.toFixed(1),
-        media_type: "movie",
+      const showToAdd = {
+        id: show.id,
+        title: show.name,
+        poster_path: getImageUrl(show.poster_path),
+        release_date: formatDate(show.first_air_date),
+        vote_average: show.vote_average.toFixed(1),
+        media_type: "tv",
       };
-      updatedWatchlist = [...currentWatchlist, movieToAdd];
-      setWatchlist([...watchlist, movie.id]);
-      showNotification(`Added "${movie.title}" to watchlist`, "watchlist-add");
+      updatedWatchlist = [...currentWatchlist, showToAdd];
+      setWatchlist([...watchlist, show.id]);
+      showNotification(`Added "${show.name}" to watchlist`, "watchlist-add");
     }
 
     localStorage.setItem("watchlist", JSON.stringify(updatedWatchlist));
@@ -159,41 +155,41 @@ function Movies({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
 
   return (
     <div className="parent_container">
-      <h1 id="trending-section">Trending now</h1>
+      <h1 id="tvshows-section">Popular TV Shows</h1>
       <div className="movies_container">
-        {movies.map((movie) => (
+        {shows.map((show) => (
           <div
             className="movie_card"
-            key={movie.id}
-            onClick={() => handleMovieClick(movie.id)}
+            key={show.id}
+            onClick={() => handleShowClick(show.id)}
           >
-            <img src={getImageUrl(movie.poster_path)} alt={movie.title} />
+            <img src={getImageUrl(show.poster_path)} alt={show.name} />
             <div className="movie_info">
-              <h3>{movie.title}</h3>
+              <h3>{show.name}</h3>
               <div className="movie_details">
                 <span className="release_date">
                   <i className="release_icon">📅</i>{" "}
-                  {formatDate(movie.release_date)}
+                  {formatDate(show.first_air_date)}
                 </span>
                 <span className="rating">
                   <i className="rating_icon">⭐</i>{" "}
-                  {movie.vote_average.toFixed(1)}/10
+                  {show.vote_average.toFixed(1)}/10
                 </span>
               </div>
             </div>
             <div className="action_buttons">
               <button
                 className={`favorite_btn ${
-                  favorites.includes(movie.id) ? "active" : ""
+                  favorites.includes(show.id) ? "active" : ""
                 }`}
-                onClick={(e) => toggleFavorite(e, movie)}
+                onClick={(e) => toggleFavorite(e, show)}
                 title={
-                  favorites.includes(movie.id)
+                  favorites.includes(show.id)
                     ? "Remove from Favorites"
                     : "Add to Favorites"
                 }
                 aria-label={
-                  favorites.includes(movie.id)
+                  favorites.includes(show.id)
                     ? "Remove from Favorites"
                     : "Add to Favorites"
                 }
@@ -202,16 +198,16 @@ function Movies({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
               </button>
               <button
                 className={`watchlist_btn ${
-                  watchlist.includes(movie.id) ? "active" : ""
+                  watchlist.includes(show.id) ? "active" : ""
                 }`}
-                onClick={(e) => toggleWatchlist(e, movie)}
+                onClick={(e) => toggleWatchlist(e, show)}
                 title={
-                  watchlist.includes(movie.id)
+                  watchlist.includes(show.id)
                     ? "Remove from Watchlist"
                     : "Add to Watchlist"
                 }
                 aria-label={
-                  watchlist.includes(movie.id)
+                  watchlist.includes(show.id)
                     ? "Remove from Watchlist"
                     : "Add to Watchlist"
                 }
@@ -233,4 +229,4 @@ function Movies({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
   );
 }
 
-export default Movies;
+export default TVShows;
