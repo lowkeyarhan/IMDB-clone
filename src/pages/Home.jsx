@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Banner from "../components/banner.jsx";
 import Movies from "../components/movies.jsx";
+import Footer from "../components/Footer.jsx";
 import "../styles/home.css";
 
 function Home() {
@@ -37,6 +38,7 @@ function Home() {
         <>
           <Banner />
           <Movies />
+          <Footer />
         </>
       )}
     </>

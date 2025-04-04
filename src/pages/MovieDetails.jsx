@@ -9,6 +9,7 @@ import {
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import "../styles/MovieDetails.css";
+import Footer from "../components/Footer.jsx";
 
 function MovieDetails() {
   const { id } = useParams();
@@ -342,6 +343,8 @@ function MovieDetails() {
           </div>
         )}
       </div>
+
+      <Footer />
     </div>
   );
 }
