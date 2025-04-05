@@ -11,6 +11,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import "../styles/MovieDetails.css";
 import Footer from "../components/Footer.jsx";
+import Notification from "../components/Notification.jsx";
 
 function TVShowDetails() {
   const { id } = useParams();
@@ -21,6 +22,11 @@ function TVShowDetails() {
   const [watchlist, setWatchlist] = useState([]);
   const [showTrailer, setShowTrailer] = useState(false);
   const [trailerKey, setTrailerKey] = useState(null);
+  const [notification, setNotification] = useState({
+    visible: false,
+    message: "",
+    type: "",
+  });
 
   const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
   const BASE_URL = "https://api.themoviedb.org/3";
@@ -142,6 +148,14 @@ function TVShowDetails() {
     }
   };
 
+  const handlePlayEpisode = () => {
+    setNotification({
+      visible: true,
+      message: "Episode playback feature coming soon!",
+      type: "info",
+    });
+  };
+
   const closeTrailer = () => {
     setShowTrailer(false);
     setTrailerKey(null);
@@ -207,6 +221,13 @@ function TVShowDetails() {
               <button className="play-button" onClick={handlePlayTrailer}>
                 <FontAwesomeIcon icon={faPlay} />
                 Trailer
+              </button>
+              <button
+                className="play-button play-episode-button"
+                onClick={handlePlayEpisode}
+              >
+                <FontAwesomeIcon icon={faPlay} />
+                Episode 1
               </button>
               <button
                 className={`icon-button favorite-button ${
@@ -399,6 +420,12 @@ function TVShowDetails() {
       </div>
 
       <Footer />
+      <Notification
+        message={notification.message}
+        type={notification.type}
+        visible={notification.visible}
+        onClose={() => setNotification({ ...notification, visible: false })}
+      />
     </div>
   );
 }
