@@ -152,11 +152,13 @@
   transform: scale(1.05);
 }
 
-.play-episode-button {
+.play-episode-button,
+.play-movie-button {
   background-color: #2b2b2b;
 }
 
-.play-episode-button:hover {
+.play-episode-button:hover,
+.play-movie-button:hover {
   background-color: #3b3b3b;
 }
 

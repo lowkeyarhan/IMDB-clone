@@ -149,11 +149,9 @@ function TVShowDetails() {
   };
 
   const handlePlayEpisode = () => {
-    setNotification({
-      visible: true,
-      message: "Episode playback feature coming soon!",
-      type: "info",
-    });
+    if (show) {
+      navigate(`/watch/tv/${show.id}`);
+    }
   };
 
   const closeTrailer = () => {

@@ -1,0 +1,672 @@
+.player-page {
+  width: 100%;
+  min-height: 100vh;
+  background-color: #0a0a0a;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  padding-top: 60px;
+}
+
+/* Top bar */
+.player-top-bar {
+  display: flex;
+  align-items: center;
+  padding: 16px 4%;
+  background-color: rgba(10, 10, 15);
+  position: sticky;
+  top: 60px;
+  z-index: 10;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.media-title {
+  flex: 1;
+  font-size: 1.4rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  padding-left: 0;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.home-link {
+  color: #fff;
+  font-size: 1.2rem;
+  transition: color 0.2s ease;
+  display: flex;
+  align-items: center;
+}
+
+.home-link:hover {
+  color: var(--primary-accent);
+}
+
+.title-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.player-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 6px 12px;
+}
+
+.server-selector {
+  position: relative;
+}
+
+.server-button,
+.season-episode-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: #fff;
+  padding: 10px 16px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.server-button:hover,
+.season-episode-button:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.server-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: rgba(20, 20, 20, 0.95);
+  border-radius: 8px;
+  width: 180px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  z-index: 20;
+  margin-top: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.server-option {
+  width: 100%;
+  text-align: left;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.server-option:last-child {
+  border-bottom: none;
+}
+
+.server-option:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.server-option.active {
+  background-color: var(--primary-accent);
+  font-weight: 500;
+}
+
+/* Season/Episode selector */
+.season-episode-selector {
+  position: relative;
+}
+
+.season-episode-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: rgba(20, 20, 20, 0.95);
+  border-radius: 8px;
+  width: 240px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  z-index: 20;
+  margin-top: 8px;
+  overflow: hidden;
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.season-select,
+.episode-select {
+  margin-bottom: 16px;
+}
+
+.season-select:last-child {
+  margin-bottom: 0;
+}
+
+.season-select label,
+.episode-select label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+  color: #ccc;
+  font-weight: 500;
+}
+
+.season-select select,
+.episode-select select {
+  width: 100%;
+  padding: 10px 12px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: #fff;
+  font-size: 0.95rem;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.season-select select:hover,
+.episode-select select:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.season-select select:focus,
+.episode-select select:focus {
+  border-color: var(--primary-accent);
+  box-shadow: 0 0 0 2px rgba(229, 9, 20, 0.25);
+}
+
+/* Player container */
+.player-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #000;
+  padding: 0;
+  margin: 0;
+  max-height: calc(100vh - 130px);
+}
+
+.video-responsive {
+  width: 100%;
+  height: 0;
+  padding-bottom: 56.25%; /* 16:9 aspect ratio */
+  position: relative;
+}
+
+.video-player {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+}
+
+/* Loading */
+.player-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 60px;
+  color: #e50914;
+}
+
+.loading-text {
+  margin-top: 24px;
+  font-size: 1.2rem;
+  color: #ccc;
+  font-weight: 500;
+}
+
+/* Notice */
+.player-notice {
+  background-color: rgba(0, 0, 0, 0.9);
+  padding: 16px 24px;
+  text-align: center;
+  font-size: 0.95rem;
+  color: #aaa;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 20px;
+}
+
+.player-notice p {
+  margin: 8px 0;
+}
+
+/* Error Display */
+.player-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 60px;
+  color: #ff5252;
+  text-align: center;
+}
+
+.error-text {
+  margin: 24px 0;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.error-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.error-actions button {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: #fff;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+}
+
+.error-actions button:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Server Navigation Buttons */
+.server-nav-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 16px;
+}
+
+.server-nav-buttons button {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: #fff;
+  padding: 10px 18px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.server-nav-buttons button:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.server-nav-buttons span {
+  font-size: 0.95rem;
+  color: #ccc;
+  font-weight: 500;
+  background-color: rgba(255, 255, 255, 0.08);
+  padding: 8px 14px;
+  border-radius: 6px;
+}
+
+/* Media Queries */
+@media (max-width: 1000px) {
+  .player-top-bar {
+    padding: 14px 4%;
+  }
+
+  .media-title {
+    font-size: 1.3rem;
+  }
+
+  .home-link {
+    font-size: 1.1rem;
+  }
+
+  .player-controls {
+    gap: 12px;
+  }
+
+  .server-button,
+  .season-episode-button {
+    padding: 9px 14px;
+    font-size: 0.9rem;
+  }
+
+  .server-dropdown,
+  .season-episode-dropdown {
+    width: 220px;
+  }
+
+  .player-container {
+    max-height: calc(100vh - 120px);
+  }
+
+  .media-details-container h2 {
+    font-size: 1.8rem;
+  }
+
+  .media-meta {
+    gap: 20px;
+  }
+
+  .media-meta-item {
+    font-size: 0.95rem;
+  }
+
+  .genre-tag {
+    font-size: 0.85rem;
+  }
+
+  .media-overview h3 {
+    font-size: 1.4rem;
+  }
+
+  .media-overview p {
+    font-size: 0.95rem;
+  }
+
+  .player-notice {
+    padding: 14px 20px;
+    font-size: 0.9rem;
+  }
+
+  .server-nav-buttons {
+    gap: 15px;
+  }
+
+  .server-nav-buttons button {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+  }
+
+  .server-nav-buttons span {
+    font-size: 0.9rem;
+    padding: 7px 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .player-top-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 12px 5%;
+    gap: 12px;
+  }
+
+  .media-title {
+    font-size: 1.2rem;
+    width: 100%;
+  }
+
+  .player-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .server-button,
+  .season-episode-button {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+  }
+
+  .player-notice {
+    padding: 12px 16px;
+    font-size: 0.85rem;
+  }
+
+  .server-nav-buttons button {
+    padding: 8px 14px;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .player-top-bar {
+    padding: 10px 5%;
+  }
+
+  .media-title {
+    font-size: 1.1rem;
+  }
+
+  .home-link {
+    font-size: 1rem;
+  }
+
+  .server-button span,
+  .season-episode-button span {
+    display: none;
+  }
+
+  .server-button,
+  .season-episode-button {
+    padding: 8px;
+  }
+
+  .player-controls {
+    padding: 4px 8px;
+  }
+
+  .server-nav-buttons {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .server-nav-buttons button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 380px) {
+  .player-top-bar {
+    padding: 8px 4%;
+  }
+
+  .media-title {
+    font-size: 1rem;
+  }
+
+  .home-link {
+    font-size: 0.9rem;
+  }
+
+  .player-controls {
+    padding: 3px 6px;
+  }
+
+  .server-button,
+  .season-episode-button {
+    padding: 6px;
+  }
+
+  .player-notice {
+    padding: 10px 12px;
+    font-size: 0.8rem;
+  }
+
+  .server-nav-buttons button {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+  }
+
+  .server-nav-buttons span {
+    padding: 5px 8px;
+    font-size: 0.8rem;
+  }
+
+  .media-details-container h2 {
+    font-size: 1.2rem;
+  }
+
+  .media-meta-item {
+    font-size: 0.85rem;
+  }
+
+  .media-overview h3 {
+    font-size: 1.1rem;
+  }
+
+  .media-overview p {
+    font-size: 0.85rem;
+  }
+}
+
+/* Media Details Section */
+.media-details-section {
+  background-color: rgba(20, 20, 20, 0.8);
+  padding: 30px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.media-details-container {
+  width: 90%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.media-details-container h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.media-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.media-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #ccc;
+  font-size: 1rem;
+}
+
+.media-meta-item svg {
+  color: var(--primary-accent);
+}
+
+.media-genres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.genre-tag {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  padding: 4px 12px;
+  font-size: 0.9rem;
+  color: #ccc;
+}
+
+.media-overview {
+  margin-top: 24px;
+}
+
+.media-overview h3 {
+  font-size: 1.5rem;
+  margin-bottom: 12px;
+  color: #fff;
+}
+
+.media-overview p {
+  color: #ccc;
+  line-height: 1.6;
+  font-size: 1rem;
+  max-width: 900px;
+}
+
+@media (max-width: 768px) {
+  .media-details-container h2 {
+    font-size: 1.6rem;
+  }
+
+  .media-meta {
+    gap: 16px;
+  }
+
+  .media-overview h3 {
+    font-size: 1.3rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .media-details-section {
+    padding: 20px 0;
+  }
+
+  .media-details-container {
+    padding: 0 16px;
+  }
+
+  .media-details-container h2 {
+    font-size: 1.4rem;
+  }
+
+  .media-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .media-overview h3 {
+    font-size: 1.2rem;
+  }
+
+  .media-overview p {
+    font-size: 0.95rem;
+  }
+}
+
+/* Keep navbar dark when on player page */
+.player-page-active .nav {
+  background-color: rgba(10, 10, 15) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  transition: none !important;
+}
+
+/* Prevent navbar from changing on scroll */
+.player-page-active .nav.scrolled {
+  background-color: rgba(10, 10, 15) !important;
+  box-shadow: none !important;
+}

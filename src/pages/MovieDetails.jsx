@@ -206,7 +206,10 @@ function MovieDetails() {
                 <FontAwesomeIcon icon={faPlay} />
                 Trailer
               </button>
-              <button className="play-button play-movie-button">
+              <button
+                className="play-button play-movie-button"
+                onClick={() => navigate(`/watch/movie/${movie.id}`)}
+              >
                 <FontAwesomeIcon icon={faPlay} />
                 Movie
               </button>
