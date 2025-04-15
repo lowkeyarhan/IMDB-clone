@@ -16,7 +16,7 @@
 
 /* Class to add when scrolled */
 .nav.scrolled {
-  background-color: rgba(20, 20, 20, 0.95);
+  background-color: rgba(0, 0, 0, 0.8);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 

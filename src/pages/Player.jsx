@@ -11,7 +11,18 @@ import {
   faStar,
   faCalendarAlt,
   faHome,
+  faHeart,
+  faMoon,
+  faComment,
+  faShareAlt,
 } from "@fortawesome/free-solid-svg-icons";
+import {
+  faFacebookF,
+  faTwitter,
+  faWhatsapp,
+  faTelegram,
+  faRedditAlien,
+} from "@fortawesome/free-brands-svg-icons";
 import "../styles/Player.css";
 
 function Player() {
@@ -58,11 +69,29 @@ function Player() {
         }`,
       },
       {
+        server: "UpCloud",
+        link:
+          mediaType === "tv"
+            ? `https://dokicloud.one/embed/${
+                mediaType === "tv" ? "tv" : ""
+              }/${tmdbId}/${season}/${episode}`
+            : `https://dokicloud.one/embed/movie/${tmdbId}`,
+      },
+      {
+        server: "MegaCloud",
+        link:
+          mediaType === "tv"
+            ? `https://megacloud.tv/embed-${
+                mediaType === "tv" ? "tv" : ""
+              }/${tmdbId}/${season}/${episode}`
+            : `https://megacloud.tv/embed-1/movie/${tmdbId}`,
+      },
+      {
         server: "VidCloud",
         link:
           mediaType === "tv"
-            ? `https://vidclouds.us/embed/tv.php?imdb=${tmdbId}&season=${season}&episode=${episode}`
-            : `https://vidclouds.us/embed/imdb-${tmdbId}.html`,
+            ? `https://vidsrc.xyz/embed/tv?tmdb=${tmdbId}&season=${season}&episode=${episode}`
+            : `https://vidsrc.xyz/embed/movie?tmdb=${tmdbId}`,
       },
       {
         server: "DoodStream",
@@ -70,7 +99,7 @@ function Player() {
       },
       {
         server: "StreamSB",
-        link: `https://streamsb.net/e/${mediaType[0]}${videoId}/`,
+        link: `https://watchsb.com/e/${mediaType[0]}${videoId}.html`,
       },
     ];
   };
@@ -194,9 +223,29 @@ function Player() {
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
+  // Add this function to handle refresh
+  const handleRefresh = () => {
+    setLoading(true);
+
+    // Generate fresh streaming links
+    const links = generateStreamLinks(
+      id,
+      type,
+      type === "tv" ? seasonNumber : null,
+      type === "tv" ? episodeNumber : null
+    );
+    setStreamLinks(links);
+
+    // Simulate loading delay and then set back to not loading
+    setTimeout(() => {
+      setLoading(false);
+      setError(false);
+    }, 1000);
+  };
+
   return (
     <div className="player-page">
-      {/* Top bar */}
+      {/* Top bar - simplified */}
       <div className="player-top-bar">
         <div className="media-title">
           <Link to="/" className="home-link">
@@ -204,83 +253,62 @@ function Player() {
           </Link>
           <span className="title-text">{title}</span>
         </div>
-        <div className="player-controls">
-          {type === "tv" && (
-            <div className="season-episode-selector">
-              <button
-                className="season-episode-button"
-                onClick={() => setShowSeasonEpisode(!showSeasonEpisode)}
-              >
-                <FontAwesomeIcon icon={faCircleInfo} />
-                <span>
-                  S{seasonNumber} E{episodeNumber}
-                </span>
-              </button>
-
-              {showSeasonEpisode && (
-                <div className="season-episode-dropdown">
-                  <div className="season-select">
-                    <label>Season:</label>
-                    <select value={seasonNumber} onChange={handleSeasonChange}>
-                      {seasons.map((season) => (
-                        <option key={season.id} value={season.season_number}>
-                          Season {season.season_number}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="episode-select">
-                    <label>Episode:</label>
-                    <select
-                      value={episodeNumber}
-                      onChange={handleEpisodeChange}
-                    >
-                      {Array.from(
-                        {
-                          length:
-                            seasons.find(
-                              (s) => s.season_number === seasonNumber
-                            )?.episode_count || 1,
-                        },
-                        (_, i) => (
-                          <option key={i + 1} value={i + 1}>
-                            Episode {i + 1}
-                          </option>
-                        )
-                      )}
-                    </select>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          <div className="server-selector">
+        {type === "tv" && (
+          <div className="season-episode-selector">
             <button
-              className="server-button"
-              onClick={() => setShowServerList(!showServerList)}
+              className="season-episode-button"
+              onClick={() => setShowSeasonEpisode(!showSeasonEpisode)}
             >
-              <FontAwesomeIcon icon={faList} />
-              <span>Server: {activeServer.server}</span>
+              <FontAwesomeIcon icon={faCircleInfo} />
+              <span>
+                S{seasonNumber} E{episodeNumber}
+              </span>
             </button>
 
-            {showServerList && (
-              <div className="server-dropdown">
-                {streamLinks.map((server, index) => (
-                  <button
-                    key={index}
-                    className={`server-option ${
-                      index === activeServerIndex ? "active" : ""
-                    }`}
-                    onClick={() => handleServerChange(index)}
-                  >
-                    {server.server}
-                  </button>
-                ))}
+            {showSeasonEpisode && (
+              <div className="season-episode-dropdown">
+                <div className="season-select">
+                  <label>Season:</label>
+                  <select value={seasonNumber} onChange={handleSeasonChange}>
+                    {seasons.map((season) => (
+                      <option key={season.id} value={season.season_number}>
+                        Season {season.season_number}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="episode-select">
+                  <label>Episode:</label>
+                  <select value={episodeNumber} onChange={handleEpisodeChange}>
+                    {Array.from(
+                      {
+                        length:
+                          seasons.find((s) => s.season_number === seasonNumber)
+                            ?.episode_count || 1,
+                      },
+                      (_, i) => (
+                        <option key={i + 1} value={i + 1}>
+                          Episode {i + 1}
+                        </option>
+                      )
+                    )}
+                  </select>
+                </div>
               </div>
             )}
           </div>
-        </div>
+        )}
+      </div>
+
+      {/* Refresh notice */}
+      <div className="refresh-notice">
+        <p>
+          If you get any error message when trying to stream, please{" "}
+          <span className="highlight" onClick={handleRefresh}>
+            Refresh
+          </span>{" "}
+          the page or switch to another streaming server.
+        </p>
       </div>
 
       {/* Player container */}
@@ -318,21 +346,41 @@ function Player() {
         )}
       </div>
 
-      {/* Server navigation notice */}
-      <div className="player-notice">
-        <p>
-          If the current server doesn't work, try another server from the list
-        </p>
-        <div className="server-nav-buttons">
-          <button onClick={handlePrevServer}>
-            <FontAwesomeIcon icon={faAngleLeft} /> Previous
+      {/* Simplified player actions */}
+      <div className="player-actions">
+        <div className="action-buttons">
+          <button className="action-btn">
+            <FontAwesomeIcon icon={faHeart} /> Add to favorite
           </button>
-          <span>
-            {activeServer.server} ({activeServerIndex + 1}/{streamLinks.length})
-          </span>
-          <button onClick={handleNextServer}>
-            Next <FontAwesomeIcon icon={faAngleRight} />
-          </button>
+        </div>
+      </div>
+
+      {/* Improved server selection */}
+      <div className="server-selection">
+        <h3>Available Servers</h3>
+        <p>If current server doesn't work, try one of these alternatives:</p>
+        <div className="server-grid">
+          {streamLinks.map((server, index) => (
+            <button
+              key={index}
+              className={`server-block ${
+                index === activeServerIndex ? "active" : ""
+              }`}
+              onClick={() => handleServerChange(index)}
+            >
+              <div className="server-icon">
+                <FontAwesomeIcon
+                  icon={index === activeServerIndex ? faStar : faAngleRight}
+                />
+              </div>
+              <div className="server-info">
+                <span className="server-name">{server.server}</span>
+                {index === activeServerIndex && (
+                  <span className="server-status">Playing</span>
+                )}
+              </div>
+            </button>
+          ))}
         </div>
       </div>
 
