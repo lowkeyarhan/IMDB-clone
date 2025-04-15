@@ -41,9 +41,19 @@ function NavBar() {
         setSearchActive(true);
       }
     }
+
+    // Check if a movie card was clicked and we need to close the search
+    const closeSearch = localStorage.getItem("closeSearch");
+    if (closeSearch === "true") {
+      setSearchActive(false);
+      localStorage.removeItem("closeSearch"); // Clear the flag
+    }
   }, [location]);
 
   const toggleSearch = () => {
+    // Clear the closeSearch flag if it exists
+    localStorage.removeItem("closeSearch");
+
     setSearchActive(!searchActive);
     if (searchActive && searchQuery) {
       setSearchQuery("");

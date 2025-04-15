@@ -77,11 +77,12 @@ function Player() {
   ) => {
     return [
       {
-        server: "Beta (ads)",
-        link: `https://vidsrc.me/embed/${mediaType}/${tmdbId}${
-          mediaType === "tv" ? `/season/${season}/episode/${episode}` : ""
-        }`,
-        quality: "1080p",
+        server: "Delta(ads)",
+        link:
+          mediaType === "tv"
+            ? `https://player.videasy.net/${mediaType}/${tmdbId}/${season}/${episode}`
+            : `https://player.videasy.net/${mediaType}/${tmdbId}`,
+        quality: "4K",
       },
       {
         server: "Gamma (ads)",
@@ -92,12 +93,11 @@ function Player() {
         quality: "1080p",
       },
       {
-        server: "Delta(ads)",
-        link:
-          mediaType === "tv"
-            ? `https://player.videasy.net/${mediaType}/${tmdbId}/${season}/${episode}`
-            : `https://player.videasy.net/${mediaType}/${tmdbId}`,
-        quality: "4K",
+        server: "Beta (ads)",
+        link: `https://vidsrc.me/embed/${mediaType}/${tmdbId}${
+          mediaType === "tv" ? `/season/${season}/episode/${episode}` : ""
+        }`,
+        quality: "1080p",
       },
       {
         server: "Alpha (ads)",
@@ -217,18 +217,21 @@ function Player() {
     setActiveServerIndex(index);
     setActiveServer(streamLinks[index] || { server: "Loading...", link: "" });
     setVideoKey(streamLinks[index]?.link || "");
+    setIsLoading(true);
   };
 
   const handleNextServer = () => {
     setActiveServerIndex((prevIndex) =>
       prevIndex === streamLinks.length - 1 ? 0 : prevIndex + 1
     );
+    setIsLoading(true);
   };
 
   const handlePrevServer = () => {
     setActiveServerIndex((prevIndex) =>
       prevIndex === 0 ? streamLinks.length - 1 : prevIndex - 1
     );
+    setIsLoading(true);
   };
 
   // Format date for display
@@ -343,6 +346,14 @@ function Player() {
           </div>
         ) : (
           <div className="video-responsive">
+            {isLoading && (
+              <div className="player-loading">
+                <div className="loading-spinner">
+                  <FontAwesomeIcon icon={faSpinner} spin size="3x" />
+                </div>
+                <div className="loading-text">Loading stream...</div>
+              </div>
+            )}
             <iframe
               src={activeServer.link}
               frameBorder="0"
@@ -351,6 +362,7 @@ function Player() {
               title={title}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               referrerPolicy="no-referrer"
+              onLoad={() => setIsLoading(false)}
             ></iframe>
           </div>
         )}

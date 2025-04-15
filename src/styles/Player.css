@@ -390,7 +390,7 @@
   .server-buttons {
     gap: 10px;
   }
-  .refresh-notice p{
+  .refresh-notice p {
     font-size: 12px !important;
   }
 }
@@ -755,12 +755,12 @@
   border-radius: 8px;
   overflow: hidden;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.5s ease;
   border: 2px solid transparent;
 }
 
 .episode-card:hover {
-  transform: translateY(-5px);
+  transform: scale(1.025);
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
 }
 
@@ -783,6 +783,11 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.7s ease;
+}
+
+.episode-thumbnail img:hover {
+  transform: scale(1.05);
 }
 
 .episode-number {
@@ -937,4 +942,63 @@
 .server-active-indicator {
   color: #e50914;
   font-size: 1.2rem;
+}
+
+/* Player Loading Animation */
+.player-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.8);
+  z-index: 10;
+}
+
+.loading-spinner {
+  margin-bottom: 16px;
+  color: var(--primary-accent, #e50914);
+}
+
+.loading-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  animation: text-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes text-pulse {
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Update responsive styles */
+@media (max-width: 768px) {
+  .loading-spinner svg {
+    font-size: 2em !important;
+  }
+
+  .loading-text {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .loading-spinner svg {
+    font-size: 1.5em !important;
+  }
+
+  .loading-text {
+    font-size: 14px;
+  }
 }
