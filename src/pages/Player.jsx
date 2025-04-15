@@ -46,14 +46,11 @@ function Player() {
     season = null,
     episode = null
   ) => {
-    // These are sample embed URLs - in a real app you'd get these from a backend API
-    // or scraping service that provides actual working links
     const videoId = `${tmdbId}${
       mediaType === "tv" ? `-${season}-${episode}` : ""
     }`;
 
     return [
-      // VidSrc as first/default option
       {
         server: "VidSrc",
         link: `https://vidsrc.to/embed/${mediaType}/${tmdbId}${
@@ -61,22 +58,11 @@ function Player() {
         }`,
       },
       {
-        server: "2Embed",
-        link: `https://2embed.cc/embed/${mediaType}/${tmdbId}${
-          mediaType === "tv" ? `/season/${season}/episode/${episode}` : ""
-        }`,
-      },
-      {
-        server: "Vidcloud",
-        link: `https://dokicloud.one/embed-4/${
-          mediaType === "tv" ? "series" : "movie"
-        }?id=${tmdbId}${
-          mediaType === "tv" ? `&s=${season}&e=${episode}` : ""
-        }&autoplay=1`,
-      },
-      {
-        server: "Streamtape",
-        link: `https://streamtape.com/e/${mediaType}${videoId}/`,
+        server: "VidCloud",
+        link:
+          mediaType === "tv"
+            ? `https://vidclouds.us/embed/tv.php?imdb=${tmdbId}&season=${season}&episode=${episode}`
+            : `https://vidclouds.us/embed/imdb-${tmdbId}.html`,
       },
       {
         server: "DoodStream",
@@ -85,10 +71,6 @@ function Player() {
       {
         server: "StreamSB",
         link: `https://streamsb.net/e/${mediaType[0]}${videoId}/`,
-      },
-      {
-        server: "MixDrop",
-        link: `https://mixdrop.co/e/${mediaType[0]}${videoId}/`,
       },
     ];
   };
