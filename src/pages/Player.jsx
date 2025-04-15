@@ -77,7 +77,7 @@ function Player() {
   ) => {
     return [
       {
-        server: "VidSrc",
+        server: "VidSrc (ads)",
         link: `https://vidsrc.me/embed/${mediaType}/${tmdbId}${
           mediaType === "tv" ? `/season/${season}/episode/${episode}` : ""
         }`,
