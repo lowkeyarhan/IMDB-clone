@@ -222,42 +222,32 @@
 
 /* Improved server selection */
 .server-selection {
-  background-color: #111;
-  padding: 20px 5%;
+  background-color: #0a0a0a;
+  padding: 30px 5%;
   color: #ccc;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .server-selection h3 {
-  font-size: 1.2rem;
+  font-size: 1.4rem;
   font-weight: 600;
-  margin-bottom: 8px;
-  color: #fff;
-  text-align: center;
-}
-
-.server-selection p {
   margin-bottom: 20px;
-  font-size: 0.95rem;
-  text-align: center;
-  color: #aaa;
+  color: #fff;
 }
 
 .server-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 16px;
-  margin: 0 auto;
-  max-width: 1200px;
 }
 
 .server-block {
   display: flex;
   align-items: center;
-  background-color: #1a1a1a;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
-  padding: 12px;
+  background-color: #181818;
+  border: none;
+  border-radius: 4px;
+  padding: 16px;
   transition: all 0.2s ease;
   cursor: pointer;
   text-align: left;
@@ -265,13 +255,13 @@
 }
 
 .server-block:hover {
-  background-color: #222;
+  background-color: #252525;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 .server-block.active {
-  background-color: var(--primary-accent);
-  border-color: var(--primary-accent);
+  background-color: #e50914;
+  border-color: #e50914;
 }
 
 .server-block .server-icon {
@@ -504,26 +494,24 @@
   }
 }
 
-/* Keep navbar dark when on player page */
-.player-page-active .nav {
-  background-color: black !important;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5) !important;
-  backdrop-filter: blur(10px) !important;
-  -webkit-backdrop-filter: blur(10px) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-  transition: none !important;
+/* Also override any hover or animation effects */
+.player-page-active .nav *,
+.nav.player-nav * {
+  transition: all 0.2s ease !important;
 }
 
-/* Prevent navbar from changing on scroll */
-.player-page-active .nav.scrolled {
-  background-color: black !important;
+/* Ensure the navbar links still maintain their hover effects */
+.player-page-active .nav_link:hover::after,
+.nav.player-nav .nav_link:hover::after {
+  width: 100% !important;
 }
 
 /* Refresh notice */
 .refresh-notice {
-  background-color: #0a0812;
+  background-color: black;
   padding: 15px 5%;
   text-align: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -537,4 +525,400 @@
   color: var(--primary-accent);
   font-weight: 600;
   cursor: pointer;
+}
+
+/* Season Indicator in Top Bar */
+.season-indicator {
+  display: flex;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  padding: 5px 12px;
+  color: white;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+/* New Content Layout Styles to Match Screenshot */
+.content-layout {
+  width: 100%;
+  background-color: #0f1014;
+  padding: 30px 5% 50px;
+}
+
+.content-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 30px;
+}
+
+.section-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+}
+
+.season-search {
+  position: relative;
+  width: 300px;
+}
+
+.season-search input {
+  width: 100%;
+  padding: 10px 40px 10px 15px;
+  border-radius: 20px;
+  border: none;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+.season-search input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.search-button {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+}
+
+.view-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.view-control-btn {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 4px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-control-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.view-control-btn.active {
+  background-color: var(--primary-accent);
+  color: #fff;
+}
+
+/* Seasons Wrapper - Contains sidebar and episodes grid */
+.seasons-wrapper {
+  display: flex;
+  gap: 30px;
+}
+
+/* Seasons Sidebar */
+.seasons-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding-right: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.seasons-sidebar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.seasons-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.seasons-sidebar::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 5px;
+}
+
+.season-item {
+  display: flex;
+  gap: 15px;
+  background-color: rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.season-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.season-item.active {
+  background-color: rgba(229, 9, 20, 0.1);
+  border-color: #e50914;
+}
+
+.season-poster {
+  width: 60px;
+  height: 85px;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.season-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.check-icon {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 20px;
+  height: 20px;
+  background-color: #e50914;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  color: #fff;
+}
+
+.season-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.season-number {
+  font-weight: 600;
+  color: #fff;
+  font-size: 0.95rem;
+  margin-bottom: 5px;
+}
+
+.episode-count {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.year {
+  font-size: 0.8rem;
+  color: #e50914;
+  margin-top: 5px;
+}
+
+/* Episodes Grid */
+.episodes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+  flex: 1;
+}
+
+.episode-card {
+  background-color: rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.episode-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+.episode-card.active {
+  border-color: #e50914;
+}
+
+.episode-thumbnail {
+  position: relative;
+  width: 100%;
+  height: 0;
+  padding-bottom: 56.25%; /* 16:9 aspect ratio */
+  overflow: hidden;
+}
+
+.episode-thumbnail img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.episode-number {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.playing-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(229, 9, 20, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: #fff;
+}
+
+.episode-title {
+  padding: 12px;
+  font-size: 0.9rem;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .episodes-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
+}
+
+@media (max-width: 992px) {
+  .content-header {
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+
+  .section-title {
+    width: 100%;
+    margin-bottom: 15px;
+  }
+
+  .seasons-wrapper {
+    flex-direction: column;
+  }
+
+  .seasons-sidebar {
+    width: 100%;
+    max-height: none;
+    flex-direction: row;
+    overflow-x: auto;
+    padding-bottom: 15px;
+  }
+
+  .season-item {
+    min-width: 240px;
+  }
+}
+
+@media (max-width: 768px) {
+  .content-header {
+    justify-content: space-between;
+  }
+
+  .season-search {
+    width: calc(100% - 120px);
+  }
+
+  .episodes-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+}
+
+@media (max-width: 576px) {
+  .episodes-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+
+  .episode-title {
+    padding: 8px;
+    font-size: 0.8rem;
+  }
+}
+
+/* Server selection panel updated styling */
+.server-selection-panel {
+  width: 100%;
+  background-color: #0a0a0f;
+  padding: 30px 5%;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.server-selection-panel h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #fff;
+}
+
+.server-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 15px;
+}
+
+.server-block {
+  background-color: #181821;
+  border-radius: 8px;
+  padding: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.server-block:hover {
+  background-color: #222230;
+  transform: translateY(-3px);
+}
+
+.server-block.active {
+  background-color: rgba(229, 9, 20, 0.1);
+  border-color: #e50914;
+}
+
+.server-quality {
+  display: inline-block;
+  background-color: #e50914;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-top: 5px;
+}
+
+.server-active-indicator {
+  color: #e50914;
+  font-size: 1.2rem;
 }

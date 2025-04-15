@@ -13,6 +13,9 @@ function NavBar() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Check if current page is the player page
+  const isPlayerPage = location.pathname.startsWith("/player");
+
   //Animate on scroll
   useEffect(() => {
     const handleScroll = () => {
@@ -78,7 +81,11 @@ function NavBar() {
   };
 
   return (
-    <div className={`nav ${scrolled ? "scrolled" : ""}`}>
+    <div
+      className={`nav ${scrolled ? "scrolled" : ""} ${
+        isPlayerPage ? "player-nav" : ""
+      }`}
+    >
       <div className="left_items">
         <Link to="/" className="nav_link">
           Home

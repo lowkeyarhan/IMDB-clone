@@ -15,6 +15,17 @@ import {
   faMoon,
   faComment,
   faShareAlt,
+  faPlay,
+  faSearch,
+  faTh,
+  faThList,
+  faSortAmountDown,
+  faCheck,
+  faPlayCircle,
+  faChevronLeft,
+  faChevronRight,
+  faServer,
+  faThLarge,
 } from "@fortawesome/free-solid-svg-icons";
 import {
   faFacebookF,
@@ -36,7 +47,6 @@ function Player() {
   const [seasonNumber, setSeasonNumber] = useState(1);
   const [episodeNumber, setEpisodeNumber] = useState(1);
   const [seasons, setSeasons] = useState([]);
-  const [showSeasonEpisode, setShowSeasonEpisode] = useState(false);
   const [streamLinks, setStreamLinks] = useState([]);
   const [mediaDetails, setMediaDetails] = useState({
     overview: "",
@@ -45,74 +55,59 @@ function Player() {
     genres: [],
     backdrop: "",
   });
+  const [episodeDetails, setEpisodeDetails] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState("grid"); // 'grid' or 'list'
+  const [activeServer, setActiveServer] = useState({
+    server: "Loading...",
+    link: "",
+  });
+  const [videoKey, setVideoKey] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
   const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
   const BASE_URL = "https://api.themoviedb.org/3";
 
-  // Mock function to generate streaming links based on TMDB ID
-  // In a real implementation, this would call an API to get actual embed codes
+  // Update the generateStreamLinks function with high-quality sources
   const generateStreamLinks = (
     tmdbId,
     mediaType,
     season = null,
     episode = null
   ) => {
-    const videoId = `${tmdbId}${
-      mediaType === "tv" ? `-${season}-${episode}` : ""
-    }`;
-
     return [
       {
-        server: "VidSrc",
-        link: `https://vidsrc.to/embed/${mediaType}/${tmdbId}${
+        server: "VidSrc Pro",
+        link: `https://vidsrc.me/embed/${mediaType}/${tmdbId}${
           mediaType === "tv" ? `/season/${season}/episode/${episode}` : ""
         }`,
+        quality: "4K",
       },
       {
-        server: "UpCloud",
+        server: "StreamM4u",
+        link: `https://streamm4u.com/play/${
+          mediaType === "tv" ? "tv" : "movie"
+        }/${tmdbId}${mediaType === "tv" ? `/${season}/${episode}` : ""}`,
+        quality: "1080p",
+      },
+      {
+        server: "SuperStream",
         link:
           mediaType === "tv"
-            ? `https://dokicloud.one/embed/${
-                mediaType === "tv" ? "tv" : ""
-              }/${tmdbId}/${season}/${episode}`
-            : `https://dokicloud.one/embed/movie/${tmdbId}`,
+            ? `https://multiembed.mov/directstream.php?video_id=${tmdbId}&tmdb=1&s=${season}&e=${episode}`
+            : `https://multiembed.mov/directstream.php?video_id=${tmdbId}&tmdb=1`,
+        quality: "4K",
       },
       {
-        server: "MegaCloud",
+        server: "2Embed",
         link:
           mediaType === "tv"
-            ? `https://megacloud.tv/embed-${
-                mediaType === "tv" ? "tv" : ""
-              }/${tmdbId}/${season}/${episode}`
-            : `https://megacloud.tv/embed-1/movie/${tmdbId}`,
-      },
-      {
-        server: "VidCloud",
-        link:
-          mediaType === "tv"
-            ? `https://vidsrc.xyz/embed/tv?tmdb=${tmdbId}&season=${season}&episode=${episode}`
-            : `https://vidsrc.xyz/embed/movie?tmdb=${tmdbId}`,
-      },
-      {
-        server: "DoodStream",
-        link: `https://dood.wf/e/${mediaType[0]}${videoId}x/`,
-      },
-      {
-        server: "StreamSB",
-        link: `https://watchsb.com/e/${mediaType[0]}${videoId}.html`,
+            ? `https://www.2embed.cc/embed/${mediaType}/${tmdbId}/${season}/${episode}`
+            : `https://www.2embed.cc/embed/${mediaType}/${tmdbId}`,
+        quality: "1080p",
       },
     ];
   };
-
-  useEffect(() => {
-    // Add player-page-active class to body when component mounts
-    document.body.classList.add("player-page-active");
-
-    // Remove the class when component unmounts
-    return () => {
-      document.body.classList.remove("player-page-active");
-    };
-  }, []);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -184,19 +179,43 @@ function Player() {
     }
   }, [seasonNumber, episodeNumber, id, type]);
 
+  // First, fetch episode images
+  useEffect(() => {
+    if (type === "tv" && seasonNumber) {
+      const fetchEpisodeDetails = async () => {
+        try {
+          const endpoint = `${BASE_URL}/tv/${id}/season/${seasonNumber}?api_key=${API_KEY}`;
+          const response = await fetch(endpoint);
+          const data = await response.json();
+
+          if (data.episodes) {
+            setEpisodeDetails(data.episodes);
+          }
+        } catch (error) {
+          console.error("Error fetching episode details:", error);
+        }
+      };
+
+      fetchEpisodeDetails();
+    }
+  }, [id, seasonNumber, API_KEY, type]);
+
+  // Set initial activeServer value when streamLinks change
+  useEffect(() => {
+    if (streamLinks.length > 0) {
+      setActiveServer(
+        streamLinks[activeServerIndex] || { server: "Loading...", link: "" }
+      );
+      setVideoKey(streamLinks[activeServerIndex]?.link || "");
+      setIsLoading(false);
+    }
+  }, [streamLinks, activeServerIndex]);
+
+  // handleServerChange function
   const handleServerChange = (index) => {
     setActiveServerIndex(index);
-    setShowServerList(false);
-  };
-
-  const handleSeasonChange = (e) => {
-    const newSeason = parseInt(e.target.value);
-    setSeasonNumber(newSeason);
-    setEpisodeNumber(1); // Reset episode to 1 when changing season
-  };
-
-  const handleEpisodeChange = (e) => {
-    setEpisodeNumber(parseInt(e.target.value));
+    setActiveServer(streamLinks[index] || { server: "Loading...", link: "" });
+    setVideoKey(streamLinks[index]?.link || "");
   };
 
   const handleNextServer = () => {
@@ -209,11 +228,6 @@ function Player() {
     setActiveServerIndex((prevIndex) =>
       prevIndex === 0 ? streamLinks.length - 1 : prevIndex - 1
     );
-  };
-
-  const activeServer = streamLinks[activeServerIndex] || {
-    server: "Loading...",
-    link: "",
   };
 
   // Format date for display
@@ -243,6 +257,39 @@ function Player() {
     }, 1000);
   };
 
+  // Add this useEffect to fetch episode details when season changes
+  useEffect(() => {
+    const fetchEpisodeDetails = async () => {
+      if (type === "tv" && seasonNumber) {
+        try {
+          const response = await fetch(
+            `${BASE_URL}/tv/${id}/season/${seasonNumber}?api_key=${API_KEY}`
+          );
+          const data = await response.json();
+          setEpisodeDetails(data.episodes || []);
+        } catch (error) {
+          console.error("Error fetching episode details:", error);
+          setEpisodeDetails([]);
+        }
+      }
+    };
+
+    fetchEpisodeDetails();
+  }, [id, seasonNumber, API_KEY, type]);
+
+  const handleEpisodeChange = (episodeNum) => {
+    setEpisodeNumber(episodeNum);
+    fetchStreamLinks(id, type, seasonNumber, episodeNum);
+    setIsLoading(true);
+  };
+
+  const handleSeasonChange = (seasonNum) => {
+    setSeasonNumber(seasonNum);
+    setEpisodeNumber(1); // Reset to first episode when changing season
+    fetchStreamLinks(id, type, seasonNum, 1);
+    setIsLoading(true);
+  };
+
   return (
     <div className="player-page">
       {/* Top bar - simplified */}
@@ -254,48 +301,10 @@ function Player() {
           <span className="title-text">{title}</span>
         </div>
         {type === "tv" && (
-          <div className="season-episode-selector">
-            <button
-              className="season-episode-button"
-              onClick={() => setShowSeasonEpisode(!showSeasonEpisode)}
-            >
-              <FontAwesomeIcon icon={faCircleInfo} />
-              <span>
-                S{seasonNumber} E{episodeNumber}
-              </span>
-            </button>
-
-            {showSeasonEpisode && (
-              <div className="season-episode-dropdown">
-                <div className="season-select">
-                  <label>Season:</label>
-                  <select value={seasonNumber} onChange={handleSeasonChange}>
-                    {seasons.map((season) => (
-                      <option key={season.id} value={season.season_number}>
-                        Season {season.season_number}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="episode-select">
-                  <label>Episode:</label>
-                  <select value={episodeNumber} onChange={handleEpisodeChange}>
-                    {Array.from(
-                      {
-                        length:
-                          seasons.find((s) => s.season_number === seasonNumber)
-                            ?.episode_count || 1,
-                      },
-                      (_, i) => (
-                        <option key={i + 1} value={i + 1}>
-                          Episode {i + 1}
-                        </option>
-                      )
-                    )}
-                  </select>
-                </div>
-              </div>
-            )}
+          <div className="season-indicator">
+            <span>
+              S{seasonNumber} · E{episodeNumber}
+            </span>
           </div>
         )}
       </div>
@@ -346,40 +355,151 @@ function Player() {
         )}
       </div>
 
-      {/* Simplified player actions */}
-      <div className="player-actions">
-        <div className="action-buttons">
-          <button className="action-btn">
-            <FontAwesomeIcon icon={faHeart} /> Add to favorite
-          </button>
-        </div>
-      </div>
+      {/* New Content Area for Seasons and Episodes (like in screenshot) */}
+      {type === "tv" && (
+        <div className="content-layout">
+          <div className="content-header">
+            <h2 className="section-title">Seasons & Episodes</h2>
 
-      {/* Improved server selection */}
-      <div className="server-selection">
-        <h3>Available Servers</h3>
-        <p>If current server doesn't work, try one of these alternatives:</p>
-        <div className="server-grid">
-          {streamLinks.map((server, index) => (
-            <button
+            <div className="season-search">
+              <input
+                type="text"
+                placeholder="Search episodes..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <button className="search-button">
+                <FontAwesomeIcon icon={faSearch} />
+              </button>
+            </div>
+
+            <div className="view-controls">
+              <button
+                className={`view-control-btn ${
+                  viewMode === "grid" ? "active" : ""
+                }`}
+                onClick={() => setViewMode("grid")}
+              >
+                <FontAwesomeIcon icon={faThLarge} />
+              </button>
+              <button
+                className={`view-control-btn ${
+                  viewMode === "list" ? "active" : ""
+                }`}
+                onClick={() => setViewMode("list")}
+              >
+                <FontAwesomeIcon icon={faList} />
+              </button>
+            </div>
+          </div>
+
+          <div className="seasons-wrapper">
+            <div className="seasons-sidebar">
+              {seasons.map((season, index) => (
+                <div
+                  key={index}
+                  className={`season-item ${
+                    seasonNumber === season.season_number ? "active" : ""
+                  }`}
+                  onClick={() => handleSeasonChange(season.season_number)}
+                >
+                  <div className="season-poster">
+                    <img
+                      src={
+                        season.poster_path
+                          ? `https://image.tmdb.org/t/p/w154${season.poster_path}`
+                          : "https://via.placeholder.com/154x231/1a1a1a/5a5a5a?text=No+Image"
+                      }
+                      alt={`Season ${season.season_number}`}
+                    />
+                    {seasonNumber === season.season_number && (
+                      <div className="check-icon">
+                        <FontAwesomeIcon icon={faCheck} />
+                      </div>
+                    )}
+                  </div>
+                  <div className="season-info">
+                    <div className="season-number">
+                      Season {season.season_number}
+                    </div>
+                    <div className="episode-count">
+                      {season.episode_count} Episodes
+                    </div>
+                    {season.air_date && (
+                      <div className="year">
+                        {new Date(season.air_date).getFullYear()}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="episodes-grid">
+              {episodeDetails
+                .filter(
+                  (episode) =>
+                    episode.name
+                      .toLowerCase()
+                      .includes(searchQuery.toLowerCase()) ||
+                    episode.episode_number.toString().includes(searchQuery)
+                )
+                .map((episode) => (
+                  <div
+                    key={episode.id}
+                    className={`episode-card ${
+                      episodeNumber === episode.episode_number ? "active" : ""
+                    }`}
+                    onClick={() => handleEpisodeChange(episode.episode_number)}
+                  >
+                    <div className="episode-thumbnail">
+                      <img
+                        src={
+                          episode.still_path
+                            ? `https://image.tmdb.org/t/p/w300${episode.still_path}`
+                            : "https://via.placeholder.com/300x169/1a1a1a/5a5a5a?text=No+Image"
+                        }
+                        alt={`Episode ${episode.episode_number}`}
+                      />
+                      <div className="episode-number">
+                        E{episode.episode_number}
+                      </div>
+                      {episodeNumber === episode.episode_number && (
+                        <div className="playing-indicator">
+                          <FontAwesomeIcon icon={faPlayCircle} />
+                        </div>
+                      )}
+                    </div>
+                    <div className="episode-title">{episode.name}</div>
+                  </div>
+                ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Server selection */}
+      <div className="server-selection-panel">
+        <h3>Select Server</h3>
+        <div className="server-list">
+          {streamLinks.map((link, index) => (
+            <div
               key={index}
               className={`server-block ${
-                index === activeServerIndex ? "active" : ""
+                activeServer.server === link.server ? "active" : ""
               }`}
               onClick={() => handleServerChange(index)}
             >
-              <div className="server-icon">
-                <FontAwesomeIcon
-                  icon={index === activeServerIndex ? faStar : faAngleRight}
-                />
+              <div>
+                <div className="server-name">{link.server}</div>
+                <div className="server-quality">HD</div>
               </div>
-              <div className="server-info">
-                <span className="server-name">{server.server}</span>
-                {index === activeServerIndex && (
-                  <span className="server-status">Playing</span>
-                )}
-              </div>
-            </button>
+              {activeServer.server === link.server && (
+                <div className="server-active-indicator">
+                  <FontAwesomeIcon icon={faCheck} />
+                </div>
+              )}
+            </div>
           ))}
         </div>
       </div>
