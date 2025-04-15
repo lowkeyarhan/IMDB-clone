@@ -493,7 +493,7 @@ function Player() {
 
       {/* Server selection */}
       <div className="server-selection-panel">
-        <h3>Select Server</h3>
+        <h3>Servers</h3>
         <div className="server-list">
           {streamLinks.map((link, index) => (
             <div
