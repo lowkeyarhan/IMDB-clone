@@ -77,14 +77,14 @@ function Player() {
   ) => {
     return [
       {
-        server: "VidSrc (ads)",
+        server: "Beta (ads)",
         link: `https://vidsrc.me/embed/${mediaType}/${tmdbId}${
           mediaType === "tv" ? `/season/${season}/episode/${episode}` : ""
         }`,
         quality: "1080p",
       },
       {
-        server: "SuperStream (ads)",
+        server: "Gamma (ads)",
         link:
           mediaType === "tv"
             ? `https://multiembed.mov/directstream.php?video_id=${tmdbId}&tmdb=1&s=${season}&e=${episode}`
@@ -92,7 +92,7 @@ function Player() {
         quality: "1080p",
       },
       {
-        server: "4K Videasy (ads)",
+        server: "Delta(ads)",
         link:
           mediaType === "tv"
             ? `https://player.videasy.net/${mediaType}/${tmdbId}/${season}/${episode}`
