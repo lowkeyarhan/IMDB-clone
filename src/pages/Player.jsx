@@ -77,33 +77,34 @@ function Player() {
   ) => {
     return [
       {
-        server: "VidSrc Pro",
+        server: "VidSrc",
         link: `https://vidsrc.me/embed/${mediaType}/${tmdbId}${
           mediaType === "tv" ? `/season/${season}/episode/${episode}` : ""
         }`,
-        quality: "4K",
-      },
-      {
-        server: "StreamM4u",
-        link: `https://streamm4u.com/play/${
-          mediaType === "tv" ? "tv" : "movie"
-        }/${tmdbId}${mediaType === "tv" ? `/${season}/${episode}` : ""}`,
         quality: "1080p",
       },
       {
-        server: "SuperStream",
+        server: "SuperStream (ads)",
         link:
           mediaType === "tv"
             ? `https://multiembed.mov/directstream.php?video_id=${tmdbId}&tmdb=1&s=${season}&e=${episode}`
             : `https://multiembed.mov/directstream.php?video_id=${tmdbId}&tmdb=1`,
+        quality: "1080p",
+      },
+      {
+        server: "4K Videasy (ads)",
+        link:
+          mediaType === "tv"
+            ? `https://player.videasy.net/${mediaType}/${tmdbId}/${season}/${episode}`
+            : `https://player.videasy.net/${mediaType}/${tmdbId}`,
         quality: "4K",
       },
       {
-        server: "2Embed",
+        server: "Alpha (ads)",
         link:
           mediaType === "tv"
-            ? `https://www.2embed.cc/embed/${mediaType}/${tmdbId}/${season}/${episode}`
-            : `https://www.2embed.cc/embed/${mediaType}/${tmdbId}`,
+            ? `https://megacloud.store/embed-1/e-1/${tmdbId}${season}${episode}?z=`
+            : `https://megacloud.store/embed-1/e-1/${tmdbId}?z=`,
         quality: "1080p",
       },
     ];
@@ -492,7 +493,7 @@ function Player() {
             >
               <div>
                 <div className="server-name">{link.server}</div>
-                <div className="server-quality">HD</div>
+                <div className="server-quality">{link.quality}</div>
               </div>
               {activeServer.server === link.server && (
                 <div className="server-active-indicator">
