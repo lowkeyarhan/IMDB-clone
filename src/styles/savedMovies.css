@@ -201,7 +201,6 @@
 @media (max-width: 1000px) {
   .saved_container {
     padding-top: 100px;
-    padding: 90px 3% 40px;
   }
 
   .saved_container h1 {
@@ -237,10 +236,6 @@
 
 /* Extra small screens */
 @media (max-width: 378px) {
-  .saved_container {
-    padding: 80px 3% 30px;
-  }
-
   .saved_container h1 {
     font-size: 1.7rem;
   }
