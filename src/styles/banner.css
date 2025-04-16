@@ -162,7 +162,7 @@
 }
 
 /* Mobile styles */
-@media (max-width: 1000px) {
+@media (max-width: 950px) {
   .banner_container {
     height: 65vh;
   }

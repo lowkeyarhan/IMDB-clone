@@ -393,11 +393,17 @@
   .refresh-notice p {
     font-size: 12px !important;
   }
-  .media-details-container h2{
+  .media-details-container h2 {
     font-size: 28px;
   }
-  .media-overview p{
+  .media-overview p {
     font-size: 14px;
+  }
+  .media-details-container {
+    margin: 0;
+  }
+  .media-details-section {
+    padding: 5%;
   }
 }
 
@@ -562,6 +568,7 @@
 /* New Content Layout Styles to Match Screenshot */
 .content-layout {
   width: 100%;
+  height: fit-content !important;
   background-color: #0f1014;
   padding: 30px 5% 50px;
 }
@@ -642,37 +649,50 @@
 
 /* Seasons Wrapper - Contains sidebar and episodes grid */
 .seasons-wrapper {
-  display: flex;
+  display: grid;
+  grid-template-columns: 220px 1fr;
   gap: 30px;
+  max-height: 80vh;
 }
 
 /* Seasons Sidebar */
 .seasons-sidebar {
-  width: 220px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
+  width: 100%;
+  display: grid;
+  grid-auto-rows: min-content;
   gap: 15px;
-  max-height: 80vh;
+  /* height: fit-content; */
+  max-height: 50vh;
   overflow-y: auto;
   padding-right: 10px;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+  z-index: 1;
 }
 
 .seasons-sidebar::-webkit-scrollbar {
-  width: 5px;
+  width: 8px;
 }
 
 .seasons-sidebar::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.seasons-sidebar::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.2);
   border-radius: 5px;
 }
 
+.seasons-sidebar::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 5px;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+}
+
+.seasons-sidebar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Season item styling */
 .season-item {
   display: flex;
   gap: 10px;
@@ -683,6 +703,7 @@
   transition: all 0.2s ease;
   height: fit-content;
   border: 2px solid transparent;
+  width: 100%;
 }
 
 .season-item:hover {
@@ -752,8 +773,13 @@
 .episodes-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 15px;
+  gap: 20px;
   flex: 1;
+  height: fit-content;
+  overflow-y: auto;
+  padding-right: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 }
 
 .episode-card {
@@ -851,19 +877,48 @@
   }
 
   .seasons-wrapper {
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    gap: 20px;
+    max-height: none;
   }
 
   .seasons-sidebar {
     width: 100%;
-    max-height: none;
-    flex-direction: row;
+    max-height: 280px;
+    height: auto;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 240px;
+    grid-template-rows: 1fr;
     overflow-x: auto;
+    overflow-y: hidden;
     padding-bottom: 15px;
+    padding-right: 0;
+    margin-bottom: 0;
+    gap: 15px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  }
+
+  .seasons-sidebar::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .seasons-sidebar::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+  }
+
+  .seasons-sidebar::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 5px;
   }
 
   .season-item {
     min-width: 240px;
+    width: 100%;
   }
 }
 

@@ -23,7 +23,7 @@ function Footer() {
           </div>
           <div className="creator-social">
             <a
-              href="https://github.com/johndoe"
+              href="https://pbs.twimg.com/media/GML6pLqXoAAbZI_.jpg"
               target="_blank"
               rel="noopener noreferrer"
               className="social-icon"
@@ -31,7 +31,7 @@ function Footer() {
               <FontAwesomeIcon icon={faGithub} />
             </a>
             <a
-              href="https://linkedin.com/in/johndoe"
+              href="https://www.linkedin.com/in/imnotarhannnnn"
               target="_blank"
               rel="noopener noreferrer"
               className="social-icon"
@@ -39,7 +39,7 @@ function Footer() {
               <FontAwesomeIcon icon={faLinkedin} />
             </a>
             <a
-              href="https://twitter.com/johndoe"
+              href="https://www.instagram.com/lowkeyarhan/"
               target="_blank"
               rel="noopener noreferrer"
               className="social-icon"

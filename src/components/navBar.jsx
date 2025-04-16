@@ -26,11 +26,18 @@ function NavBar() {
       }
     };
 
-    window.addEventListener("scroll", handleScroll);
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
+    // Only add scroll listener if not on player page
+    if (!isPlayerPage) {
+      window.addEventListener("scroll", handleScroll);
+      return () => {
+        window.removeEventListener("scroll", handleScroll);
+      };
+    } else {
+      // Reset scrolled state when on player page
+      setScrolled(false);
+      return () => {};
+    }
+  }, [isPlayerPage]);
 
   useEffect(() => {
     if (location.pathname === "/search") {
@@ -47,6 +54,13 @@ function NavBar() {
     if (closeSearch === "true") {
       setSearchActive(false);
       localStorage.removeItem("closeSearch"); // Clear the flag
+    }
+
+    // Reset search input if the flag is set
+    const resetSearchInput = localStorage.getItem("resetSearchInput");
+    if (resetSearchInput === "true") {
+      setSearchQuery("");
+      localStorage.removeItem("resetSearchInput"); // Clear the flag
     }
   }, [location]);
 
@@ -92,8 +106,8 @@ function NavBar() {
 
   return (
     <div
-      className={`nav ${scrolled ? "scrolled" : ""} ${
-        isPlayerPage ? "player-nav" : ""
+      className={`nav ${
+        isPlayerPage ? "player-nav" : scrolled ? "scrolled" : ""
       }`}
     >
       <div className="left_items">

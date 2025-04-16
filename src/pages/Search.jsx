@@ -134,8 +134,11 @@ function Search() {
 
   const handleItemClick = (item) => {
     // Set a flag in localStorage to indicate search should be closed
-    localStorage.setItem('closeSearch', 'true');
-    
+    localStorage.setItem("closeSearch", "true");
+
+    // Also reset the search query in localStorage
+    localStorage.setItem("resetSearchInput", "true");
+
     if (item.media_type === "movie") {
       navigate(`/movie/${item.id}`);
     } else if (item.media_type === "tv") {

@@ -541,7 +541,7 @@
 }
 
 /* Mobile styles */
-@media (max-width: 1000px) {
+@media (max-width: 950px) {
   .hero-content h1 {
     font-size: 2rem;
   }
@@ -549,6 +549,10 @@
   .hero-banner {
     height: 60vh;
     min-height: 450px;
+  }
+
+  .hero-overlay {
+    padding: 5%;
   }
 
   .hero-metadata {
@@ -598,6 +602,10 @@
     grid-template-columns: 1fr;
   }
 
+  .details-sidebar {
+    padding: 15px;
+  }
+
   .cast-item {
     display: flex;
     flex-direction: row;
@@ -645,13 +653,15 @@
   }
 
   .cast-section h2,
-  .similar-section h2 {
+  .similar-section h2,
+  .seasons-section h2 {
     font-size: 1.5rem;
     padding-left: 10px;
   }
 
   .cast-section h2::before,
-  .similar-section h2::before {
+  .similar-section h2::before,
+  .seasons-section h2::before {
     content: "";
     position: absolute;
     left: 0px;
@@ -684,6 +694,9 @@
   }
   .similar-card img:hover {
     transform: none;
+  }
+  .seasons-list {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -745,6 +758,13 @@
 .seasons-section {
   margin-top: 40px;
   animation: fade-in 0.5s ease-out;
+}
+
+.seasons-section h2 {
+  font-size: 1.8rem;
+  margin-bottom: 20px;
+  font-weight: 600;
+  position: relative;
 }
 
 .seasons-list {
@@ -810,5 +830,74 @@
 @media (max-width: 768px) {
   .seasons-list {
     grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .season-item {
+    height: auto;
+    min-height: 150px;
+  }
+
+  .season-image {
+    width: 100px;
+    height: 150px;
+  }
+
+  .season-name {
+    font-size: 1rem;
+    margin-bottom: 8px;
+  }
+
+  .season-details {
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .seasons-section h2 {
+    font-size: 1.5rem;
+  }
+
+  .season-item {
+    min-height: 120px;
+  }
+
+  .season-image {
+    width: 80px;
+    height: 120px;
+  }
+
+  .season-info {
+    padding: 10px;
+  }
+
+  .season-overview {
+    font-size: 0.8rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+@media (max-width: 378px) {
+  .season-image {
+    width: 70px;
+    height: 105px;
+  }
+
+  .season-name {
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+  }
+
+  .season-details {
+    font-size: 0.8rem;
+  }
+
+  .season-overview {
+    -webkit-line-clamp: 2;
   }
 }
