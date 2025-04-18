@@ -1,6 +1,6 @@
 # 🎬 Movie Streaming Website – README
 
-Welcome to the **Alpha** version of our movie streaming platform!  
+Welcome to the **Alpha** version of our movie streaming platform, ScreenKiss!  
 This project is under active development, with several features pending integration and known bugs currently being addressed. Please follow the instructions below for an optimal experience.
 
 ---
@@ -8,7 +8,7 @@ This project is under active development, with several features pending integrat
 ## ⚠️ General Instructions
 
 ### 1. Alpha Phase Disclaimer  
-This website is in the **alpha phase** and may contain bugs. A major issue right now is the presence of **malicious ads and redirects**. These will be resolved in future updates.
+This website is in the **alpha phase** and may contain several bugs. A major issue right now is the presence of **malicious ads and redirects** in the embed player. These will be resolved in future updates.
 
 ---
 
@@ -19,7 +19,7 @@ Follow the guide based on your device to block intrusive ads and ensure smooth p
 #### 📱 Android Devices
 - Go to:  
   `Settings > Network & Internet > Private DNS`
-- Set DNS to:  dns.adguard.com
+- Set DNS to:  dns.adguard.com || p3.freedns.controld.com
 - Clear your browser cache before use (recommended).
 
 #### 💻 Windows/macOS
@@ -59,6 +59,10 @@ This platform supports **4K HDR** streaming for most newer movies and web series
 - ✅ Resolved buffering and playback issues (partially).
 - ✅ Refactored codebase for better readability and debugging.
 - ✅ Added **4K HDR (HLG/HDR10)** streaming capability for newer content.
+- ✅ Added favicon.
+- ✅ Fixed an issue where the website crashes after loading on any page other than home.
+- ✅ Improved the search bar working, now resets and collapses automatically when clicking on any movie card in the search page.
+- ✅ Fixed an issue with the seasons sidebar clipping off.
 
 ---
 
@@ -78,7 +82,7 @@ This platform supports **4K HDR** streaming for most newer movies and web series
 
 ## 🚫 Confidential Access
 
-This website is currently shared **only with close friends** for internal testing.  
+The website is currently shared **only with a closed group of people** for internal testing.  
 **Do not share the link or access with anyone else.**  
 Your feedback is crucial in building a refined and safe user experience.
 
