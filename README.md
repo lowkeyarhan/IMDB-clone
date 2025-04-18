@@ -24,7 +24,7 @@ Follow the guide based on your device to block intrusive ads and ensure smooth p
 
 #### 💻 Windows/macOS
 
-**For Chrome users:**
+**For Chrome, Edge, Firefox and Opera users:**
 - Install the following extensions:
 - [Malwarebytes Browser Guard](https://chrome.google.com/webstore/detail/malwarebytes-browser-guard/ihcjicgdanjaechkgeegckofjjedodee)
 - [AdBlocker Ultimate](https://chrome.google.com/webstore/detail/adblocker-ultimate/lljbglgogigkfmjjmlacpdobfhddgfnn)
