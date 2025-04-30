@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGithub, faLinkedin } from "@fortawesome/free-brands-svg-icons";
-import { faSearch } from "@fortawesome/free-solid-svg-icons";
+import { faSearch, faUser } from "@fortawesome/free-solid-svg-icons";
 
 function NavBar() {
   const [searchActive, setSearchActive] = useState(false);
@@ -212,6 +212,9 @@ function NavBar() {
             </div>
           </form>
         </div>
+        <button className="user_icon_btn" aria-label="User profile">
+          <FontAwesomeIcon icon={faUser} className="user_icon" />
+        </button>
       </div>
     </div>
   );

@@ -72,10 +72,8 @@
 
 .banner_title {
   font-size: 3rem;
-  font-weight: 800;
   font-family: "Banner heading";
   margin-bottom: 1rem;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.45);
   white-space: normal;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -87,9 +85,10 @@
 
 .banner_description {
   font-size: 1.1rem;
+  font-family: "Poppins", sans-serif;
   font-weight: 400;
   line-height: 1.5;
-  margin-top: 1rem;
+  margin-top: 1.2rem;
   max-width: 100%;
   color: rgba(255, 255, 255, 0.9);
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
@@ -115,9 +114,9 @@
   outline: none;
   border: none;
   font-weight: 700;
-  padding: 0.5rem 2rem;
+  padding: 15px 30px;
   margin-right: 1rem;
-  border-radius: 0.2vw;
+  border-radius: 25px;
   font-size: 1rem;
   transition: all 0.2s;
 }
@@ -127,12 +126,16 @@
 }
 
 .banner_button.play {
-  background-color: #e50914;
+  background-color: #ff000da0;
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
   color: white;
 }
 
 .banner_button.watchlist {
-  background-color: rgba(109, 109, 110, 0.7);
+  background-color: rgba(255, 255, 255, 0.15);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
   color: white;
 }
 

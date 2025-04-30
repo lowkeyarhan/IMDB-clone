@@ -137,10 +137,12 @@
   align-items: center;
   gap: 8px;
   padding: 10px 20px;
-  background-color: var(--primary-accent);
+  background-color: rgba(255, 255, 255, 0.1);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 20px;
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
@@ -148,18 +150,18 @@
 }
 
 .play-button:hover {
-  background-color: #f40612;
-  transform: scale(1.05);
+  background-color: #ff000da0;
+  transform: scale(1.025);
 }
 
-.play-episode-button,
+/* .play-episode-button,
 .play-movie-button {
   background-color: #2b2b2b;
-}
+} */
 
 .play-episode-button:hover,
 .play-movie-button:hover {
-  background-color: #3b3b3b;
+  background-color: rgba(255, 255, 255, 0.2);
 }
 
 .icon-button {
