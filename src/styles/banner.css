@@ -1,6 +1,6 @@
 @font-face {
   font-family: "Banner heading";
-  src: url("./public/fonts/jarvis-heading.ttf");
+  src: url("/fonts/jarvis-heading.ttf");
   font-weight: normal;
   font-style: normal;
 }
