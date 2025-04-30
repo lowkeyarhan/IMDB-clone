@@ -90,10 +90,9 @@ function Watchlist() {
 
       {watchlist.length === 0 ? (
         <div className="empty_message">
-          <p>Your watchlist is currently empty.</p>
+          <p>Mmm... your watchlist’s looking a little lonely.</p>
           <p className="mt-2">
-            Add movies and TV shows to your watchlist to keep track of what you
-            want to watch!
+            Add something spicy—I’d love to know what you’re craving next. 😏
           </p>
         </div>
       ) : (

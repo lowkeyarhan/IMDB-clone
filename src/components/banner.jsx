@@ -2,6 +2,8 @@ import "../styles/banner.css";
 import React, { useState, useEffect } from "react";
 import Notification from "./Notification";
 import { useNavigate } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPlay, faPlus } from "@fortawesome/free-solid-svg-icons";
 
 function Banner() {
   const [movies, setMovies] = useState([]);
@@ -26,6 +28,12 @@ function Banner() {
     return `${IMAGE_BASE_URL}${BACKDROP_SIZE}${path}`;
   };
 
+  // Load watchlist from localStorage on component mount
+  useEffect(() => {
+    const savedWatchlist = JSON.parse(localStorage.getItem("watchlist")) || [];
+    setWatchlist(savedWatchlist.map((item) => item.id));
+  }, []);
+
   useEffect(() => {
     const fetchBannerMovies = async () => {
       try {
@@ -34,7 +42,11 @@ function Banner() {
         );
         const data = await response.json();
         if (data.results && data.results.length > 0) {
-          setMovies(data.results.slice(0, TOTAL_SLIDES));
+          // Filter out movies without backdrop images
+          const moviesWithBackdrops = data.results.filter(
+            (movie) => movie.backdrop_path
+          );
+          setMovies(moviesWithBackdrops.slice(0, TOTAL_SLIDES));
         }
       } catch (error) {
         console.error("Error fetching banner movies:", error);
@@ -88,6 +100,7 @@ function Banner() {
         poster_path: getImageUrl(movie.poster_path),
         release_date: movie.release_date,
         vote_average: movie.vote_average,
+        media_type: "movie",
       };
       updatedWatchlist = [...currentWatchlist, movieToAdd];
       setWatchlist([...watchlist, movie.id]);
@@ -115,38 +128,39 @@ function Banner() {
 
   if (movies.length === 0) return null;
 
+  const currentMovie = movies[currentSlide];
+
   return (
     <div className="banner_container">
       {/* Display the current slide */}
       <div
         className="banner_image"
         style={{
-          backgroundImage: `url(${getImageUrl(
-            movies[currentSlide].backdrop_path
-          )})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center top",
+          backgroundImage: `url(${getImageUrl(currentMovie.backdrop_path)})`,
         }}
       >
         <div className="banner_contents">
           <h1 className="banner_title">
-            {movies[currentSlide].title ||
-              movies[currentSlide].name ||
-              movies[currentSlide].original_name}
+            {currentMovie.title ||
+              currentMovie.name ||
+              currentMovie.original_name}
           </h1>
           <div className="banner_buttons">
             <button className="banner_button play" onClick={handlePlayClick}>
-              <i className="fas fa-play"></i> Play
+              <FontAwesomeIcon icon={faPlay} /> Play
             </button>
             <button
               className="banner_button watchlist"
-              onClick={() => toggleWatchlist(movies[currentSlide])}
+              onClick={() => toggleWatchlist(currentMovie)}
             >
-              <i className="fas fa-plus-circle"></i> Add to Watchlist
+              <FontAwesomeIcon icon={faPlus} />
+              {watchlist.includes(currentMovie.id)
+                ? "Remove from Watchlist"
+                : "Add to Watchlist"}
             </button>
           </div>
           <h2 className="banner_description">
-            {truncate(movies[currentSlide].overview, 150)}
+            {truncate(currentMovie.overview, 170)}
           </h2>
         </div>
       </div>

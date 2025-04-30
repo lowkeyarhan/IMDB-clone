@@ -652,7 +652,7 @@
   display: grid;
   grid-template-columns: 220px 1fr;
   gap: 30px;
-  max-height: 80vh;
+  max-height: fit-content;
 }
 
 /* Seasons Sidebar */
@@ -661,7 +661,6 @@
   display: grid;
   grid-auto-rows: min-content;
   gap: 15px;
-  /* height: fit-content; */
   max-height: 50vh;
   overflow-y: auto;
   padding-right: 10px;

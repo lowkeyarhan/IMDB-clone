@@ -16,9 +16,9 @@ function Footer() {
       <div className="footer-container">
         <div className="footer-content">
           <div className="creator-info">
-            <p className="creator-name">Arhan Das</p>
+            <p className="creator-name">Bombardino Crocodilo</p>
             <p className="creator-bio">
-              Passionate full-stack developer with a love for cinema.
+              Made with ❤️ by Arhan Das
             </p>
           </div>
           <div className="creator-social">

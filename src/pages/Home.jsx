@@ -2,10 +2,11 @@ import React, { useState, useEffect } from "react";
 import Banner from "../components/banner.jsx";
 import Movies from "../components/movies.jsx";
 import TVShows from "../components/tvShows.jsx";
+import Anime from "../components/anime.jsx";
 import Pagination from "../components/pagination.jsx";
 import Footer from "../components/Footer.jsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faFilm, faTv } from "@fortawesome/free-solid-svg-icons";
+import { faFilm, faTv, faDragon } from "@fortawesome/free-solid-svg-icons";
 import "../styles/home.css";
 
 function Home() {
@@ -27,7 +28,11 @@ function Home() {
 
     // Scroll to the active section
     const sectionId =
-      activeSection === "movies" ? "trending-section" : "tvshows-section";
+      activeSection === "movies"
+        ? "trending-section"
+        : activeSection === "tvshows"
+        ? "tvshows-section"
+        : "anime-section";
     const section = document.getElementById(sectionId);
     if (section) {
       section.scrollIntoView({ behavior: "smooth" });
@@ -83,7 +88,13 @@ function Home() {
                 className={`tab ${activeSection === "tvshows" ? "active" : ""}`}
                 onClick={() => handleTabChange("tvshows")}
               >
-                <FontAwesomeIcon icon={faTv} /> TV Shows
+                <FontAwesomeIcon icon={faTv} /> Series
+              </button>
+              <button
+                className={`tab ${activeSection === "anime" ? "active" : ""}`}
+                onClick={() => handleTabChange("anime")}
+              >
+                <FontAwesomeIcon icon={faDragon} /> Anime
               </button>
             </div>
           </div>
@@ -103,6 +114,16 @@ function Home() {
               currentPage={currentPage}
               onTotalPagesUpdate={(pages) =>
                 handleTotalPagesUpdate(pages, "tvshows")
+              }
+              setActiveSection={() => {}}
+            />
+          )}
+
+          {activeSection === "anime" && (
+            <Anime
+              currentPage={currentPage}
+              onTotalPagesUpdate={(pages) =>
+                handleTotalPagesUpdate(pages, "anime")
               }
               setActiveSection={() => {}}
             />

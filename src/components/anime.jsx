@@ -6,11 +6,11 @@ import { faHeart, faBookmark } from "@fortawesome/free-solid-svg-icons";
 import Notification from "./Notification";
 
 // Create a cache object outside of the component to persist between renders
-const tvShowsCache = {};
+const animeCache = {};
 
-function TVShows({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
+function Anime({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
   const navigate = useNavigate();
-  const [shows, setShows] = useState([]);
+  const [animeList, setAnimeList] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [watchlist, setWatchlist] = useState([]);
   const [notification, setNotification] = useState({
@@ -24,6 +24,10 @@ function TVShows({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
   const IMAGE_BASE_URL = "https://image.tmdb.org/t/p";
   const POSTER_SIZE = "/w500";
   const CACHE_EXPIRY = 10 * 60 * 1000; // 10 minutes in milliseconds
+
+  // Anime genre IDs in TMDB - Animation(16) and often from Japan
+  const ANIME_KEYWORDS = "16"; // Animation genre ID
+  const ORIGIN_COUNTRY = "JP"; // Japan as origin country
 
   // Function to get image URL
   const getImageUrl = (path) => {
@@ -63,51 +67,59 @@ function TVShows({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
     setWatchlist(savedWatchlist.map((item) => item.id));
   }, []);
 
-  // Fetch TV shows when page changes
+  // Fetch anime when page changes
   useEffect(() => {
-    const fetchTVShows = async () => {
-      const cacheKey = `popular-tvshows-page-${currentPage}`;
+    const fetchAnime = async () => {
+      const cacheKey = `anime-page-${currentPage}`;
 
       // Check if we have cached data that's not expired
       if (
-        tvShowsCache[cacheKey] &&
-        tvShowsCache[cacheKey].timestamp > Date.now() - CACHE_EXPIRY
+        animeCache[cacheKey] &&
+        animeCache[cacheKey].timestamp > Date.now() - CACHE_EXPIRY
       ) {
-        console.log("Using cached TV shows data for page", currentPage);
-        setShows(tvShowsCache[cacheKey].data);
-        
+        console.log("Using cached anime data for page", currentPage);
+        setAnimeList(animeCache[cacheKey].data);
+
         // Update total pages from cache as well
-        if (onTotalPagesUpdate && tvShowsCache[cacheKey].totalPages) {
-          onTotalPagesUpdate(tvShowsCache[cacheKey].totalPages);
+        if (onTotalPagesUpdate && animeCache[cacheKey].totalPages) {
+          onTotalPagesUpdate(animeCache[cacheKey].totalPages);
         }
         return;
       }
-      
+
       try {
+        // First, get animation genre shows from Japan
         const response = await fetch(
-          `${BASE_URL}/tv/popular?api_key=${API_KEY}&page=${currentPage}`
+          `${BASE_URL}/discover/tv?api_key=${API_KEY}&with_genres=${ANIME_KEYWORDS}&with_original_language=ja&page=${currentPage}&sort_by=popularity.desc`
         );
         const data = await response.json();
-        setShows(data.results);
+
+        // Filter to most likely be anime (Japanese animation)
+        const animeResults = data.results.filter((show) => {
+          // If origin_country includes Japan, it's more likely to be anime
+          return show.origin_country && show.origin_country.includes("JP");
+        });
+
+        setAnimeList(animeResults);
 
         // Update total pages in the parent component
         const maxPages = Math.min(data.total_pages, 500);
         if (onTotalPagesUpdate) {
           onTotalPagesUpdate(maxPages);
         }
-        
+
         // Cache the fetched data with timestamp
-        tvShowsCache[cacheKey] = {
-          data: data.results,
+        animeCache[cacheKey] = {
+          data: animeResults,
           totalPages: maxPages,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         };
       } catch (error) {
-        console.error("Error fetching popular TV shows:", error);
+        console.error("Error fetching anime:", error);
       }
     };
 
-    fetchTVShows();
+    fetchAnime();
 
     // Set this as the active section when it's being viewed
     if (setActiveSection) {
@@ -115,67 +127,71 @@ function TVShows({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
     }
   }, [currentPage, API_KEY, onTotalPagesUpdate, setActiveSection]);
 
-  const handleShowClick = (showId) => {
-    navigate(`/tv/${showId}`);
+  const handleAnimeClick = (animeId) => {
+    navigate(`/tv/${animeId}`);
   };
 
-  const toggleFavorite = (e, show) => {
+  const toggleFavorite = (e, anime) => {
     e.stopPropagation(); // Prevent click from bubbling to parent
     const currentFavorites =
       JSON.parse(localStorage.getItem("favorites")) || [];
-    const showExists = currentFavorites.some((item) => item.id === show.id);
+    const animeExists = currentFavorites.some((item) => item.id === anime.id);
 
     let updatedFavorites;
-    if (showExists) {
-      updatedFavorites = currentFavorites.filter((item) => item.id !== show.id);
-      setFavorites(favorites.filter((id) => id !== show.id));
+    if (animeExists) {
+      updatedFavorites = currentFavorites.filter(
+        (item) => item.id !== anime.id
+      );
+      setFavorites(favorites.filter((id) => id !== anime.id));
       showNotification(
-        `Removed "${show.name}" from favorites`,
+        `Removed "${anime.name}" from favorites`,
         "favorite-remove"
       );
     } else {
-      const showToAdd = {
-        id: show.id,
-        title: show.name,
-        poster_path: getImageUrl(show.poster_path),
-        release_date: formatDate(show.first_air_date),
-        vote_average: show.vote_average.toFixed(1),
+      const animeToAdd = {
+        id: anime.id,
+        title: anime.name,
+        poster_path: getImageUrl(anime.poster_path),
+        release_date: formatDate(anime.first_air_date),
+        vote_average: anime.vote_average.toFixed(1),
         media_type: "tv",
       };
-      updatedFavorites = [...currentFavorites, showToAdd];
-      setFavorites([...favorites, show.id]);
-      showNotification(`Added "${show.name}" to favorites`, "favorite-add");
+      updatedFavorites = [...currentFavorites, animeToAdd];
+      setFavorites([...favorites, anime.id]);
+      showNotification(`Added "${anime.name}" to favorites`, "favorite-add");
     }
 
     localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
   };
 
-  const toggleWatchlist = (e, show) => {
+  const toggleWatchlist = (e, anime) => {
     e.stopPropagation(); // Prevent click from bubbling to parent
     const currentWatchlist =
       JSON.parse(localStorage.getItem("watchlist")) || [];
-    const showExists = currentWatchlist.some((item) => item.id === show.id);
+    const animeExists = currentWatchlist.some((item) => item.id === anime.id);
 
     let updatedWatchlist;
-    if (showExists) {
-      updatedWatchlist = currentWatchlist.filter((item) => item.id !== show.id);
-      setWatchlist(watchlist.filter((id) => id !== show.id));
+    if (animeExists) {
+      updatedWatchlist = currentWatchlist.filter(
+        (item) => item.id !== anime.id
+      );
+      setWatchlist(watchlist.filter((id) => id !== anime.id));
       showNotification(
-        `Removed "${show.name}" from watchlist`,
+        `Removed "${anime.name}" from watchlist`,
         "watchlist-remove"
       );
     } else {
-      const showToAdd = {
-        id: show.id,
-        title: show.name,
-        poster_path: getImageUrl(show.poster_path),
-        release_date: formatDate(show.first_air_date),
-        vote_average: show.vote_average.toFixed(1),
+      const animeToAdd = {
+        id: anime.id,
+        title: anime.name,
+        poster_path: getImageUrl(anime.poster_path),
+        release_date: formatDate(anime.first_air_date),
+        vote_average: anime.vote_average.toFixed(1),
         media_type: "tv",
       };
-      updatedWatchlist = [...currentWatchlist, showToAdd];
-      setWatchlist([...watchlist, show.id]);
-      showNotification(`Added "${show.name}" to watchlist`, "watchlist-add");
+      updatedWatchlist = [...currentWatchlist, animeToAdd];
+      setWatchlist([...watchlist, anime.id]);
+      showNotification(`Added "${anime.name}" to watchlist`, "watchlist-add");
     }
 
     localStorage.setItem("watchlist", JSON.stringify(updatedWatchlist));
@@ -183,30 +199,31 @@ function TVShows({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
 
   return (
     <div className="parent_container">
-      <h1 id="tvshows-section">Popular TV Shows</h1>
+      <h1 id="anime-section">Sōzōkai</h1>
       <div className="movies_container">
-        {shows.map((show) => (
+        {animeList.map((anime) => (
           <div
             className="movie_card"
-            key={show.id}
-            onClick={() => handleShowClick(show.id)}
+            key={anime.id}
+            onClick={() => handleAnimeClick(anime.id)}
           >
             <img
               src={
-                getImageUrl(show.poster_path) ||
+                getImageUrl(anime.poster_path) ||
                 "https://via.placeholder.com/300x450?text=No+Poster"
               }
-              alt={show.name}
+              alt={anime.name}
             />
             <div className="movie_info">
-              <h3>{show.name}</h3>
+              <h3>{anime.name}</h3>
               <div className="movie_details">
                 <span className="release_date">
                   <i className="release_icon">📅</i>{" "}
-                  {formatDate(show.first_air_date)}
+                  {formatDate(anime.first_air_date)}
                 </span>
                 <span className="rating">
-                  <i className="rating_icon">⭐</i> {show.vote_average.toFixed(1)}
+                  <i className="rating_icon">⭐</i>{" "}
+                  {anime.vote_average.toFixed(1)}
                   /10
                 </span>
               </div>
@@ -214,16 +231,16 @@ function TVShows({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
             <div className="action_buttons">
               <button
                 className={`favorite_btn ${
-                  favorites.includes(show.id) ? "active" : ""
+                  favorites.includes(anime.id) ? "active" : ""
                 }`}
-                onClick={(e) => toggleFavorite(e, show)}
+                onClick={(e) => toggleFavorite(e, anime)}
                 title={
-                  favorites.includes(show.id)
+                  favorites.includes(anime.id)
                     ? "Remove from Favorites"
                     : "Add to Favorites"
                 }
                 aria-label={
-                  favorites.includes(show.id)
+                  favorites.includes(anime.id)
                     ? "Remove from Favorites"
                     : "Add to Favorites"
                 }
@@ -232,16 +249,16 @@ function TVShows({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
               </button>
               <button
                 className={`watchlist_btn ${
-                  watchlist.includes(show.id) ? "active" : ""
+                  watchlist.includes(anime.id) ? "active" : ""
                 }`}
-                onClick={(e) => toggleWatchlist(e, show)}
+                onClick={(e) => toggleWatchlist(e, anime)}
                 title={
-                  watchlist.includes(show.id)
+                  watchlist.includes(anime.id)
                     ? "Remove from Watchlist"
                     : "Add to Watchlist"
                 }
                 aria-label={
-                  watchlist.includes(show.id)
+                  watchlist.includes(anime.id)
                     ? "Remove from Watchlist"
                     : "Add to Watchlist"
                 }
@@ -263,4 +280,4 @@ function TVShows({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
   );
 }
 
-export default TVShows;
+export default Anime;

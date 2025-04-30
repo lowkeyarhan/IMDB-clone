@@ -14,6 +14,10 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import Notification from "../components/Notification";
 
+// Cache for search results
+const searchCache = {};
+const CACHE_EXPIRY = 10 * 60 * 1000; // 10 minutes cache
+
 function Search() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -92,6 +96,18 @@ function Search() {
         return;
       }
 
+      // Check if we have this query in cache and it's not expired
+      if (
+        searchCache[query] &&
+        searchCache[query].timestamp > Date.now() - CACHE_EXPIRY
+      ) {
+        console.log("Using cached search results for:", query);
+        setSearchResults(searchCache[query].results);
+        setLoading(false);
+        setError(null);
+        return;
+      }
+
       setLoading(true);
       setError(null);
 
@@ -114,6 +130,13 @@ function Search() {
           const filteredResults = data.results.filter(
             (item) => item.media_type === "movie" || item.media_type === "tv"
           );
+
+          // Save to cache
+          searchCache[query] = {
+            results: filteredResults,
+            timestamp: Date.now(),
+          };
+
           setSearchResults(filteredResults);
         } else {
           setSearchResults([]);
@@ -128,17 +151,13 @@ function Search() {
       }
     };
 
-    // Search immediately without delay
+    // Search immediately without delay since we're already debouncing
+    // in the navbar component
     searchContent();
   }, [query, API_KEY]);
 
   const handleItemClick = (item) => {
-    // Set a flag in localStorage to indicate search should be closed
-    localStorage.setItem("closeSearch", "true");
-
-    // Also reset the search query in localStorage
-    localStorage.setItem("resetSearchInput", "true");
-
+    // Navigate directly to the details page based on media type
     if (item.media_type === "movie") {
       navigate(`/movie/${item.id}`);
     } else if (item.media_type === "tv") {

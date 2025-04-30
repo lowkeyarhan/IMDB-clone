@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -64,6 +64,8 @@ function Player() {
   });
   const [videoKey, setVideoKey] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const searchTimeoutRef = useRef(null);
+  const SEARCH_DEBOUNCE_DELAY = 500; // 500ms delay for search
 
   const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
   const BASE_URL = "https://api.themoviedb.org/3";
@@ -77,7 +79,7 @@ function Player() {
   ) => {
     return [
       {
-        server: "Delta(ads)",
+        server: "Dormannu",
         link:
           mediaType === "tv"
             ? `https://player.videasy.net/${mediaType}/${tmdbId}/${season}/${episode}`
@@ -85,7 +87,7 @@ function Player() {
         quality: "4K",
       },
       {
-        server: "Gamma (ads)",
+        server: "IronLink",
         link:
           mediaType === "tv"
             ? `https://multiembed.mov/directstream.php?video_id=${tmdbId}&tmdb=1&s=${season}&e=${episode}`
@@ -93,14 +95,14 @@ function Player() {
         quality: "1080p",
       },
       {
-        server: "Beta (ads)",
+        server: "Syntherion",
         link: `https://vidsrc.me/embed/${mediaType}/${tmdbId}${
           mediaType === "tv" ? `/season/${season}/episode/${episode}` : ""
         }`,
         quality: "1080p",
       },
       {
-        server: "Alpha (ads)",
+        server: "Nanovue",
         link:
           mediaType === "tv"
             ? `https://megacloud.store/embed-1/e-1/${tmdbId}${season}${episode}?z=`
@@ -294,6 +296,40 @@ function Player() {
     setIsLoading(true);
   };
 
+  // Add a debounced search function for episodes
+  const debouncedSearch = useCallback((query) => {
+    // If there's any search functionality that uses the query to filter episodes,
+    // it would go here. Right now the component just sets the state but doesn't
+    // actually filter the episodes based on the search.
+    console.log("Debounced search for:", query);
+    // The actual search/filter logic would be here
+  }, []);
+
+  // Handle search input with debouncing
+  const handleSearchChange = (e) => {
+    const newQuery = e.target.value;
+    setSearchQuery(newQuery);
+
+    // Clear any existing timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // Set a new timeout for the search
+    searchTimeoutRef.current = setTimeout(() => {
+      debouncedSearch(newQuery);
+    }, SEARCH_DEBOUNCE_DELAY);
+  };
+
+  // Clear timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
+
   return (
     <div className="player-page">
       {/* Top bar - simplified */}
@@ -316,11 +352,11 @@ function Player() {
       {/* Refresh notice */}
       <div className="refresh-notice">
         <p>
-          If you get any error message when trying to stream, please{" "}
+          If the stream buffers or freezes, please{" "}
           <span className="highlight" onClick={handleRefresh}>
             Refresh
           </span>{" "}
-          the page or switch to another streaming server.
+          the page or maybe switch to another server.
         </p>
       </div>
 
@@ -368,6 +404,32 @@ function Player() {
         )}
       </div>
 
+      {/* Server selection */}
+      <div className="server-selection-panel">
+        <h3>Servers</h3>
+        <div className="server-list">
+          {streamLinks.map((link, index) => (
+            <div
+              key={index}
+              className={`server-block ${
+                activeServer.server === link.server ? "active" : ""
+              }`}
+              onClick={() => handleServerChange(index)}
+            >
+              <div>
+                <div className="server-name">{link.server}</div>
+                <div className="server-quality">{link.quality}</div>
+              </div>
+              {activeServer.server === link.server && (
+                <div className="server-active-indicator">
+                  <FontAwesomeIcon icon={faCheck} />
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* New Content Area for Seasons and Episodes (like in screenshot) */}
       {type === "tv" && (
         <div className="content-layout">
@@ -379,7 +441,7 @@ function Player() {
                 type="text"
                 placeholder="Search episodes..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={handleSearchChange}
               />
               <button className="search-button">
                 <FontAwesomeIcon icon={faSearch} />
@@ -490,32 +552,6 @@ function Player() {
           </div>
         </div>
       )}
-
-      {/* Server selection */}
-      <div className="server-selection-panel">
-        <h3>Servers</h3>
-        <div className="server-list">
-          {streamLinks.map((link, index) => (
-            <div
-              key={index}
-              className={`server-block ${
-                activeServer.server === link.server ? "active" : ""
-              }`}
-              onClick={() => handleServerChange(index)}
-            >
-              <div>
-                <div className="server-name">{link.server}</div>
-                <div className="server-quality">{link.quality}</div>
-              </div>
-              {activeServer.server === link.server && (
-                <div className="server-active-indicator">
-                  <FontAwesomeIcon icon={faCheck} />
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
 
       {/* Media details section */}
       {!loading && !error && (

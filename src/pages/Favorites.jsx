@@ -89,9 +89,9 @@ function Favorites() {
 
       {favorites.length === 0 ? (
         <div className="empty_message">
-          <p>Oh ohhh! Your favorites list is looking a bit empty.</p>
+          <p>Oh ohhh... someone's keeping their heart empty?</p>
           <p className="mt-2">
-            Mark movies and TV shows you love as favorites to see them here!
+          Go on, mark your faves—let me see what turns you on. 💋
           </p>
         </div>
       ) : (

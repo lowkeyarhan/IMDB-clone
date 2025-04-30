@@ -1,6 +1,6 @@
 import "../styles/navbar.css";
 import "../styles/search.css";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGithub, faLinkedin } from "@fortawesome/free-brands-svg-icons";
@@ -12,6 +12,9 @@ function NavBar() {
   const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const debounceTimeoutRef = useRef(null);
+  const searchContainerRef = useRef(null);
+  const DEBOUNCE_DELAY = 500; // 500ms delay
 
   // Check if current page is the player page
   const isPlayerPage = location.pathname.startsWith("/player");
@@ -39,6 +42,30 @@ function NavBar() {
     }
   }, [isPlayerPage]);
 
+  // Add click outside listener to close search
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(event.target) &&
+        searchActive
+      ) {
+        setSearchActive(false);
+
+        // Clear search query
+        setSearchQuery("");
+      }
+    };
+
+    // Add event listener
+    document.addEventListener("mousedown", handleClickOutside);
+
+    // Clean up
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [searchActive]);
+
   useEffect(() => {
     if (location.pathname === "/search") {
       const params = new URLSearchParams(location.search);
@@ -60,12 +87,22 @@ function NavBar() {
     const resetSearchInput = localStorage.getItem("resetSearchInput");
     if (resetSearchInput === "true") {
       setSearchQuery("");
-      localStorage.removeItem("resetSearchInput"); // Clear the flag
+      localStorage.removeItem("resetSearchInput");
     }
   }, [location]);
 
+  // Listen for location changes to automatically close search on detail pages
+  useEffect(() => {
+    if (
+      location.pathname.startsWith("/movie/") ||
+      location.pathname.startsWith("/tv/")
+    ) {
+      setSearchActive(false);
+      setSearchQuery("");
+    }
+  }, [location.pathname]);
+
   const toggleSearch = () => {
-    // Clear the closeSearch flag if it exists
     localStorage.removeItem("closeSearch");
 
     setSearchActive(!searchActive);
@@ -77,18 +114,48 @@ function NavBar() {
     }
   };
 
+  // Debounced navigation function
+  const debouncedNavigate = useCallback(
+    (query) => {
+      if (query.trim()) {
+        navigate(`/search?query=${encodeURIComponent(query)}`);
+      } else if (location.pathname === "/search") {
+        navigate("/");
+      }
+    },
+    [navigate, location.pathname]
+  );
+
   const handleSearchChange = (e) => {
     const newQuery = e.target.value;
     setSearchQuery(newQuery);
-    if (newQuery.trim()) {
-      navigate(`/search?query=${encodeURIComponent(newQuery)}`);
-    } else if (location.pathname === "/search") {
-      navigate("/");
+
+    // Clear any existing timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
     }
+
+    // Set a new timeout
+    debounceTimeoutRef.current = setTimeout(() => {
+      debouncedNavigate(newQuery);
+    }, DEBOUNCE_DELAY);
   };
+
+  // Clear timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+
     if (searchQuery.trim()) {
       navigate(`/search?query=${encodeURIComponent(searchQuery)}`);
     }
@@ -122,7 +189,7 @@ function NavBar() {
         </Link>
       </div>
       <div className="right_items">
-        <div className="search_container">
+        <div className="search_container" ref={searchContainerRef}>
           <form onSubmit={handleSearchSubmit}>
             <div className="search_input_container">
               <button
@@ -145,20 +212,6 @@ function NavBar() {
             </div>
           </form>
         </div>
-        <a
-          href="https://github.com/lowkeyarhan"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <FontAwesomeIcon icon={faGithub} className="icon" />
-        </a>
-        <a
-          href="https://linkedin.com/in/imnotarhannnnn"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <FontAwesomeIcon icon={faLinkedin} className="icon" />
-        </a>
       </div>
     </div>
   );
