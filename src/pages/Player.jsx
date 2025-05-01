@@ -79,6 +79,16 @@ function Player() {
   ) => {
     return [
       {
+        server: "Syntherion (ads free)",
+        link:
+          mediaType === "tv"
+            ? `https://vidsrc.su/embed/tv/${tmdbId}/${season}/${episode}?next-ep=${
+                episode + 1
+              }`
+            : `https://vidsrc.su/embed/movie/${tmdbId}`,
+        quality: "1080p",
+      },
+      {
         server: "IronLink",
         link:
           mediaType === "tv"
@@ -93,13 +103,6 @@ function Player() {
             ? `https://player.videasy.net/${mediaType}/${tmdbId}/${season}/${episode}`
             : `https://player.videasy.net/${mediaType}/${tmdbId}`,
         quality: "4K",
-      },
-      {
-        server: "Syntherion",
-        link: `https://vidsrc.me/embed/${mediaType}/${tmdbId}${
-          mediaType === "tv" ? `/season/${season}/episode/${episode}` : ""
-        }`,
-        quality: "1080p",
       },
       {
         server: "Nanovue",
