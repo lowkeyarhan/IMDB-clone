@@ -79,20 +79,20 @@ function Player() {
   ) => {
     return [
       {
+        server: "IronLink",
+        link:
+          mediaType === "tv"
+            ? `https://vidlink.pro/tv/${tmdbId}/${season}/${episode}`
+            : `https://vidlink.pro/movie/${tmdbId}`,
+        quality: "1080p",
+      },
+      {
         server: "Dormannu",
         link:
           mediaType === "tv"
             ? `https://player.videasy.net/${mediaType}/${tmdbId}/${season}/${episode}`
             : `https://player.videasy.net/${mediaType}/${tmdbId}`,
         quality: "4K",
-      },
-      {
-        server: "IronLink",
-        link:
-          mediaType === "tv"
-            ? `https://multiembed.mov/directstream.php?video_id=${tmdbId}&tmdb=1&s=${season}&e=${episode}`
-            : `https://multiembed.mov/directstream.php?video_id=${tmdbId}&tmdb=1`,
-        quality: "1080p",
       },
       {
         server: "Syntherion",
@@ -105,8 +105,8 @@ function Player() {
         server: "Nanovue",
         link:
           mediaType === "tv"
-            ? `https://megacloud.store/embed-1/e-1/${tmdbId}${season}${episode}?z=`
-            : `https://megacloud.store/embed-1/e-1/${tmdbId}?z=`,
+            ? `https://ythd.org/embed/tv/${tmdbId}/${season}/${episode}`
+            : `https://ythd.org/embed/movie/${tmdbId}`,
         quality: "1080p",
       },
     ];

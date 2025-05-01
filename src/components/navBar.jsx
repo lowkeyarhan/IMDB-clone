@@ -14,33 +14,33 @@ function NavBar() {
   const location = useLocation();
   const debounceTimeoutRef = useRef(null);
   const searchContainerRef = useRef(null);
-  const DEBOUNCE_DELAY = 500; // 500ms delay
+  const DEBOUNCE_DELAY = 500; // 500ms debouncing delay
 
   // Check if current page is the player page
   const isPlayerPage = location.pathname.startsWith("/player");
 
-  //Animate on scroll
+  // Completely rebuilt scroll animation logic
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 50) {
-        setScrolled(true);
+        if (!scrolled) setScrolled(true);
       } else {
-        setScrolled(false);
+        if (scrolled) setScrolled(false);
       }
     };
 
-    // Only add scroll listener if not on player page
-    if (!isPlayerPage) {
+    if (isPlayerPage) {
+      setScrolled(false);
+      // No event listener needed for player page
+      return () => {};
+    } else {
       window.addEventListener("scroll", handleScroll);
+      handleScroll();
       return () => {
         window.removeEventListener("scroll", handleScroll);
       };
-    } else {
-      // Reset scrolled state when on player page
-      setScrolled(false);
-      return () => {};
     }
-  }, [isPlayerPage]);
+  }, [isPlayerPage, scrolled]);
 
   // Add click outside listener to close search
   useEffect(() => {
@@ -51,8 +51,6 @@ function NavBar() {
         searchActive
       ) {
         setSearchActive(false);
-
-        // Clear search query
         setSearchQuery("");
       }
     };
@@ -60,7 +58,6 @@ function NavBar() {
     // Add event listener
     document.addEventListener("mousedown", handleClickOutside);
 
-    // Clean up
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
@@ -80,7 +77,7 @@ function NavBar() {
     const closeSearch = localStorage.getItem("closeSearch");
     if (closeSearch === "true") {
       setSearchActive(false);
-      localStorage.removeItem("closeSearch"); // Clear the flag
+      localStorage.removeItem("closeSearch");
     }
 
     // Reset search input if the flag is set
@@ -207,6 +204,7 @@ function NavBar() {
                 value={searchQuery}
                 onChange={handleSearchChange}
                 onKeyDown={handleKeyPress}
+                onClick={() => setSearchActive(true)}
                 ref={(input) => searchActive && input && input.focus()}
               />
             </div>

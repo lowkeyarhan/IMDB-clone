@@ -133,12 +133,13 @@ function Banner() {
   return (
     <div className="banner_container">
       {/* Display the current slide */}
+      <div className="banner_image">
       <div
-        className="banner_image"
+          className="banner_bg"
         style={{
           backgroundImage: `url(${getImageUrl(currentMovie.backdrop_path)})`,
         }}
-      >
+        ></div>
         <div className="banner_contents">
           <h1 className="banner_title">
             {currentMovie.title ||
