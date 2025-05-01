@@ -79,7 +79,7 @@ function Player() {
   ) => {
     return [
       {
-        server: "Syntherion (ads free)",
+        server: "Syntherion (ad free)",
         link:
           mediaType === "tv"
             ? `https://vidsrc.su/embed/tv/${tmdbId}/${season}/${episode}?next-ep=${
@@ -89,7 +89,7 @@ function Player() {
         quality: "1080p",
       },
       {
-        server: "IronLink",
+        server: "IronLink (use adblocker)",
         link:
           mediaType === "tv"
             ? `https://vidlink.pro/tv/${tmdbId}/${season}/${episode}`
@@ -97,7 +97,7 @@ function Player() {
         quality: "1080p",
       },
       {
-        server: "Dormannu",
+        server: "Dormannu (ads)",
         link:
           mediaType === "tv"
             ? `https://player.videasy.net/${mediaType}/${tmdbId}/${season}/${episode}`
@@ -105,7 +105,7 @@ function Player() {
         quality: "4K",
       },
       {
-        server: "Nanovue",
+        server: "Nanovue (use adblocker)",
         link:
           mediaType === "tv"
             ? `https://ythd.org/embed/tv/${tmdbId}/${season}/${episode}`
@@ -352,7 +352,7 @@ function Player() {
         )}
       </div>
 
-      {/* Refresh notice */}
+      {/* Refresh notice
       <div className="refresh-notice">
         <p>
           If the stream buffers or freezes, please{" "}
@@ -361,7 +361,7 @@ function Player() {
           </span>{" "}
           the page or maybe switch to another server.
         </p>
-      </div>
+      </div> */}
 
       {/* Player container */}
       <div className="player-container">
