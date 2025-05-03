@@ -10,11 +10,16 @@ import {
   faHeart,
   faFilm,
   faTv,
+  faSpinner,
 } from "@fortawesome/free-solid-svg-icons";
+import { useAuth } from "../contexts/AuthContext";
+import { getUserFavorites, removeFromFavorites } from "../firebase/firestore";
 
 function Favorites() {
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const [favorites, setFavorites] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState({
     visible: false,
     message: "",
@@ -39,16 +44,44 @@ function Favorites() {
     }
   };
 
+  // Load favorites from Firestore instead of localStorage
   useEffect(() => {
-    try {
-      const savedFavorites =
-        JSON.parse(localStorage.getItem("favorites")) || [];
-      setFavorites(savedFavorites);
-    } catch (error) {
-      console.error("Error loading favorites from localStorage:", error);
-      setFavorites([]);
+    async function loadFavorites() {
+      if (!currentUser) {
+        setFavorites([]);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const favoriteItems = await getUserFavorites(currentUser.uid);
+        // Map the data to match the expected format
+        const formattedFavorites = favoriteItems.map((favorite) => {
+          const item = favorite;
+          // Extract the media ID from the document ID (format: userId_mediaId)
+          const mediaId = favorite.id.split("_")[1];
+          return {
+            ...item,
+            id: item.id || mediaId, // Use the media ID
+            title: item.title,
+            poster_path: item.poster_path,
+            release_date: item.release_date,
+            vote_average: item.vote_average,
+            media_type: item.media_type || "movie",
+          };
+        });
+        setFavorites(formattedFavorites);
+      } catch (error) {
+        console.error("Error loading favorites from Firestore:", error);
+        showNotification("Failed to load favorites", "error");
+      } finally {
+        setLoading(false);
+      }
     }
-  }, []);
+
+    loadFavorites();
+  }, [currentUser]);
 
   // Show notification
   const showNotification = (message, type) => {
@@ -72,26 +105,42 @@ function Favorites() {
     navigate(`/${mediaType}/${item.id}`);
   };
 
-  const removeFromFavorites = (e, itemId, itemTitle) => {
+  // Remove from favorites in Firestore
+  const removeFromFavoritesHandler = async (e, itemId, itemTitle) => {
     e.stopPropagation(); // Prevent click from bubbling to parent
-    const updatedFavorites = favorites.filter((item) => item.id !== itemId);
-    setFavorites(updatedFavorites);
-    localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
-    showNotification(
-      `"${itemTitle}" removed from favorites`,
-      "favorite-remove"
-    );
+
+    try {
+      if (!currentUser) return;
+
+      await removeFromFavorites(currentUser.uid, itemId);
+
+      const updatedFavorites = favorites.filter((item) => item.id !== itemId);
+      setFavorites(updatedFavorites);
+
+      showNotification(
+        `"${itemTitle}" removed from favorites`,
+        "favorite-remove"
+      );
+    } catch (error) {
+      console.error("Error removing from favorites:", error);
+      showNotification("Failed to remove from favorites", "error");
+    }
   };
 
   return (
     <div className="saved_container">
       <h1>My Favorites</h1>
 
-      {favorites.length === 0 ? (
+      {loading ? (
+        <div className="loading-state">
+          <FontAwesomeIcon icon={faSpinner} spin size="2x" />
+          <p>Loading favorites...</p>
+        </div>
+      ) : favorites.length === 0 ? (
         <div className="empty_message">
           <p>Oh ohhh... someone's keeping their heart empty?</p>
           <p className="mt-2">
-          Go on, mark your faves—let me see what turns you on. 💋
+            Go on, mark your faves—let me see what turns you on. 💋
           </p>
         </div>
       ) : (
@@ -131,7 +180,9 @@ function Favorites() {
                 </div>
                 <button
                   className="remove_btn"
-                  onClick={(e) => removeFromFavorites(e, item.id, item.title)}
+                  onClick={(e) =>
+                    removeFromFavoritesHandler(e, item.id, item.title)
+                  }
                 >
                   <FontAwesomeIcon icon={faTrash} /> Remove
                 </button>

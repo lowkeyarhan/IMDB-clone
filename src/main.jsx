@@ -3,6 +3,8 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import "./index.css";
 import App from "./App.jsx";
+// Initialize Firebase
+import "./firebase/config";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>

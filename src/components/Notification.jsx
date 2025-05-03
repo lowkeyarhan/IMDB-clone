@@ -62,4 +62,3 @@ const Notification = ({ message, type, onClose, visible }) => {
 };
 
 export default Notification;
- 

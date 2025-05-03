@@ -1,6 +1,6 @@
 import "./App.css";
 import React from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import NavBar from "./components/navBar.jsx";
 import Home from "./pages/Home.jsx";
 import Favorites from "./pages/Favorites.jsx";
@@ -9,21 +9,68 @@ import Search from "./pages/Search.jsx";
 import MovieDetails from "./pages/MovieDetails.jsx";
 import TVShowDetails from "./pages/TvShowDetails.jsx";
 import Player from "./pages/Player.jsx";
+import Login from "./pages/Login.jsx";
+import Signup from "./pages/Signup.jsx";
+import Profile from "./pages/Profile.jsx";
+import { AuthProvider, useAuth } from "./contexts/AuthContext.jsx";
 
-function App() {
+// Protected route component
+function PrivateRoute({ children }) {
+  const { currentUser } = useAuth();
+
+  if (!currentUser) {
+    return <Navigate to="/login" />;
+  }
+
+  return children;
+}
+
+function AppRoutes() {
   return (
     <>
       <NavBar />
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/favorites" element={<Favorites />} />
-        <Route path="/watchlist" element={<Watchlist />} />
+        <Route
+          path="/favorites"
+          element={
+            <PrivateRoute>
+              <Favorites />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/watchlist"
+          element={
+            <PrivateRoute>
+              <Watchlist />
+            </PrivateRoute>
+          }
+        />
         <Route path="/search" element={<Search />} />
         <Route path="/movie/:id" element={<MovieDetails />} />
         <Route path="/tv/:id" element={<TVShowDetails />} />
         <Route path="/watch/:type/:id" element={<Player />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route
+          path="/profile"
+          element={
+            <PrivateRoute>
+              <Profile />
+            </PrivateRoute>
+          }
+        />
       </Routes>
     </>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppRoutes />
+    </AuthProvider>
   );
 }
 

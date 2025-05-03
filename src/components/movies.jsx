@@ -4,12 +4,22 @@ import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart, faBookmark } from "@fortawesome/free-solid-svg-icons";
 import Notification from "./Notification";
+import { useAuth } from "../contexts/AuthContext";
+import {
+  getUserFavorites,
+  getUserWatchlist,
+  addToFavorites,
+  removeFromFavorites,
+  addToWatchlist,
+  removeFromWatchlist,
+} from "../firebase/firestore";
 
 // Create a cache object outside of the component to persist between renders
 const moviesCache = {};
 
 function Movies({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const [movies, setMovies] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [watchlist, setWatchlist] = useState([]);
@@ -55,34 +65,71 @@ function Movies({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
     });
   };
 
-  // Load saved favorites and watchlist
+  // Load saved favorites and watchlist from Firestore
   useEffect(() => {
-    const savedFavorites = JSON.parse(localStorage.getItem("favorites")) || [];
-    const savedWatchlist = JSON.parse(localStorage.getItem("watchlist")) || [];
-    setFavorites(savedFavorites.map((item) => item.id));
-    setWatchlist(savedWatchlist.map((item) => item.id));
-  }, []);
+    async function loadUserData() {
+      if (!currentUser) {
+        // If not logged in, reset favorites and watchlist
+        console.log("No user logged in, resetting favorites and watchlist");
+        setFavorites([]);
+        setWatchlist([]);
+        return;
+      }
+
+      console.log("Loading data for user:", currentUser.uid);
+
+      try {
+        // Load favorites from Firestore
+        console.log("Fetching favorites from collection 'favourites'");
+        const favoriteItems = await getUserFavorites(currentUser.uid);
+        console.log("Favorites received:", favoriteItems);
+
+        const favoriteIds = favoriteItems.map((item) => {
+          // Extract the media ID from the document ID (format: userId_mediaId)
+          const mediaId = item.id.split("_")[1];
+          return mediaId;
+        });
+        setFavorites(favoriteIds);
+
+        // Load watchlist from Firestore
+        console.log("Fetching watchlist from collection 'watchlist'");
+        const watchlistItems = await getUserWatchlist(currentUser.uid);
+        console.log("Watchlist received:", watchlistItems);
+
+        const watchlistIds = watchlistItems.map((item) => {
+          // Extract the media ID from the document ID (format: userId_mediaId)
+          const mediaId = item.id.split("_")[1];
+          return mediaId;
+        });
+        setWatchlist(watchlistIds);
+      } catch (error) {
+        console.error("Error loading user data from Firestore:", error);
+      }
+    }
+
+    loadUserData();
+  }, [currentUser]);
 
   // Fetch movies when page changes
   useEffect(() => {
     const fetchMovies = async () => {
       const cacheKey = `trending-movies-page-${currentPage}`;
-      
+
       // Check if we have cached data that's not expired
       if (
-        moviesCache[cacheKey] && 
+        moviesCache[cacheKey] &&
         moviesCache[cacheKey].timestamp > Date.now() - CACHE_EXPIRY
       ) {
         console.log("Using cached movies data for page", currentPage);
         setMovies(moviesCache[cacheKey].data);
-        
+
         // Update total pages from cache as well
         if (onTotalPagesUpdate && moviesCache[cacheKey].totalPages) {
           onTotalPagesUpdate(moviesCache[cacheKey].totalPages);
         }
         return;
       }
-      
+
       try {
         const response = await fetch(
           `${BASE_URL}/trending/movie/week?api_key=${API_KEY}&page=${currentPage}`
@@ -95,12 +142,12 @@ function Movies({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
         if (onTotalPagesUpdate) {
           onTotalPagesUpdate(maxPages);
         }
-        
+
         // Cache the fetched data with timestamp
         moviesCache[cacheKey] = {
           data: data.results,
           totalPages: maxPages,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         };
       } catch (error) {
         console.error("Error fetching trending movies:", error);
@@ -119,70 +166,94 @@ function Movies({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
     navigate(`/movie/${movieId}`);
   };
 
-  const toggleFavorite = (e, movie) => {
+  const toggleFavorite = async (e, movie) => {
     e.stopPropagation(); // Prevent click from bubbling to parent
-    const currentFavorites =
-      JSON.parse(localStorage.getItem("favorites")) || [];
-    const movieExists = currentFavorites.some((item) => item.id === movie.id);
 
-    let updatedFavorites;
-    if (movieExists) {
-      updatedFavorites = currentFavorites.filter(
-        (item) => item.id !== movie.id
-      );
-      setFavorites(favorites.filter((id) => id !== movie.id));
-      showNotification(
-        `Removed "${movie.title}" from favorites`,
-        "favorite-remove"
-      );
-    } else {
-      const movieToAdd = {
-        id: movie.id,
-        title: movie.title,
-        poster_path: getImageUrl(movie.poster_path),
-        release_date: formatDate(movie.release_date),
-        vote_average: movie.vote_average.toFixed(1),
-        media_type: "movie",
-      };
-      updatedFavorites = [...currentFavorites, movieToAdd];
-      setFavorites([...favorites, movie.id]);
-      showNotification(`Added "${movie.title}" to favorites`, "favorite-add");
+    if (!currentUser) {
+      showNotification("Please login to add favorites", "error");
+      return;
     }
 
-    localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
+    console.log("Toggle favorite for movie:", movie.id, movie.title);
+    console.log("Current user:", currentUser.uid);
+
+    const isInFavorites = favorites.includes(movie.id.toString());
+    console.log("Is in favorites?", isInFavorites);
+
+    try {
+      if (isInFavorites) {
+        // Remove from favorites
+        console.log("Removing from favorites:", movie.id);
+        await removeFromFavorites(currentUser.uid, movie.id);
+        setFavorites(favorites.filter((id) => id !== movie.id.toString()));
+        showNotification(
+          `Removed "${movie.title}" from favorites`,
+          "favorite-remove"
+        );
+      } else {
+        // Add to favorites
+        const movieToAdd = {
+          id: movie.id,
+          title: movie.title,
+          poster_path: getImageUrl(movie.poster_path),
+          release_date: formatDate(movie.release_date),
+          vote_average: movie.vote_average.toFixed(1),
+          media_type: "movie",
+        };
+
+        console.log("Adding to favorites:", movieToAdd);
+        await addToFavorites(currentUser.uid, movieToAdd);
+        setFavorites([...favorites, movie.id.toString()]);
+        showNotification(`Added "${movie.title}" to favorites`, "favorite-add");
+      }
+    } catch (error) {
+      console.error("Error updating favorites:", error);
+      console.log("Error details:", JSON.stringify(error));
+      showNotification("Failed to update favorites", "error");
+    }
   };
 
-  const toggleWatchlist = (e, movie) => {
+  const toggleWatchlist = async (e, movie) => {
     e.stopPropagation(); // Prevent click from bubbling to parent
-    const currentWatchlist =
-      JSON.parse(localStorage.getItem("watchlist")) || [];
-    const movieExists = currentWatchlist.some((item) => item.id === movie.id);
 
-    let updatedWatchlist;
-    if (movieExists) {
-      updatedWatchlist = currentWatchlist.filter(
-        (item) => item.id !== movie.id
-      );
-      setWatchlist(watchlist.filter((id) => id !== movie.id));
-      showNotification(
-        `Removed "${movie.title}" from watchlist`,
-        "watchlist-remove"
-      );
-    } else {
-      const movieToAdd = {
-        id: movie.id,
-        title: movie.title,
-        poster_path: getImageUrl(movie.poster_path),
-        release_date: formatDate(movie.release_date),
-        vote_average: movie.vote_average.toFixed(1),
-        media_type: "movie",
-      };
-      updatedWatchlist = [...currentWatchlist, movieToAdd];
-      setWatchlist([...watchlist, movie.id]);
-      showNotification(`Added "${movie.title}" to watchlist`, "watchlist-add");
+    if (!currentUser) {
+      showNotification("Please login to add to watchlist", "error");
+      return;
     }
 
-    localStorage.setItem("watchlist", JSON.stringify(updatedWatchlist));
+    const isInWatchlist = watchlist.includes(movie.id.toString());
+
+    try {
+      if (isInWatchlist) {
+        // Remove from watchlist
+        await removeFromWatchlist(currentUser.uid, movie.id);
+        setWatchlist(watchlist.filter((id) => id !== movie.id.toString()));
+        showNotification(
+          `Removed "${movie.title}" from watchlist`,
+          "watchlist-remove"
+        );
+      } else {
+        // Add to watchlist
+        const movieToAdd = {
+          id: movie.id,
+          title: movie.title,
+          poster_path: getImageUrl(movie.poster_path),
+          release_date: formatDate(movie.release_date),
+          vote_average: movie.vote_average.toFixed(1),
+          media_type: "movie",
+        };
+
+        await addToWatchlist(currentUser.uid, movieToAdd);
+        setWatchlist([...watchlist, movie.id.toString()]);
+        showNotification(
+          `Added "${movie.title}" to watchlist`,
+          "watchlist-add"
+        );
+      }
+    } catch (error) {
+      console.error("Error updating watchlist:", error);
+      showNotification("Failed to update watchlist", "error");
+    }
   };
 
   return (
@@ -212,16 +283,16 @@ function Movies({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
             <div className="action_buttons">
               <button
                 className={`favorite_btn ${
-                  favorites.includes(movie.id) ? "active" : ""
+                  favorites.includes(movie.id.toString()) ? "active" : ""
                 }`}
                 onClick={(e) => toggleFavorite(e, movie)}
                 title={
-                  favorites.includes(movie.id)
+                  favorites.includes(movie.id.toString())
                     ? "Remove from Favorites"
                     : "Add to Favorites"
                 }
                 aria-label={
-                  favorites.includes(movie.id)
+                  favorites.includes(movie.id.toString())
                     ? "Remove from Favorites"
                     : "Add to Favorites"
                 }
@@ -230,16 +301,16 @@ function Movies({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
               </button>
               <button
                 className={`watchlist_btn ${
-                  watchlist.includes(movie.id) ? "active" : ""
+                  watchlist.includes(movie.id.toString()) ? "active" : ""
                 }`}
                 onClick={(e) => toggleWatchlist(e, movie)}
                 title={
-                  watchlist.includes(movie.id)
+                  watchlist.includes(movie.id.toString())
                     ? "Remove from Watchlist"
                     : "Add to Watchlist"
                 }
                 aria-label={
-                  watchlist.includes(movie.id)
+                  watchlist.includes(movie.id.toString())
                     ? "Remove from Watchlist"
                     : "Add to Watchlist"
                 }

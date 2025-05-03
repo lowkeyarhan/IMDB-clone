@@ -4,17 +4,29 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGithub, faLinkedin } from "@fortawesome/free-brands-svg-icons";
-import { faSearch, faUser } from "@fortawesome/free-solid-svg-icons";
+import {
+  faSearch,
+  faUser,
+  faSignOutAlt,
+  faSignInAlt,
+  faUserPlus,
+  faHeart,
+  faList,
+} from "@fortawesome/free-solid-svg-icons";
+import { useAuth } from "../contexts/AuthContext";
 
 function NavBar() {
   const [searchActive, setSearchActive] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [scrolled, setScrolled] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const debounceTimeoutRef = useRef(null);
   const searchContainerRef = useRef(null);
+  const userMenuRef = useRef(null);
   const DEBOUNCE_DELAY = 500; // 500ms debouncing delay
+  const { currentUser, logout } = useAuth();
 
   // Check if current page is the player page
   const isPlayerPage = location.pathname.startsWith("/player");
@@ -53,6 +65,14 @@ function NavBar() {
         setSearchActive(false);
         setSearchQuery("");
       }
+
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(event.target) &&
+        showUserMenu
+      ) {
+        setShowUserMenu(false);
+      }
     };
 
     // Add event listener
@@ -61,7 +81,7 @@ function NavBar() {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [searchActive]);
+  }, [searchActive, showUserMenu]);
 
   useEffect(() => {
     if (location.pathname === "/search") {
@@ -97,6 +117,8 @@ function NavBar() {
       setSearchActive(false);
       setSearchQuery("");
     }
+    // Close user menu when navigating
+    setShowUserMenu(false);
   }, [location.pathname]);
 
   const toggleSearch = () => {
@@ -108,6 +130,28 @@ function NavBar() {
       if (location.pathname === "/search") {
         navigate("/");
       }
+    }
+  };
+
+  // Toggle user menu
+  const toggleUserMenu = () => {
+    if (!currentUser) {
+      // If no user is logged in, redirect to login page
+      navigate("/login");
+    } else {
+      // If user is logged in, show/hide the menu
+      setShowUserMenu(!showUserMenu);
+    }
+  };
+
+  // Handle logout
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setShowUserMenu(false);
+      navigate("/");
+    } catch (error) {
+      console.error("Failed to log out", error);
     }
   };
 
@@ -210,9 +254,81 @@ function NavBar() {
             </div>
           </form>
         </div>
-        <button className="user_icon_btn" aria-label="User profile">
-          <FontAwesomeIcon icon={faUser} className="user_icon" />
-        </button>
+        <div className="user_menu_container" ref={userMenuRef}>
+          <button
+            className="user_icon_btn"
+            onClick={toggleUserMenu}
+            aria-label="User profile"
+          >
+            {currentUser && currentUser.photoURL ? (
+              <img
+                src={currentUser.photoURL}
+                alt={currentUser.displayName || "User"}
+                className="navbar-user-avatar"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <FontAwesomeIcon icon={faUser} className="user_icon" />
+            )}
+          </button>
+          {showUserMenu && (
+            <div className="user_dropdown_menu" aria-label="User menu">
+              {currentUser ? (
+                <>
+                  <div className="user_info">
+                    <div className="user_avatar">
+                      {currentUser.photoURL ? (
+                        <img
+                          src={currentUser.photoURL}
+                          alt={currentUser.displayName || "User"}
+                          className="user-avatar-img"
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : (
+                        <FontAwesomeIcon icon={faUser} />
+                      )}
+                    </div>
+                    <div className="user_details">
+                      <div className="user_name">
+                        {currentUser.displayName || "User"}
+                      </div>
+                      <div className="user_email">{currentUser.email}</div>
+                    </div>
+                  </div>
+                  <div className="menu_divider"></div>
+                  <Link
+                    to="/profile"
+                    className="dropdown_item"
+                    aria-label="Go to profile"
+                  >
+                    <FontAwesomeIcon icon={faUser} />
+                    <span>Profile</span>
+                  </Link>
+                  <div className="menu_divider"></div>
+                  <button
+                    className="dropdown_item logout_item"
+                    onClick={handleLogout}
+                    aria-label="Sign out"
+                  >
+                    <FontAwesomeIcon icon={faSignOutAlt} />
+                    <span>Logout</span>
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to="/login"
+                    className="dropdown_item"
+                    aria-label="Sign in"
+                  >
+                    <FontAwesomeIcon icon={faSignInAlt} />
+                    <span>Login with Google</span>
+                  </Link>
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

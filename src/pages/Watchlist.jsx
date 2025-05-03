@@ -10,11 +10,16 @@ import {
   faPlayCircle,
   faFilm,
   faTv,
+  faSpinner,
 } from "@fortawesome/free-solid-svg-icons";
+import { useAuth } from "../contexts/AuthContext";
+import { getUserWatchlist, removeFromWatchlist } from "../firebase/firestore";
 
 function Watchlist() {
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const [watchlist, setWatchlist] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState({
     visible: false,
     message: "",
@@ -40,16 +45,43 @@ function Watchlist() {
     }
   };
 
+  // Load watchlist from Firestore instead of localStorage
   useEffect(() => {
-    try {
-      const savedWatchlist =
-        JSON.parse(localStorage.getItem("watchlist")) || [];
-      setWatchlist(savedWatchlist);
-    } catch (error) {
-      console.error("Error loading watchlist from localStorage:", error);
-      setWatchlist([]);
+    async function loadWatchlist() {
+      if (!currentUser) {
+        setWatchlist([]);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const watchlistItems = await getUserWatchlist(currentUser.uid);
+        // Map the data to match the expected format
+        const formattedWatchlist = watchlistItems.map((item) => {
+          // Extract the media ID from the document ID (format: userId_mediaId)
+          const mediaId = item.id.split("_")[1];
+          return {
+            ...item,
+            id: item.id || mediaId, // Use the media ID
+            title: item.title,
+            poster_path: item.poster_path,
+            release_date: item.release_date,
+            vote_average: item.vote_average,
+            media_type: item.media_type || "movie",
+          };
+        });
+        setWatchlist(formattedWatchlist);
+      } catch (error) {
+        console.error("Error loading watchlist from Firestore:", error);
+        showNotification("Failed to load watchlist", "error");
+      } finally {
+        setLoading(false);
+      }
     }
-  }, []);
+
+    loadWatchlist();
+  }, [currentUser]);
 
   // Show notification
   const showNotification = (message, type) => {
@@ -73,15 +105,26 @@ function Watchlist() {
     navigate(`/${mediaType}/${item.id}`);
   };
 
-  const markAsWatched = (e, itemId, itemTitle) => {
+  // Mark as watched in Firestore
+  const markAsWatched = async (e, itemId, itemTitle) => {
     e.stopPropagation(); // Prevent click from bubbling to parent
-    const updatedWatchlist = watchlist.filter((item) => item.id !== itemId);
-    setWatchlist(updatedWatchlist);
-    localStorage.setItem("watchlist", JSON.stringify(updatedWatchlist));
-    showNotification(
-      `"${itemTitle}" marked as watched and removed from watchlist`,
-      "watchlist-remove"
-    );
+
+    try {
+      if (!currentUser) return;
+
+      await removeFromWatchlist(currentUser.uid, itemId);
+
+      const updatedWatchlist = watchlist.filter((item) => item.id !== itemId);
+      setWatchlist(updatedWatchlist);
+
+      showNotification(
+        `"${itemTitle}" marked as watched and removed from watchlist`,
+        "watchlist-remove"
+      );
+    } catch (error) {
+      console.error("Error removing from watchlist:", error);
+      showNotification("Failed to mark as watched", "error");
+    }
   };
 
   return (
