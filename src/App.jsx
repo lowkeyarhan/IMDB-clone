@@ -6,6 +6,7 @@ import Home from "./pages/Home.jsx";
 import Favorites from "./pages/Favorites.jsx";
 import Watchlist from "./pages/Watchlist.jsx";
 import Search from "./pages/Search.jsx";
+import Explore from "./pages/Explore.jsx";
 import MovieDetails from "./pages/MovieDetails.jsx";
 import TVShowDetails from "./pages/TvShowDetails.jsx";
 import Player from "./pages/Player.jsx";
@@ -13,6 +14,7 @@ import Login from "./pages/Login.jsx";
 import Signup from "./pages/Signup.jsx";
 import Profile from "./pages/Profile.jsx";
 import { AuthProvider, useAuth } from "./contexts/AuthContext.jsx";
+import { UserDataProvider } from "./contexts/UserDataContext.jsx";
 
 // Protected route component
 function PrivateRoute({ children }) {
@@ -31,6 +33,7 @@ function AppRoutes() {
       <NavBar />
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/explore" element={<Explore />} />
         <Route
           path="/favorites"
           element={
@@ -69,7 +72,9 @@ function AppRoutes() {
 function App() {
   return (
     <AuthProvider>
-      <AppRoutes />
+      <UserDataProvider>
+        <AppRoutes />
+      </UserDataProvider>
     </AuthProvider>
   );
 }

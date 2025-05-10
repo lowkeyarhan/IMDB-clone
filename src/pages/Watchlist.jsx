@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/savedMovies.css";
 import Notification from "../components/Notification";
@@ -13,13 +13,17 @@ import {
   faSpinner,
 } from "@fortawesome/free-solid-svg-icons";
 import { useAuth } from "../contexts/AuthContext";
-import { getUserWatchlist, removeFromWatchlist } from "../firebase/firestore";
+import { useUserData } from "../contexts/UserDataContext";
 
 function Watchlist() {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
-  const [watchlist, setWatchlist] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    watchlist,
+    watchlistLoading: loading,
+    watchlistError: error,
+    removeFromWatchlist: removeItem,
+  } = useUserData();
   const [notification, setNotification] = useState({
     visible: false,
     message: "",
@@ -30,6 +34,14 @@ function Watchlist() {
     if (!dateString) return "N/A";
     const options = { year: "numeric", month: "short", day: "numeric" };
     return new Date(dateString).toLocaleDateString(undefined, options);
+  };
+
+  // Get appropriate release date based on media type
+  const getAppropriateDate = (item) => {
+    if (item.media_type === "tv") {
+      return item.first_air_date || item.release_date;
+    }
+    return item.release_date;
   };
 
   // Format vote average safely
@@ -44,44 +56,6 @@ function Watchlist() {
       return vote;
     }
   };
-
-  // Load watchlist from Firestore instead of localStorage
-  useEffect(() => {
-    async function loadWatchlist() {
-      if (!currentUser) {
-        setWatchlist([]);
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        const watchlistItems = await getUserWatchlist(currentUser.uid);
-        // Map the data to match the expected format
-        const formattedWatchlist = watchlistItems.map((item) => {
-          // Extract the media ID from the document ID (format: userId_mediaId)
-          const mediaId = item.id.split("_")[1];
-          return {
-            ...item,
-            id: item.id || mediaId, // Use the media ID
-            title: item.title,
-            poster_path: item.poster_path,
-            release_date: item.release_date,
-            vote_average: item.vote_average,
-            media_type: item.media_type || "movie",
-          };
-        });
-        setWatchlist(formattedWatchlist);
-      } catch (error) {
-        console.error("Error loading watchlist from Firestore:", error);
-        showNotification("Failed to load watchlist", "error");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadWatchlist();
-  }, [currentUser]);
 
   // Show notification
   const showNotification = (message, type) => {
@@ -101,31 +75,54 @@ function Watchlist() {
   };
 
   const handleItemClick = (item) => {
-    const mediaType = item.media_type || "movie"; // Default to movie for backward compatibility
+    const mediaType = item.media_type || "movie";
     navigate(`/${mediaType}/${item.id}`);
   };
 
   // Mark as watched in Firestore
-  const markAsWatched = async (e, itemId, itemTitle) => {
-    e.stopPropagation(); // Prevent click from bubbling to parent
+  const markAsWatched = async (e, itemId, mediaType, itemTitle) => {
+    e.stopPropagation();
 
     try {
       if (!currentUser) return;
 
-      await removeFromWatchlist(currentUser.uid, itemId);
+      const success = await removeItem(itemId, mediaType);
 
-      const updatedWatchlist = watchlist.filter((item) => item.id !== itemId);
-      setWatchlist(updatedWatchlist);
-
-      showNotification(
-        `"${itemTitle}" marked as watched and removed from watchlist`,
-        "watchlist-remove"
-      );
+      if (success) {
+        showNotification(
+          `"${itemTitle}" marked as watched and removed from watchlist`,
+          "watchlist-remove"
+        );
+      }
     } catch (error) {
       console.error("Error removing from watchlist:", error);
       showNotification("Failed to mark as watched", "error");
     }
   };
+
+  if (loading) {
+    return (
+      <div className="saved_container">
+        <h1>My Watchlist</h1>
+        <div className="loading-container">
+          <FontAwesomeIcon icon={faSpinner} spin className="loading-icon" />
+          <p>Loading your watchlist...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="saved_container">
+        <h1>My Watchlist</h1>
+        <div className="error-container">
+          <p>Error loading watchlist: {error}</p>
+          <p>Please try signing out and back in.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="saved_container">
@@ -133,9 +130,9 @@ function Watchlist() {
 
       {watchlist.length === 0 ? (
         <div className="empty_message">
-          <p>Mmm... your watchlist’s looking a little lonely.</p>
+          <p>Mmm... your watchlist's looking a little lonely.</p>
           <p className="mt-2">
-            Add something spicy—I’d love to know what you’re craving next. 😏
+            Add something spicy—I'd love to know what you're craving next. 😏
           </p>
         </div>
       ) : (
@@ -152,27 +149,40 @@ function Watchlist() {
                   title={item.media_type === "tv" ? "TV Show" : "Movie"}
                 />
               </div>
-              {item.poster_path && (
+              {item.poster_path ? (
                 <img src={item.poster_path} alt={item.title} />
+              ) : (
+                <div className="no-poster">No image available</div>
               )}
               <div className="saved_movie_info">
-                <h3>{item.title}</h3>
+                <h3>{item.title || "Unknown Title"}</h3>
                 <div className="saved_movie_details">
                   <span className="release_date">
                     <FontAwesomeIcon
                       icon={faCalendarDays}
                       className="release_icon"
                     />{" "}
-                    {formatDate(item.release_date) || "N/A"}
+                    {formatDate(getAppropriateDate(item)) || "N/A"}
                   </span>
                   <span className="rating">
                     <FontAwesomeIcon icon={faStar} className="rating_icon" />{" "}
                     {formatVoteAverage(item.vote_average)}
                   </span>
                 </div>
+                {item.media_type === "tv" && item.number_of_seasons && (
+                  <div className="tv-info">
+                    <small>
+                      {item.number_of_seasons} Season
+                      {item.number_of_seasons !== 1 ? "s" : ""} •{" "}
+                      {item.status || "Unknown status"}
+                    </small>
+                  </div>
+                )}
                 <button
                   className="watched_btn"
-                  onClick={(e) => markAsWatched(e, item.id, item.title)}
+                  onClick={(e) =>
+                    markAsWatched(e, item.id, item.media_type, item.title)
+                  }
                 >
                   <FontAwesomeIcon icon={faCheck} /> Mark as Watched
                 </button>

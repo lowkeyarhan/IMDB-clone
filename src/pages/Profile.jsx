@@ -21,10 +21,14 @@ import {
   faTicketAlt,
   faSignInAlt,
   faTv,
+  faSpinner,
+  faStar,
 } from "@fortawesome/free-solid-svg-icons";
 import "../styles/auth.css";
 import "../styles/profile.css";
 import Footer from "../components/Footer";
+import useWatchlist from "../hooks/useWatchlist";
+import useFavorites from "../hooks/useFavorites";
 
 function Profile() {
   const navigate = useNavigate();
@@ -33,73 +37,27 @@ function Profile() {
   const [activeTab, setActiveTab] = useState("overview");
   const [expandedSections, setExpandedSections] = useState({
     recentlyWatched: false,
+    watchlist: false,
+    favorites: false,
   });
-  const [userStats, setUserStats] = useState({
-    favorites: 0,
-    watchlist: 0,
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Get real data using our hooks
+  const { watchlist, loading: watchlistLoading } = useWatchlist(currentUser);
+  const { favorites, loading: favoritesLoading } = useFavorites(currentUser);
+
+  // Calculate stats based on real data
+  const userStats = {
+    favorites: favorites.length,
+    watchlist: watchlist.length,
+    // Recent watches would need a similar hook - using empty array for now
     recentlyWatched: [],
-    totalTimeSpent: 0, // in minutes
+    totalTimeSpent: 0,
     totalMoviesWatched: 0,
-    daysLoggedIn: 0,
-  });
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Fetch user data from Firestore
-  useEffect(() => {
-    async function fetchUserData() {
-      if (!currentUser) return;
-
-      setIsLoading(true);
-      try {
-        // Get favorites count
-        const favoritesQuery = query(
-          collection(db, "favorites"),
-          where("userId", "==", currentUser.uid)
-        );
-        const favoritesSnapshot = await getDocs(favoritesQuery);
-
-        // Get watchlist count
-        const watchlistQuery = query(
-          collection(db, "watchlist"),
-          where("userId", "==", currentUser.uid)
-        );
-        const watchlistSnapshot = await getDocs(watchlistQuery);
-
-        // Calculate total time spent (sum of all watched content durations)
-        const totalTimeSpent = mockRecentlyWatched.reduce(
-          (total, item) => total + item.duration,
-          0
-        );
-
-        // Calculate total movies watched (count of movies in watch history)
-        const totalMoviesWatched = mockRecentlyWatched.filter(
-          (item) => item.type === "movie"
-        ).length;
-
-        // Calculate days logged in (days since account creation)
-        const creationDate = new Date(currentUser.metadata.creationTime);
-        const today = new Date();
-        const daysLoggedIn = Math.floor(
-          (today - creationDate) / (1000 * 60 * 60 * 24)
-        );
-
-        setUserStats({
-          favorites: favoritesSnapshot.size,
-          watchlist: watchlistSnapshot.size,
-          recentlyWatched: mockRecentlyWatched,
-          totalTimeSpent,
-          totalMoviesWatched,
-          daysLoggedIn,
-        });
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchUserData();
-  }, [currentUser]);
+    // Calculate days logged in based on user creation date
+    daysLoggedIn: currentUser ? 
+      Math.floor((new Date() - new Date(currentUser.metadata.creationTime)) / (1000 * 60 * 60 * 24)) : 0
+  };
 
   async function handleLogout() {
     try {
@@ -259,7 +217,7 @@ function Profile() {
                       </div>
                       <div className="stats-details">
                         <h3>{userStats.favorites}</h3>
-                        <p>Favorites</p>
+                        <p>Favourites</p>
                       </div>
                     </div>
 
@@ -278,7 +236,7 @@ function Profile() {
                         <FontAwesomeIcon icon={faTv} className="stats-icon" />
                       </div>
                       <div className="stats-details">
-                        <h3>{userStats.totalMoviesWatched}</h3>
+                        <h3>0</h3>
                         <p>Series Finished</p>
                       </div>
                     </div>
@@ -291,7 +249,7 @@ function Profile() {
                         />
                       </div>
                       <div className="stats-details">
-                        <h3>{formatWatchTime(userStats.totalTimeSpent)}</h3>
+                        <h3>0h 0m</h3>
                         <p>Time Spent</p>
                       </div>
                     </div>
@@ -301,7 +259,7 @@ function Profile() {
                         <FontAwesomeIcon icon={faFilm} className="stats-icon" />
                       </div>
                       <div className="stats-details">
-                        <h3>{userStats.recentlyWatched.length}</h3>
+                        <h3>0</h3>
                         <p>Movies Finished</p>
                       </div>
                     </div>
@@ -323,80 +281,15 @@ function Profile() {
                   <div className="content-section">
                     <div className="section-header">
                       <h2>Recently Watched</h2>
-                      <button
-                        className="view-toggle-button"
-                        onClick={() => toggleSection("recentlyWatched")}
-                      >
-                        {expandedSections.recentlyWatched ? (
-                          <>
-                            <span>Show Less</span>
-                            <FontAwesomeIcon icon={faChevronUp} />
-                          </>
-                        ) : (
-                          <>
-                            <span>View All</span>
-                            <FontAwesomeIcon icon={faChevronDown} />
-                          </>
-                        )}
-                      </button>
                     </div>
-
-                    {userStats.recentlyWatched.length > 0 ? (
-                      <div
-                        className={`media-grid ${
-                          expandedSections.recentlyWatched ? "expanded" : ""
-                        }`}
-                      >
-                        {userStats.recentlyWatched
-                          .slice(
-                            0,
-                            expandedSections.recentlyWatched
-                              ? userStats.recentlyWatched.length
-                              : 3
-                          )
-                          .map((item) => (
-                            <div key={item.id} className="media-card">
-                              <div className="media-poster">
-                                <img
-                                  src={`https://image.tmdb.org/t/p/w500${item.posterPath}`}
-                                  alt={item.title}
-                                />
-                                <div className="media-poster-overlay">
-                                  <button className="play-button">
-                                    <FontAwesomeIcon icon={faPlay} />
-                                  </button>
-                                </div>
-                                <div className="media-badge">
-                                  {item.type === "movie" ? "Movie" : "TV Show"}
-                                </div>
-                              </div>
-                              <div className="media-info">
-                                <h3 className="media-title">{item.title}</h3>
-                                <div className="media-meta">
-                                  <span className="watch-time">
-                                    <FontAwesomeIcon icon={faClock} />
-                                    {getTimeAgo(item.watchedAt)}
-                                  </span>
-                                </div>
-                                {expandedSections.recentlyWatched && (
-                                  <p className="media-description">
-                                    {item.overview.substring(0, 120)}...
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                    ) : (
                       <div className="empty-state">
                         <FontAwesomeIcon
                           icon={faHistory}
                           className="empty-icon"
                         />
-                        <h3>No watch history yet</h3>
-                        <p>Movies and shows you watch will appear here</p>
+                      <h3>Coming Soon</h3>
+                      <p>Watch history features will be available soon</p>
                       </div>
-                    )}
                   </div>
 
                   <div className="content-section">
@@ -420,9 +313,72 @@ function Profile() {
                 <div className="content-section">
                   <div className="section-header">
                     <h2>Your Favorites</h2>
+                    {favorites.length > 0 && (
+                      <button
+                        className="view-toggle-button"
+                        onClick={() => toggleSection("favorites")}
+                      >
+                        {expandedSections.favorites ? (
+                          <>
+                            <span>Show Less</span>
+                            <FontAwesomeIcon icon={faChevronUp} />
+                          </>
+                        ) : (
+                          <>
+                            <span>View All</span>
+                            <FontAwesomeIcon icon={faChevronDown} />
+                          </>
+                        )}
+                      </button>
+                    )}
                   </div>
-                  {userStats.favorites > 0 ? (
-                    <p>Loading your favorite movies and shows...</p>
+                  
+                  {favoritesLoading ? (
+                    <div className="loading-container">
+                      <FontAwesomeIcon icon={faSpinner} spin className="loading-icon" />
+                      <p>Loading your favorites...</p>
+                    </div>
+                  ) : favorites.length > 0 ? (
+                    <div className={`media-grid ${expandedSections.favorites ? "expanded" : ""}`}>
+                      {favorites
+                        .slice(0, expandedSections.favorites ? favorites.length : 3)
+                        .map((item) => (
+                          <div 
+                            key={item.id} 
+                            className="media-card"
+                            onClick={() => navigate(`/${item.media_type || 'movie'}/${item.id}`)}
+                          >
+                            <div className="media-poster">
+                              <img
+                                src={item.poster_path || "https://via.placeholder.com/300x450?text=No+Image"}
+                                alt={item.title}
+                              />
+                              <div className="media-poster-overlay">
+                                <button className="play-button">
+                                  <FontAwesomeIcon icon={faPlay} />
+                                </button>
+                              </div>
+                              <div className="media-badge">
+                                {item.media_type === "tv" ? "TV Show" : "Movie"}
+                              </div>
+                            </div>
+                            <div className="media-info">
+                              <h3 className="media-title">{item.title}</h3>
+                              <div className="media-meta">
+                                <span className="rating">
+                                  <FontAwesomeIcon icon={faStar} />
+                                  {item.vote_average || "N/A"}
+                                </span>
+                              </div>
+                              {expandedSections.favorites && item.overview && (
+                                <p className="media-description">
+                                  {(item.overview || "").substring(0, 120)}...
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
                   ) : (
                     <div className="empty-state">
                       <FontAwesomeIcon icon={faHeart} className="empty-icon" />
@@ -445,9 +401,72 @@ function Profile() {
                 <div className="content-section">
                   <div className="section-header">
                     <h2>Your Watchlist</h2>
+                    {watchlist.length > 0 && (
+                      <button
+                        className="view-toggle-button"
+                        onClick={() => toggleSection("watchlist")}
+                      >
+                        {expandedSections.watchlist ? (
+                          <>
+                            <span>Show Less</span>
+                            <FontAwesomeIcon icon={faChevronUp} />
+                          </>
+                        ) : (
+                          <>
+                            <span>View All</span>
+                            <FontAwesomeIcon icon={faChevronDown} />
+                          </>
+                        )}
+                      </button>
+                    )}
                   </div>
-                  {userStats.watchlist > 0 ? (
+                  
+                  {watchlistLoading ? (
+                    <div className="loading-container">
+                      <FontAwesomeIcon icon={faSpinner} spin className="loading-icon" />
                     <p>Loading your watchlist...</p>
+                    </div>
+                  ) : watchlist.length > 0 ? (
+                    <div className={`media-grid ${expandedSections.watchlist ? "expanded" : ""}`}>
+                      {watchlist
+                        .slice(0, expandedSections.watchlist ? watchlist.length : 3)
+                        .map((item) => (
+                          <div 
+                            key={item.id} 
+                            className="media-card"
+                            onClick={() => navigate(`/${item.media_type || 'movie'}/${item.id}`)}
+                          >
+                            <div className="media-poster">
+                              <img
+                                src={item.poster_path || "https://via.placeholder.com/300x450?text=No+Image"}
+                                alt={item.title}
+                              />
+                              <div className="media-poster-overlay">
+                                <button className="play-button">
+                                  <FontAwesomeIcon icon={faPlay} />
+                                </button>
+                              </div>
+                              <div className="media-badge">
+                                {item.media_type === "tv" ? "TV Show" : "Movie"}
+                              </div>
+                            </div>
+                            <div className="media-info">
+                              <h3 className="media-title">{item.title}</h3>
+                              <div className="media-meta">
+                                <span className="rating">
+                                  <FontAwesomeIcon icon={faStar} />
+                                  {item.vote_average || "N/A"}
+                                </span>
+                              </div>
+                              {expandedSections.watchlist && item.overview && (
+                                <p className="media-description">
+                                  {(item.overview || "").substring(0, 120)}...
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
                   ) : (
                     <div className="empty-state">
                       <FontAwesomeIcon icon={faList} className="empty-icon" />
@@ -471,44 +490,14 @@ function Profile() {
                   <div className="section-header">
                     <h2>Watch History</h2>
                   </div>
-                  {userStats.recentlyWatched.length > 0 ? (
-                    <div className="history-list">
-                      {userStats.recentlyWatched.map((item) => (
-                        <div key={item.id} className="history-item">
-                          <div className="history-poster">
-                            <img
-                              src={`https://image.tmdb.org/t/p/w92${item.posterPath}`}
-                              alt={item.title}
-                            />
-                          </div>
-                          <div className="history-details">
-                            <h3>{item.title}</h3>
-                            <div className="history-meta">
-                              <span className="history-type">
-                                {item.type === "movie" ? "Movie" : "TV Show"}
-                              </span>
-                              <span className="history-date">
-                                <FontAwesomeIcon icon={faCalendarAlt} />
-                                {formatDate(item.watchedAt)}
-                              </span>
-                            </div>
-                            <p className="history-overview">
-                              {item.overview.substring(0, 150)}...
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
                     <div className="empty-state">
                       <FontAwesomeIcon
                         icon={faHistory}
                         className="empty-icon"
                       />
-                      <h3>No watch history</h3>
-                      <p>Movies and shows you watch will appear here</p>
+                    <h3>Coming Soon</h3>
+                    <p>Watch history feature will be available soon.</p>
                     </div>
-                  )}
                 </div>
               )}
             </>

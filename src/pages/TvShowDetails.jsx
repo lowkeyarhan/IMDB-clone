@@ -12,14 +12,14 @@ import {
 import "../styles/MovieDetails.css";
 import Footer from "../components/Footer.jsx";
 import Notification from "../components/Notification.jsx";
+import { useAuth } from "../contexts/AuthContext";
+import { useUserData } from "../contexts/UserDataContext";
 
 function TVShowDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [show, setShow] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [favorites, setFavorites] = useState([]);
-  const [watchlist, setWatchlist] = useState([]);
   const [showTrailer, setShowTrailer] = useState(false);
   const [trailerKey, setTrailerKey] = useState(null);
   const [notification, setNotification] = useState({
@@ -28,18 +28,40 @@ function TVShowDetails() {
     type: "",
   });
 
+  const { currentUser } = useAuth();
+  const {
+    isInFavorites,
+    isInWatchlist,
+    addToFavorites,
+    removeFromFavorites,
+    addToWatchlist,
+    removeFromWatchlist,
+  } = useUserData();
+
   const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
   const BASE_URL = "https://api.themoviedb.org/3";
   const IMAGE_BASE_URL = "https://image.tmdb.org/t/p";
   const BACKDROP_SIZE = "/original";
   const POSTER_SIZE = "/w500";
 
-  useEffect(() => {
-    const savedFavorites = JSON.parse(localStorage.getItem("favorites")) || [];
-    const savedWatchlist = JSON.parse(localStorage.getItem("watchlist")) || [];
-    setFavorites(savedFavorites.map((item) => item.id));
-    setWatchlist(savedWatchlist.map((item) => item.id));
+  // Show notification
+  const showNotification = (message, type) => {
+    setNotification({
+      message,
+      type,
+      visible: true,
+    });
+  };
 
+  // Hide notification
+  const hideNotification = () => {
+    setNotification({
+      ...notification,
+      visible: false,
+    });
+  };
+
+  useEffect(() => {
     const fetchTVShowDetails = async () => {
       try {
         setLoading(true);
@@ -77,58 +99,78 @@ function TVShowDetails() {
     return `${hours}h ${mins}m`;
   };
 
-  const toggleFavorite = () => {
-    if (!show) return;
-
-    const currentFavorites =
-      JSON.parse(localStorage.getItem("favorites")) || [];
-    const showExists = currentFavorites.some((item) => item.id === show.id);
-
-    let updatedFavorites;
-    if (showExists) {
-      updatedFavorites = currentFavorites.filter((item) => item.id !== show.id);
-      setFavorites(favorites.filter((id) => id !== show.id));
-    } else {
-      const showToAdd = {
-        id: show.id,
-        title: show.name,
-        poster_path: getImageUrl(show.poster_path),
-        release_date: formatDate(show.first_air_date),
-        vote_average: show.vote_average?.toFixed(1) || "N/A",
-        media_type: "tv",
-      };
-      updatedFavorites = [...currentFavorites, showToAdd];
-      setFavorites([...favorites, show.id]);
+  const toggleFavorite = async () => {
+    if (!show || !currentUser) {
+      showNotification("Please login to add favorites", "error");
+      return;
     }
 
-    localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
+    try {
+      const showData = {
+        id: show.id,
+        name: show.name,
+        title: show.name, // Ensure we have a title field for consistency
+        poster_path: getImageUrl(show.poster_path),
+        first_air_date: show.first_air_date,
+        release_date: show.first_air_date, // Add release_date for consistency with movies
+        vote_average: show.vote_average,
+        media_type: "tv",
+        // Add additional fields helpful for TV shows
+        number_of_seasons: show.number_of_seasons,
+        status: show.status,
+      };
+
+      if (isInFavorites(show.id, "tv")) {
+        await removeFromFavorites(show.id, "tv");
+        showNotification(
+          `Removed "${show.name}" from favorites`,
+          "favorite-remove"
+        );
+      } else {
+        await addToFavorites(showData);
+        showNotification(`Added "${show.name}" to favorites`, "favorite-add");
+      }
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+      showNotification("Failed to update favorites", "error");
+    }
   };
 
-  const toggleWatchlist = () => {
-    if (!show) return;
-
-    const currentWatchlist =
-      JSON.parse(localStorage.getItem("watchlist")) || [];
-    const showExists = currentWatchlist.some((item) => item.id === show.id);
-
-    let updatedWatchlist;
-    if (showExists) {
-      updatedWatchlist = currentWatchlist.filter((item) => item.id !== show.id);
-      setWatchlist(watchlist.filter((id) => id !== show.id));
-    } else {
-      const showToAdd = {
-        id: show.id,
-        title: show.name,
-        poster_path: getImageUrl(show.poster_path),
-        release_date: formatDate(show.first_air_date),
-        vote_average: show.vote_average?.toFixed(1) || "N/A",
-        media_type: "tv",
-      };
-      updatedWatchlist = [...currentWatchlist, showToAdd];
-      setWatchlist([...watchlist, show.id]);
+  const toggleWatchlist = async () => {
+    if (!show || !currentUser) {
+      showNotification("Please login to add to watchlist", "error");
+      return;
     }
 
-    localStorage.setItem("watchlist", JSON.stringify(updatedWatchlist));
+    try {
+      const showData = {
+        id: show.id,
+        name: show.name,
+        title: show.name, // Ensure we have a title field for consistency
+        poster_path: getImageUrl(show.poster_path),
+        first_air_date: show.first_air_date,
+        release_date: show.first_air_date, // Add release_date for consistency with movies
+        vote_average: show.vote_average,
+        media_type: "tv",
+        // Add additional fields helpful for TV shows
+        number_of_seasons: show.number_of_seasons,
+        status: show.status,
+      };
+
+      if (isInWatchlist(show.id, "tv")) {
+        await removeFromWatchlist(show.id, "tv");
+        showNotification(
+          `Removed "${show.name}" from watchlist`,
+          "watchlist-remove"
+        );
+      } else {
+        await addToWatchlist(showData);
+        showNotification(`Added "${show.name}" to watchlist`, "watchlist-add");
+      }
+    } catch (error) {
+      console.error("Error toggling watchlist:", error);
+      showNotification("Failed to update watchlist", "error");
+    }
   };
 
   const handlePlayTrailer = () => {
@@ -144,6 +186,8 @@ function TVShowDetails() {
         setTrailerKey(trailer.key);
         setShowTrailer(true);
         document.body.style.overflow = "hidden"; // Prevent scrolling when modal is open
+      } else {
+        showNotification("No trailer available for this TV show", "info");
       }
     }
   };
@@ -168,8 +212,21 @@ function TVShowDetails() {
     return <div className="error">TV Show not found</div>;
   }
 
+  // Check if TV show is in favorites/watchlist
+  const isFavorited = currentUser && isInFavorites(show.id, "tv");
+  const isWatchlisted = currentUser && isInWatchlist(show.id, "tv");
+
   return (
     <div className="movie-details">
+      {/* Notification component */}
+      <Notification
+        message={notification.message}
+        type={notification.type}
+        visible={notification.visible}
+        onClose={hideNotification}
+        duration={4000}
+      />
+
       {/* Trailer Modal */}
       {showTrailer && trailerKey && (
         <div className="trailer-modal">
@@ -229,26 +286,22 @@ function TVShowDetails() {
               </button>
               <button
                 className={`icon-button favorite-button ${
-                  favorites.includes(show.id) ? "active" : ""
+                  isFavorited ? "active" : ""
                 }`}
                 onClick={toggleFavorite}
                 title={
-                  favorites.includes(show.id)
-                    ? "Remove from Favorites"
-                    : "Add to Favorites"
+                  isFavorited ? "Remove from Favorites" : "Add to Favorites"
                 }
               >
                 <FontAwesomeIcon icon={faHeart} />
               </button>
               <button
                 className={`icon-button watchlist-button ${
-                  watchlist.includes(show.id) ? "active" : ""
+                  isWatchlisted ? "active" : ""
                 }`}
                 onClick={toggleWatchlist}
                 title={
-                  watchlist.includes(show.id)
-                    ? "Remove from Watchlist"
-                    : "Add to Watchlist"
+                  isWatchlisted ? "Remove from Watchlist" : "Add to Watchlist"
                 }
               >
                 <FontAwesomeIcon icon={faBookmark} />
@@ -418,12 +471,6 @@ function TVShowDetails() {
       </div>
 
       <Footer />
-      <Notification
-        message={notification.message}
-        type={notification.type}
-        visible={notification.visible}
-        onClose={() => setNotification({ ...notification, visible: false })}
-      />
     </div>
   );
 }

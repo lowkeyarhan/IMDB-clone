@@ -8,6 +8,7 @@ import {
   signInWithEmailAndPassword,
   updateProfile,
   sendPasswordResetEmail,
+  browserPopupRedirectResolver,
 } from "firebase/auth";
 import { auth } from "../firebase/config";
 
@@ -25,9 +26,14 @@ export function AuthProvider({ children }) {
   async function signInWithGoogle() {
     const provider = new GoogleAuthProvider();
     try {
-      const result = await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(
+        auth,
+        provider,
+        browserPopupRedirectResolver
+      );
       return result.user;
     } catch (error) {
+      console.error("Google Sign-in error:", error);
       throw error;
     }
   }

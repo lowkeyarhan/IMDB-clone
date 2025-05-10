@@ -79,7 +79,7 @@ function Player() {
   ) => {
     return [
       {
-        server: "Syntherion (ad free)",
+        server: "Syntherion",
         link:
           mediaType === "tv"
             ? `https://vidsrc.su/embed/tv/${tmdbId}/${season}/${episode}?next-ep=${
@@ -89,7 +89,7 @@ function Player() {
         quality: "1080p",
       },
       {
-        server: "IronLink (use adblocker)",
+        server: "IronLink",
         link:
           mediaType === "tv"
             ? `https://vidlink.pro/tv/${tmdbId}/${season}/${episode}`
@@ -105,7 +105,7 @@ function Player() {
         quality: "4K",
       },
       {
-        server: "Nanovue (use adblocker)",
+        server: "Nanovue",
         link:
           mediaType === "tv"
             ? `https://ythd.org/embed/tv/${tmdbId}/${season}/${episode}`
@@ -294,18 +294,14 @@ function Player() {
 
   const handleSeasonChange = (seasonNum) => {
     setSeasonNumber(seasonNum);
-    setEpisodeNumber(1); // Reset to first episode when changing season
+    setEpisodeNumber(1);
     fetchStreamLinks(id, type, seasonNum, 1);
     setIsLoading(true);
   };
 
   // Add a debounced search function for episodes
   const debouncedSearch = useCallback((query) => {
-    // If there's any search functionality that uses the query to filter episodes,
-    // it would go here. Right now the component just sets the state but doesn't
-    // actually filter the episodes based on the search.
     console.log("Debounced search for:", query);
-    // The actual search/filter logic would be here
   }, []);
 
   // Handle search input with debouncing
@@ -352,25 +348,19 @@ function Player() {
         )}
       </div>
 
-      {/* Refresh notice
-      <div className="refresh-notice">
-        <p>
-          If the stream buffers or freezes, please{" "}
-          <span className="highlight" onClick={handleRefresh}>
-            Refresh
-          </span>{" "}
-          the page or maybe switch to another server.
-        </p>
-      </div> */}
-
       {/* Player container */}
       <div className="player-container">
         {loading ? (
           <div className="player-loading">
-            <div className="loading-spinner">
-              <FontAwesomeIcon icon={faSpinner} spin size="3x" />
+            <div className="modern-loader">
+              <div className="loader-ring"></div>
+              <div className="loader-ring"></div>
+              <div className="loader-ring"></div>
+              <div className="loader-content">
+                <div className="loader-logo">SK</div>
+              </div>
             </div>
-            <div className="loading-text">Loading stream...</div>
+            <div className="loading-text">Preparing your stream...</div>
           </div>
         ) : error ? (
           <div className="player-error">
@@ -387,10 +377,15 @@ function Player() {
           <div className="video-responsive">
             {isLoading && (
               <div className="player-loading">
-                <div className="loading-spinner">
-                  <FontAwesomeIcon icon={faSpinner} spin size="3x" />
+                <div className="modern-loader">
+                  <div className="loader-ring"></div>
+                  <div className="loader-ring"></div>
+                  <div className="loader-ring"></div>
+                  <div className="loader-content">
+                    <div className="loader-logo">SK</div>
+                  </div>
                 </div>
-                <div className="loading-text">Loading stream...</div>
+                <div className="loading-text">Buffering stream...</div>
               </div>
             )}
             <iframe

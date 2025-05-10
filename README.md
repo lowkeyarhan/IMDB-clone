@@ -29,8 +29,7 @@ Follow the guide based on your device to block intrusive ads and ensure smooth p
 **For Chrome, Edge, Firefox and Opera users:**
 
 - Install the following extensions:
-- [Malwarebytes Browser Guard](https://chrome.google.com/webstore/detail/malwarebytes-browser-guard/ihcjicgdanjaechkgeegckofjjedodee)
-- [AdBlocker Ultimate](https://chrome.google.com/webstore/detail/adblocker-ultimate/lljbglgogigkfmjjmlacpdobfhddgfnn)
+- [Ghostery](https://chromewebstore.google.com/detail/ghostery-tracker-ad-block/mlomiejdfkolichcflejclcbmpeaniij?hl=en-GB&utm_source=ext_sidebar)
 
 **For Brave users:**
 
@@ -53,18 +52,20 @@ This platform supports **4K HDR** streaming for most newer movies and web series
 
 **Steps to enable:**
 
-1. Click on the **server icon** in the player.
-2. Choose `Yoru` as your server.
-3. If your device supports **HLG/HDR10**, you'll see the 4K option available.
+1. Choose Dormannu as your server.
+2. Click on the **server icon** in the player.
+3. Choose `Yoru` as your server.
+4. If your device supports **HLG/HDR10**, you can stream, else your phone may crash.
 
 ---
 
-## 📅 ChangeLog – April 30, 2025
+## 📅 ChangeLog – May 11, 2025
 
-- ✅ Minor changes in home page UI.
-- ✅ Added search debouncing for better optimized search.
-- ✅ Added a new anime section for my anime weebs out there!
-- ✅ Optimized the seasons wrapper.
+- ✅ Major UI changes, now uses glass morphism design.
+- ✅ Added user authentication.
+- ✅ Added a new explore page, find your desired movie/webseries/anime using genre filters.
+- ✅ Added a new profile page, keep track of your data.
+- ✅ Now uses database for storing your watchlist and favourites data for improved cross-device experience.
 
 ---
 

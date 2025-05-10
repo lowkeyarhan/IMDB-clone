@@ -77,16 +77,27 @@ function Movies({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
       }
 
       console.log("Loading data for user:", currentUser.uid);
+      console.log(
+        "Current Firebase config:",
+        import.meta.env.VITE_FIREBASE_PROJECT_ID || "Not found"
+      );
 
       try {
         // Load favorites from Firestore
         console.log("Fetching favorites from collection 'favourites'");
+        console.log("User authenticated:", !!currentUser);
+        console.log("User ID being used:", currentUser.uid);
         const favoriteItems = await getUserFavorites(currentUser.uid);
         console.log("Favorites received:", favoriteItems);
 
         const favoriteIds = favoriteItems.map((item) => {
           // Extract the media ID from the document ID (format: userId_mediaId)
-          const mediaId = item.id.split("_")[1];
+          let mediaId;
+          if (item.id && typeof item.id === "string" && item.id.includes("_")) {
+            mediaId = item.id.split("_")[1];
+          } else {
+            mediaId = item.mediaId || item.id;
+          }
           return mediaId;
         });
         setFavorites(favoriteIds);
@@ -97,13 +108,20 @@ function Movies({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
         console.log("Watchlist received:", watchlistItems);
 
         const watchlistIds = watchlistItems.map((item) => {
-          // Extract the media ID from the document ID (format: userId_mediaId)
-          const mediaId = item.id.split("_")[1];
+          let mediaId;
+          if (item.id && typeof item.id === "string" && item.id.includes("_")) {
+            mediaId = item.id.split("_")[1];
+          } else {
+            mediaId = item.mediaId || item.id;
+          }
           return mediaId;
         });
         setWatchlist(watchlistIds);
       } catch (error) {
         console.error("Error loading user data from Firestore:", error);
+        console.error("Error details:", error.code, error.message);
+        setFavorites([]);
+        setWatchlist([]);
       }
     }
 

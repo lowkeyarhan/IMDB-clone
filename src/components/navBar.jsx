@@ -12,6 +12,8 @@ import {
   faUserPlus,
   faHeart,
   faList,
+  faHome,
+  faCompass,
 } from "@fortawesome/free-solid-svg-icons";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -219,14 +221,25 @@ function NavBar() {
       }`}
     >
       <div className="left_items">
-        <Link to="/" className="nav_link">
-          Home
+        <Link to="/" className="nav_link nav_icon_link" title="Home">
+          <FontAwesomeIcon icon={faHome} className="nav_icon" />
         </Link>
-        <Link to="/watchlist" className="nav_link">
-          Watchlist
+        <Link to="/explore" className="nav_link nav_icon_link" title="Explore">
+          <FontAwesomeIcon icon={faCompass} className="nav_icon" />
         </Link>
-        <Link to="/favorites" className="nav_link">
-          Favourites
+        <Link
+          to="/watchlist"
+          className="nav_link nav_icon_link"
+          title="Watchlist"
+        >
+          <FontAwesomeIcon icon={faList} className="nav_icon" />
+        </Link>
+        <Link
+          to="/favorites"
+          className="nav_link nav_icon_link"
+          title="Favourites"
+        >
+          <FontAwesomeIcon icon={faHeart} className="nav_icon" />
         </Link>
       </div>
       <div className="right_items">

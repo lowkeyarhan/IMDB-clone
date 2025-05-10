@@ -3,24 +3,35 @@
   bottom: -100px;
   left: 50%;
   transform: translateX(-50%);
-  background-color: rgba(20, 16, 32, 0.95);
+  background-color: rgba(18, 18, 18, 0.6);
   color: white;
-  border-radius: 10px;
-  padding: 15px 20px;
+  border-radius: 12px;
+  padding: 16px 20px;
   display: flex;
   align-items: center;
   gap: 15px;
-  min-width: 300px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(10px);
+  min-width: 350px;
+  max-width: 450px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
   z-index: 1000;
   transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
   border: 1px solid rgba(255, 255, 255, 0.1);
   font-family: "Poppins", sans-serif;
+  overflow: hidden;
+
+  background-image: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.05) 40%,
+    rgba(0, 0, 0, 0.05) 100%
+  );
 }
 
 .notification.show {
   bottom: 30px;
+  animation: notification-bounce-in 0.7s forwards;
 }
 
 .notification-icon {
@@ -28,53 +39,102 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   background-color: rgba(255, 255, 255, 0.1);
   flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.notification-icon::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    to bottom right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: rotate(45deg);
+  animation: shimmer 2s infinite;
 }
 
 .notification-message {
   font-size: 1rem;
   font-weight: 500;
   flex-grow: 1;
+  letter-spacing: 0.2px;
 }
 
 .notification-close {
   background: none;
   border: none;
-  color: #8e8e8e;
-  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 1.1rem;
   cursor: pointer;
-  transition: color 0.3s ease;
-  padding: 5px;
+  transition: all 0.3s ease;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
 }
 
 .notification-close:hover {
   color: white;
-}
-
-.favorite-notification {
-  border-left: 4px solid rgba(229, 9, 20, 1);
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .favorite-notification .notification-icon {
-  color: rgba(229, 9, 20, 1);
-}
-
-.watchlist-notification {
-  border-left: 4px solid rgba(45, 94, 165, 1);
+  color: rgb(229, 9, 20);
+  box-shadow: 0 0 15px rgba(229, 9, 20, 0.3);
 }
 
 .watchlist-notification .notification-icon {
-  color: rgba(45, 94, 165, 1);
+  color: rgb(45, 94, 165);
+  box-shadow: 0 0 15px rgba(45, 94, 165, 0.3);
 }
 
-@keyframes slide-in {
+.anime-notification .notification-icon {
+  color: rgb(255, 124, 216);
+  box-shadow: 0 0 15px rgba(255, 124, 216, 0.3);
+}
+
+.error-notification .notification-icon {
+  color: rgb(239, 68, 68);
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+}
+
+.success-notification .notification-icon {
+  color: rgb(34, 197, 94);
+  box-shadow: 0 0 15px rgba(34, 197, 94, 0.3);
+}
+
+@keyframes shimmer {
+  0% {
+    transform: rotate(45deg) translateX(-100%);
+  }
+  100% {
+    transform: rotate(45deg) translateX(100%);
+  }
+}
+
+@keyframes notification-bounce-in {
   0% {
     transform: translateX(-50%) translateY(100px);
     opacity: 0;
+  }
+  70% {
+    transform: translateX(-50%) translateY(-10px);
+    opacity: 1;
   }
   100% {
     transform: translateX(-50%) translateY(0);
@@ -82,7 +142,7 @@
   }
 }
 
-@keyframes slide-out {
+@keyframes notification-fade-out {
   0% {
     transform: translateX(-50%) translateY(0);
     opacity: 1;
@@ -94,10 +154,27 @@
 }
 
 .notification.show {
-  animation: slide-in 0.5s forwards;
+  animation: notification-bounce-in 0.7s forwards;
 }
 
 .notification:not(.show) {
-  animation: slide-out 0.5s forwards;
+  animation: notification-fade-out 0.5s forwards;
 }
- 
+
+@media (max-width: 768px) {
+  .notification {
+    min-width: 300px;
+    max-width: 90%;
+    padding: 12px 16px;
+  }
+
+  .notification-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 1.2rem;
+  }
+
+  .notification-message {
+    font-size: 0.9rem;
+  }
+}

@@ -10,16 +10,32 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import "../styles/MovieDetails.css";
 import Footer from "../components/Footer.jsx";
+import { useAuth } from "../contexts/AuthContext";
+import { useUserData } from "../contexts/UserDataContext";
+import Notification from "../components/Notification";
 
 function MovieDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [movie, setMovie] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [favorites, setFavorites] = useState([]);
-  const [watchlist, setWatchlist] = useState([]);
   const [showTrailer, setShowTrailer] = useState(false);
   const [trailerKey, setTrailerKey] = useState(null);
+  const [notification, setNotification] = useState({
+    message: "",
+    type: "",
+    visible: false,
+  });
+
+  const { currentUser } = useAuth();
+  const {
+    isInFavorites,
+    isInWatchlist,
+    addToFavorites,
+    removeFromFavorites,
+    addToWatchlist,
+    removeFromWatchlist,
+  } = useUserData();
 
   const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
   const BASE_URL = "https://api.themoviedb.org/3";
@@ -27,12 +43,24 @@ function MovieDetails() {
   const BACKDROP_SIZE = "/original";
   const POSTER_SIZE = "/w500";
 
-  useEffect(() => {
-    const savedFavorites = JSON.parse(localStorage.getItem("favorites")) || [];
-    const savedWatchlist = JSON.parse(localStorage.getItem("watchlist")) || [];
-    setFavorites(savedFavorites.map((movie) => movie.id));
-    setWatchlist(savedWatchlist.map((movie) => movie.id));
+  // Show notification
+  const showNotification = (message, type) => {
+    setNotification({
+      message,
+      type,
+      visible: true,
+    });
+  };
 
+  // Hide notification
+  const hideNotification = () => {
+    setNotification({
+      ...notification,
+      visible: false,
+    });
+  };
+
+  useEffect(() => {
     const fetchMovieDetails = async () => {
       try {
         setLoading(true);
@@ -69,60 +97,71 @@ function MovieDetails() {
     return `${hours}h ${mins}m`;
   };
 
-  const toggleFavorite = () => {
-    if (!movie) return;
+  const toggleFavorite = async () => {
+    if (!movie || !currentUser) {
+      showNotification("Please login to add favorites", "error");
+      return;
+    }
 
-    const currentFavorites =
-      JSON.parse(localStorage.getItem("favorites")) || [];
-    const movieExists = currentFavorites.some((item) => item.id === movie.id);
-
-    let updatedFavorites;
-    if (movieExists) {
-      updatedFavorites = currentFavorites.filter(
-        (item) => item.id !== movie.id
-      );
-      setFavorites(favorites.filter((id) => id !== movie.id));
-    } else {
-      const movieToAdd = {
+    try {
+      const movieData = {
         id: movie.id,
         title: movie.title,
         poster_path: getImageUrl(movie.poster_path),
-        release_date: formatDate(movie.release_date),
-        vote_average: movie.vote_average?.toFixed(1) || "N/A",
+        release_date: movie.release_date,
+        vote_average: movie.vote_average,
+        media_type: "movie",
       };
-      updatedFavorites = [...currentFavorites, movieToAdd];
-      setFavorites([...favorites, movie.id]);
-    }
 
-    localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
+      if (isInFavorites(movie.id, "movie")) {
+        await removeFromFavorites(movie.id, "movie");
+        showNotification(
+          `Removed "${movie.title}" from favorites`,
+          "favorite-remove"
+        );
+      } else {
+        await addToFavorites(movieData);
+        showNotification(`Added "${movie.title}" to favorites`, "favorite-add");
+      }
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+      showNotification("Failed to update favorites", "error");
+    }
   };
 
-  const toggleWatchlist = () => {
-    if (!movie) return;
+  const toggleWatchlist = async () => {
+    if (!movie || !currentUser) {
+      showNotification("Please login to add to watchlist", "error");
+      return;
+    }
 
-    const currentWatchlist =
-      JSON.parse(localStorage.getItem("watchlist")) || [];
-    const movieExists = currentWatchlist.some((item) => item.id === movie.id);
-
-    let updatedWatchlist;
-    if (movieExists) {
-      updatedWatchlist = currentWatchlist.filter(
-        (item) => item.id !== movie.id
-      );
-      setWatchlist(watchlist.filter((id) => id !== movie.id));
-    } else {
-      const movieToAdd = {
+    try {
+      const movieData = {
         id: movie.id,
         title: movie.title,
         poster_path: getImageUrl(movie.poster_path),
-        release_date: formatDate(movie.release_date),
-        vote_average: movie.vote_average?.toFixed(1) || "N/A",
+        release_date: movie.release_date,
+        vote_average: movie.vote_average,
+        media_type: "movie",
       };
-      updatedWatchlist = [...currentWatchlist, movieToAdd];
-      setWatchlist([...watchlist, movie.id]);
-    }
 
-    localStorage.setItem("watchlist", JSON.stringify(updatedWatchlist));
+      if (isInWatchlist(movie.id, "movie")) {
+        await removeFromWatchlist(movie.id, "movie");
+        showNotification(
+          `Removed "${movie.title}" from watchlist`,
+          "watchlist-remove"
+        );
+      } else {
+        await addToWatchlist(movieData);
+        showNotification(
+          `Added "${movie.title}" to watchlist`,
+          "watchlist-add"
+        );
+      }
+    } catch (error) {
+      console.error("Error toggling watchlist:", error);
+      showNotification("Failed to update watchlist", "error");
+    }
   };
 
   const handlePlayTrailer = () => {
@@ -138,6 +177,8 @@ function MovieDetails() {
         setTrailerKey(trailer.key);
         setShowTrailer(true);
         document.body.style.overflow = "hidden"; // Prevent scrolling when modal is open
+      } else {
+        showNotification("No trailer available for this movie", "info");
       }
     }
   };
@@ -156,8 +197,21 @@ function MovieDetails() {
     return <div className="error">Movie not found</div>;
   }
 
+  // Check if movie is in favorites/watchlist
+  const isFavorited = currentUser && isInFavorites(movie.id, "movie");
+  const isWatchlisted = currentUser && isInWatchlist(movie.id, "movie");
+
   return (
     <div className="movie-details">
+      {/* Notification component */}
+      <Notification
+        message={notification.message}
+        type={notification.type}
+        visible={notification.visible}
+        onClose={hideNotification}
+        duration={4000}
+      />
+
       {/* Trailer Modal */}
       {showTrailer && trailerKey && (
         <div className="trailer-modal">
@@ -215,26 +269,22 @@ function MovieDetails() {
               </button>
               <button
                 className={`icon-button favorite-button ${
-                  favorites.includes(movie.id) ? "active" : ""
+                  isFavorited ? "active" : ""
                 }`}
                 onClick={toggleFavorite}
                 title={
-                  favorites.includes(movie.id)
-                    ? "Remove from Favorites"
-                    : "Add to Favorites"
+                  isFavorited ? "Remove from Favorites" : "Add to Favorites"
                 }
               >
                 <FontAwesomeIcon icon={faHeart} />
               </button>
               <button
                 className={`icon-button watchlist-button ${
-                  watchlist.includes(movie.id) ? "active" : ""
+                  isWatchlisted ? "active" : ""
                 }`}
                 onClick={toggleWatchlist}
                 title={
-                  watchlist.includes(movie.id)
-                    ? "Remove from Watchlist"
-                    : "Add to Watchlist"
+                  isWatchlisted ? "Remove from Watchlist" : "Add to Watchlist"
                 }
               >
                 <FontAwesomeIcon icon={faBookmark} />

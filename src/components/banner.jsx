@@ -4,17 +4,23 @@ import Notification from "./Notification";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlay, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { useAuth } from "../contexts/AuthContext";
+import useWatchlist from "../hooks/useWatchlist";
 
 function Banner() {
   const [movies, setMovies] = useState([]);
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [watchlist, setWatchlist] = useState([]);
   const [notification, setNotification] = useState({
     message: "",
     type: "",
     visible: false,
   });
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
+
+  // Use our Firebase watchlist hook
+  const { watchlist, isInWatchlist, addItem, removeItem } =
+    useWatchlist(currentUser);
 
   const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
   const BASE_URL = "https://api.themoviedb.org/3";
@@ -23,16 +29,10 @@ function Banner() {
   const TOTAL_SLIDES = 6;
 
   // Function to get image URL
-  const getImageUrl = (path) => {
+  const getImageUrl = (path, size = BACKDROP_SIZE) => {
     if (!path) return null;
-    return `${IMAGE_BASE_URL}${BACKDROP_SIZE}${path}`;
+    return `${IMAGE_BASE_URL}${size}${path}`;
   };
-
-  // Load watchlist from localStorage on component mount
-  useEffect(() => {
-    const savedWatchlist = JSON.parse(localStorage.getItem("watchlist")) || [];
-    setWatchlist(savedWatchlist.map((item) => item.id));
-  }, []);
 
   useEffect(() => {
     const fetchBannerMovies = async () => {
@@ -76,42 +76,58 @@ function Banner() {
     return string?.length > n ? string.substr(0, n - 1) + "..." : string;
   };
 
-  // Toggle watchlist
-  const toggleWatchlist = (movie) => {
-    const currentWatchlist =
-      JSON.parse(localStorage.getItem("watchlist")) || [];
-    const movieExists = currentWatchlist.some((item) => item.id === movie.id);
-
-    let updatedWatchlist;
-    if (movieExists) {
-      updatedWatchlist = currentWatchlist.filter(
-        (item) => item.id !== movie.id
-      );
-      setWatchlist(watchlist.filter((id) => id !== movie.id));
+  // Toggle watchlist using Firebase
+  const toggleWatchlist = async (movie) => {
+    if (!currentUser) {
       setNotification({
-        message: `Removed "${movie.title}" from watchlist`,
-        type: "watchlist-remove",
+        message: "Please log in to add items to your watchlist",
+        type: "error",
         visible: true,
       });
-    } else {
-      const movieToAdd = {
-        id: movie.id,
-        title: movie.title,
-        poster_path: getImageUrl(movie.poster_path),
-        release_date: movie.release_date,
-        vote_average: movie.vote_average,
-        media_type: "movie",
-      };
-      updatedWatchlist = [...currentWatchlist, movieToAdd];
-      setWatchlist([...watchlist, movie.id]);
+      return;
+    }
+
+    try {
+      const isInList = isInWatchlist(movie.id.toString());
+
+      if (isInList) {
+        // Remove from watchlist
+        const success = await removeItem(movie.id);
+        if (success) {
+          setNotification({
+            message: `Removed "${movie.title}" from watchlist`,
+            type: "watchlist-remove",
+            visible: true,
+          });
+        }
+      } else {
+        // Add to watchlist
+        const movieToAdd = {
+          id: movie.id,
+          title: movie.title,
+          poster_path: getImageUrl(movie.poster_path, "/w500"),
+          release_date: movie.release_date,
+          vote_average: movie.vote_average?.toFixed(1) || "N/A",
+          media_type: "movie",
+        };
+
+        const success = await addItem(movieToAdd);
+        if (success) {
+          setNotification({
+            message: `Added "${movie.title}" to watchlist`,
+            type: "watchlist-add",
+            visible: true,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error updating watchlist:", error);
       setNotification({
-        message: `Added "${movie.title}" to watchlist`,
-        type: "watchlist-add",
+        message: "Error updating watchlist",
+        type: "error",
         visible: true,
       });
     }
-
-    localStorage.setItem("watchlist", JSON.stringify(updatedWatchlist));
   };
 
   // Hide notification
@@ -134,11 +150,11 @@ function Banner() {
     <div className="banner_container">
       {/* Display the current slide */}
       <div className="banner_image">
-      <div
+        <div
           className="banner_bg"
-        style={{
-          backgroundImage: `url(${getImageUrl(currentMovie.backdrop_path)})`,
-        }}
+          style={{
+            backgroundImage: `url(${getImageUrl(currentMovie.backdrop_path)})`,
+          }}
         ></div>
         <div className="banner_contents">
           <h1 className="banner_title">
@@ -155,7 +171,7 @@ function Banner() {
               onClick={() => toggleWatchlist(currentMovie)}
             >
               <FontAwesomeIcon icon={faPlus} />
-              {watchlist.includes(currentMovie.id)
+              {isInWatchlist(currentMovie.id.toString())
                 ? "Remove from Watchlist"
                 : "Add to Watchlist"}
             </button>
