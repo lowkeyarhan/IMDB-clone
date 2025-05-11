@@ -11,6 +11,24 @@ import {
   faExclamationCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import "../styles/auth.css";
+import { motion, AnimatePresence } from "framer-motion";
+
+// Animation variants for the auth method switching
+const authSwitchVariants = {
+  initial: { opacity: 0, y: 20, scale: 0.98 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.4, ease: [0.25, 1, 0.5, 1] },
+  },
+  exit: {
+    opacity: 0,
+    y: -20,
+    scale: 0.98,
+    transition: { duration: 0.3, ease: [0.5, 0, 0.75, 0] },
+  },
+};
 
 function Login() {
   const navigate = useNavigate();
@@ -19,11 +37,10 @@ function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [authMethod, setAuthMethod] = useState("email"); // "email" or "google"
+  const [authMethod, setAuthMethod] = useState("email");
 
   async function handleEmailLogin(e) {
     e.preventDefault();
-
     try {
       setError("");
       setLoading(true);
@@ -59,110 +76,136 @@ function Login() {
   }
 
   return (
-    <div className="auth-container">
-      <div className="auth-form-container">
-        <div className="auth-logo">
-          <FontAwesomeIcon icon={faFilm} className="auth-logo-icon" />
-          <h1>ScreenKiss</h1>
-        </div>
-
-        <h2>Sign In</h2>
-
-        {error && (
-          <div className="auth-error">
-            <FontAwesomeIcon icon={faExclamationCircle} />
-            <span>{error}</span>
-          </div>
-        )}
-
-        <div className="auth-tabs">
-          <button
-            className={`auth-tab ${authMethod === "email" ? "active" : ""}`}
-            onClick={() => setAuthMethod("email")}
-          >
-            <FontAwesomeIcon icon={faEnvelope} />
-            <span>Email</span>
-          </button>
-          <button
-            className={`auth-tab ${authMethod === "google" ? "active" : ""}`}
-            onClick={() => setAuthMethod("google")}
-          >
-            <FontAwesomeIcon icon={faGoogle} />
-            <span>Google</span>
-          </button>
-        </div>
-
-        {authMethod === "email" ? (
-          <div className="auth-method-container">
-            <form onSubmit={handleEmailLogin} className="auth-form">
-              <div className="form-group">
-                <label htmlFor="email">
-                  <FontAwesomeIcon icon={faEnvelope} />
-                  <span>Email</span>
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email"
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="password">
-                  <FontAwesomeIcon icon={faLock} />
-                  <span>Password</span>
-                </label>
-                <input
-                  type="password"
-                  id="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  required
-                />
-              </div>
-              <button
-                disabled={loading}
-                type="submit"
-                className="auth-button pulse-on-hover"
-              >
-                <FontAwesomeIcon icon={faSignInAlt} />
-                Sign In
-              </button>
-            </form>
-            <div className="auth-links">
-              <Link to="/forgot-password" className="forgot-password-link">
-                Forgot Password?
-              </Link>
-              <div className="auth-divider">
-                <span>or</span>
-              </div>
-              <p className="signup-prompt">
-                Don't have an account?{" "}
-                <Link to="/signup" className="signup-link">
-                  Sign Up
-                </Link>
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="auth-method-container">
-            <p className="auth-info">
-              Use your Google account to sign in to ScreenKiss quickly and
-              securely
+    <div className="login-page-container redesigned">
+      <div className="login-card">
+        <div className="login-form-content">
+          <div className="form-header">
+            <h2>Sign In</h2>
+            <p className="subtitle">
+              Welcome back! Please sign in to continue.
             </p>
+          </div>
+
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="auth-error compact-error"
+            >
+              <FontAwesomeIcon icon={faExclamationCircle} />
+              <span>{error}</span>
+            </motion.div>
+          )}
+
+          <div className="auth-method-selection">
             <button
-              disabled={loading}
-              onClick={handleGoogleSignIn}
-              className="google-auth-button pulse-on-hover"
+              className={`method-button ${
+                authMethod === "email" ? "active" : ""
+              }`}
+              onClick={() => setAuthMethod("email")}
+            >
+              <FontAwesomeIcon icon={faEnvelope} />
+              <span>Email</span>
+            </button>
+            <button
+              className={`method-button ${
+                authMethod === "google" ? "active" : ""
+              }`}
+              onClick={() => setAuthMethod("google")}
             >
               <FontAwesomeIcon icon={faGoogle} />
-              Sign in with Google
+              <span>Google</span>
             </button>
           </div>
-        )}
+
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={authMethod} // Key change triggers animation
+              className="auth-form-wrapper-animated glassmorphic"
+              variants={authSwitchVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+            >
+              {authMethod === "email" ? (
+                <form
+                  onSubmit={handleEmailLogin}
+                  className="auth-form minimal-form"
+                >
+                  <div className="form-group">
+                    <label htmlFor="email"></label>
+                    <input
+                      type="email"
+                      id="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="password"></label>
+                    <input
+                      type="password"
+                      id="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Enter your password"
+                      required
+                    />
+                  </div>
+                  <button
+                    disabled={loading}
+                    type="submit"
+                    className="auth-button primary-submit-button"
+                  >
+                    {loading ? "Signing In..." : "Sign In"}
+                    {!loading && <FontAwesomeIcon icon={faSignInAlt} />}
+                  </button>
+                  <div className="form-links">
+                    <Link to="/forgot-password">Forgot Password?</Link>
+                  </div>
+                </form>
+              ) : (
+                <div className="google-signin-container">
+                  <p className="google-signin-info">
+                    Use your Google account for a quick and secure sign-in.
+                  </p>
+                  <button
+                    disabled={loading}
+                    onClick={handleGoogleSignIn}
+                    className="auth-button google-primary-button"
+                  >
+                    <FontAwesomeIcon icon={faGoogle} />
+                    {loading ? "Redirecting..." : "Sign in with Google"}
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+
+          <div className="bottom-links">
+            <p>
+              Don't have an account? <Link to="/signup">Sign Up</Link>
+            </p>
+            <p className="terms-link">
+              By signing in, you agree to our{" "}
+              <Link to="/terms">Terms & Conditions</Link>.
+            </p>
+          </div>
+        </div>
+
+        <div className="login-visual-content">
+          {/* Placeholder for image - can be set via CSS background-image */}
+          <div className="visual-overlay">
+            {/* Optional: Add some text or subtle graphics on the image */}
+            <h3>Your Gateway to Cinematic Adventures</h3>
+            <p>
+              Track, discover, and immerse yourself in the world of movies and
+              TV shows.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

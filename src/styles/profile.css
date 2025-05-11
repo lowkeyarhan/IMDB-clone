@@ -338,6 +338,7 @@
   font-size: 1.4rem;
   font-weight: 600;
   margin: 0;
+  margin-bottom: 1.5rem;
   position: relative;
   padding-left: 1rem;
 }
@@ -377,7 +378,6 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 1.5rem;
-  margin-top: 1.5rem;
   margin-bottom: 1.5rem;
   transition: var(--profile-transition);
 }
@@ -907,6 +907,9 @@
   .stats-card {
     border-radius: 15px;
   }
+  .empty-state {
+    margin-bottom: 1.5rem;
+  }
 }
 
 @media (max-width: 600px) {
@@ -921,12 +924,6 @@
   }
 
   .stats-grid {
-    gap: 0.8rem;
-  }
-
-  .section-header {
-    flex-direction: column;
-    align-items: flex-start;
     gap: 0.8rem;
   }
 
