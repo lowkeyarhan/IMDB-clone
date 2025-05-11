@@ -182,7 +182,7 @@
 }
 
 /* Mobile styles */
-@media (max-width: 1000px) {
+@media (max-width: 950px) {
   .search_input.active {
     width: 160px;
   }
@@ -207,6 +207,13 @@
   }
 }
 
+@media (max-width: 400px) {
+  .search_results_grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
+    gap: 10px;
+  }
+}
+
 /* Extra small screens */
 @media (max-width: 378px) {
   .search_input.active {
@@ -214,7 +221,7 @@
   }
 
   .search_results_grid {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
     gap: 10px;
   }
 

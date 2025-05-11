@@ -291,7 +291,7 @@ function Search() {
                 src={
                   item.poster_path
                     ? getImageUrl(item.poster_path)
-                    : "https://via.placeholder.com/300x450?text=No+Image"
+                    : "https://placehold.co/320x180?text=No+Image"
                 }
                 alt={item.media_type === "movie" ? item.title : item.name}
               />

@@ -334,8 +334,9 @@ function Profile() {
                                 >
                                   <img
                                     src={
+                                      item.poster_path ||
                                       item.posterPath ||
-                                      "https://via.placeholder.com/150x225/222/fff?text=No+Image"
+                                      "https://placehold.co/320x180?text=No+Image"
                                     }
                                     alt={item.title}
                                     className="history-item-thumbnail"
@@ -442,7 +443,7 @@ function Profile() {
                               <img
                                 src={
                                   item.poster_path ||
-                                  "https://via.placeholder.com/300x450?text=No+Image"
+                                  "https://placehold.co/320x180?text=No+Image"
                                 }
                                 alt={item.title}
                               />
@@ -539,7 +540,7 @@ function Profile() {
                               <img
                                 src={
                                   item.poster_path ||
-                                  "https://via.placeholder.com/300x450?text=No+Image"
+                                  "https://placehold.co/320x180?text=No+Image"
                                 }
                                 alt={item.title}
                               />
@@ -617,7 +618,7 @@ function Profile() {
                             <img
                               src={
                                 item.posterPath ||
-                                "https://via.placeholder.com/100x150/222/fff?text=No+Image"
+                                "https://placehold.co/320x180?text=No+Image"
                               }
                               alt={item.title}
                               className="history-item-thumbnail-detailed"
