@@ -443,6 +443,7 @@ function Profile() {
                               <img
                                 src={
                                   item.poster_path ||
+                                  item.posterPath ||
                                   "https://placehold.co/320x180?text=No+Image"
                                 }
                                 alt={item.title}
