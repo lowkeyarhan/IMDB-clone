@@ -332,7 +332,6 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
 }
 
 .section-header h2 {
@@ -378,6 +377,8 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 1.5rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
   transition: var(--profile-transition);
 }
 
@@ -525,6 +526,7 @@
   padding: 3rem;
   text-align: center;
   min-height: 220px;
+  margin-top: 1.5rem;
   border: 1px dashed rgba(255, 255, 255, 0.08);
 }
 
@@ -664,6 +666,181 @@
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* === Recently Watched / History Section === */
+.recently-watched-section .media-grid,
+.history-grid {
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1.25rem;
+}
+
+.history-item-card {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.25s ease-in-out, box-shadow 0.25s ease-in-out,
+    background-color 0.2s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid transparent;
+}
+
+.history-item-card:hover {
+  box-shadow: var(--shadow-medium);
+  background-color: var(--card-bg-hover-dark);
+  border-color: rgba(var(--primary-accent-rgb), 0.5);
+}
+
+.history-item-thumbnail {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background-color: var(--placeholder-bg);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.history-item-info {
+  padding: 0.8rem 1rem;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.history-item-title {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0 0 0.3rem 0;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 2.7em;
+}
+
+.history-item-watched-at {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.history-item-watched-at .faClock {
+  font-size: 0.75rem;
+}
+
+/* Styles for the detailed history list on the History Tab */
+.history-list-detailed {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.history-item-card-detailed {
+  background: rgba(45, 45, 45, 0.6);
+  border-radius: 10px;
+  backdrop-filter: blur(10px) saturate(110%);
+  font-family: "Poppins", sans-serif;
+  cursor: pointer;
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding: 1rem 0.75rem;
+  transition: background-color 0.2s ease-in-out;
+  border-bottom: 1px solid var(--card-border, rgba(255, 255, 255, 0.08));
+}
+
+.history-item-card-detailed:last-child {
+  border-bottom: none;
+}
+
+.history-item-card-detailed:hover {
+  background-color: var(--card-bg-hover-dark, rgba(255, 255, 255, 0.05));
+}
+
+.history-item-thumbnail-detailed {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 4px;
+  background-color: var(--placeholder-bg);
+  flex-shrink: 0;
+}
+
+.history-item-info-detailed {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex-grow: 1;
+  gap: 0.15rem;
+  overflow: hidden;
+}
+
+.history-item-title-detailed {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.history-item-type-detailed {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-transform: capitalize;
+}
+
+.history-item-watched-at-detailed {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.1rem;
+}
+
+.history-item-watched-at-detailed .faClock {
+  font-size: 0.75rem;
+}
+
+.profile-loading-small {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 2rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.profile-error-small {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 2rem;
+  color: var(--danger-color);
+  background-color: rgba(var(--danger-color-rgb), 0.1);
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.view-toggle-icon {
+  margin-left: auto;
+  color: var(--primary-accent);
 }
 
 /* Responsive Styles */

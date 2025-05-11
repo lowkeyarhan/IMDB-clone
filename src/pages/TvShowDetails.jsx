@@ -100,8 +100,17 @@ function TVShowDetails() {
   };
 
   const toggleFavorite = async () => {
+    console.log(
+      "[TvShowDetails] toggleFavorite called. Show:",
+      show,
+      "User:",
+      currentUser
+    );
     if (!show || !currentUser) {
       showNotification("Please login to add favorites", "error");
+      console.log(
+        "[TvShowDetails] toggleFavorite returning early. Show or User missing."
+      );
       return;
     }
 
@@ -109,36 +118,54 @@ function TVShowDetails() {
       const showData = {
         id: show.id,
         name: show.name,
-        title: show.name, // Ensure we have a title field for consistency
+        title: show.name,
         poster_path: getImageUrl(show.poster_path),
         first_air_date: show.first_air_date,
-        release_date: show.first_air_date, // Add release_date for consistency with movies
+        release_date: show.first_air_date,
         vote_average: show.vote_average,
         media_type: "tv",
-        // Add additional fields helpful for TV shows
         number_of_seasons: show.number_of_seasons,
         status: show.status,
       };
+      console.log(
+        "[TvShowDetails] toggleFavorite - showData prepared:",
+        showData
+      );
 
       if (isInFavorites(show.id, "tv")) {
+        console.log(
+          "[TvShowDetails] toggleFavorite - attempting to remove from favorites."
+        );
         await removeFromFavorites(show.id, "tv");
         showNotification(
           `Removed "${show.name}" from favorites`,
           "favorite-remove"
         );
       } else {
+        console.log(
+          "[TvShowDetails] toggleFavorite - attempting to add to favorites."
+        );
         await addToFavorites(showData);
         showNotification(`Added "${show.name}" to favorites`, "favorite-add");
       }
     } catch (error) {
-      console.error("Error toggling favorite:", error);
+      console.error("[TvShowDetails] Error in toggleFavorite:", error);
       showNotification("Failed to update favorites", "error");
     }
   };
 
   const toggleWatchlist = async () => {
+    console.log(
+      "[TvShowDetails] toggleWatchlist called. Show:",
+      show,
+      "User:",
+      currentUser
+    );
     if (!show || !currentUser) {
       showNotification("Please login to add to watchlist", "error");
+      console.log(
+        "[TvShowDetails] toggleWatchlist returning early. Show or User missing."
+      );
       return;
     }
 
@@ -146,29 +173,38 @@ function TVShowDetails() {
       const showData = {
         id: show.id,
         name: show.name,
-        title: show.name, // Ensure we have a title field for consistency
+        title: show.name,
         poster_path: getImageUrl(show.poster_path),
         first_air_date: show.first_air_date,
-        release_date: show.first_air_date, // Add release_date for consistency with movies
+        release_date: show.first_air_date,
         vote_average: show.vote_average,
         media_type: "tv",
-        // Add additional fields helpful for TV shows
         number_of_seasons: show.number_of_seasons,
         status: show.status,
       };
+      console.log(
+        "[TvShowDetails] toggleWatchlist - showData prepared:",
+        showData
+      );
 
       if (isInWatchlist(show.id, "tv")) {
+        console.log(
+          "[TvShowDetails] toggleWatchlist - attempting to remove from watchlist."
+        );
         await removeFromWatchlist(show.id, "tv");
         showNotification(
           `Removed "${show.name}" from watchlist`,
           "watchlist-remove"
         );
       } else {
+        console.log(
+          "[TvShowDetails] toggleWatchlist - attempting to add to watchlist."
+        );
         await addToWatchlist(showData);
         showNotification(`Added "${show.name}" to watchlist`, "watchlist-add");
       }
     } catch (error) {
-      console.error("Error toggling watchlist:", error);
+      console.error("[TvShowDetails] Error in toggleWatchlist:", error);
       showNotification("Failed to update watchlist", "error");
     }
   };

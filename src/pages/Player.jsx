@@ -35,10 +35,13 @@ import {
   faRedditAlien,
 } from "@fortawesome/free-brands-svg-icons";
 import "../styles/Player.css";
+import { useAuth } from "../contexts/AuthContext";
+import { addRecentlyWatched } from "../firebase/firestore";
 
 function Player() {
   const { type, id } = useParams();
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const [title, setTitle] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -54,6 +57,8 @@ function Player() {
     rating: "",
     genres: [],
     backdrop: "",
+    posterPath: null,
+    title: "",
   });
   const [episodeDetails, setEpisodeDetails] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -65,12 +70,85 @@ function Player() {
   const [videoKey, setVideoKey] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const searchTimeoutRef = useRef(null);
-  const SEARCH_DEBOUNCE_DELAY = 500; // 500ms delay for search
+  const SEARCH_DEBOUNCE_DELAY = 500;
+  const playbackStartTimeRef = useRef(null);
+  const accumulatedWatchTimeRef = useRef(0);
 
   const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
   const BASE_URL = "https://api.themoviedb.org/3";
 
-  // Update the generateStreamLinks function with high-quality sources
+  // --- START: Watch Time Tracking Logic ---
+  const recordWatchSession = useCallback(async () => {
+    if (currentUser && mediaDetails && mediaDetails.title) {
+      console.log(`[Player] Recording watch session for ${mediaDetails.title}`);
+      const watchedDurationSeconds = accumulatedWatchTimeRef.current;
+
+      const item = {
+        id: id,
+        type: type,
+        title: mediaDetails.title,
+        posterPath: mediaDetails.posterPath || mediaDetails.backdrop,
+      };
+
+      await addRecentlyWatched(currentUser.uid, item, watchedDurationSeconds);
+      accumulatedWatchTimeRef.current = 0;
+    }
+  }, [currentUser, id, type, mediaDetails, addRecentlyWatched]);
+
+  // Effect to handle watch time accumulation
+  useEffect(() => {
+    let intervalId = null;
+
+    if (videoKey && currentUser) {
+      // Start tracking if video is loaded and user is logged in
+      playbackStartTimeRef.current = Date.now();
+      console.log("[Player] Playback started, tracking time.");
+
+      // Update accumulated time every few seconds
+      intervalId = setInterval(() => {
+        if (playbackStartTimeRef.current) {
+          const sessionWatchTime =
+            (Date.now() - playbackStartTimeRef.current) / 1000;
+        }
+      }, 15000);
+    }
+
+    return () => {
+      clearInterval(intervalId);
+      if (playbackStartTimeRef.current && currentUser) {
+        const sessionWatchTime =
+          (Date.now() - playbackStartTimeRef.current) / 1000; // in seconds
+        accumulatedWatchTimeRef.current += sessionWatchTime;
+        console.log(
+          `[Player] Watch session ended. Accumulated: ${accumulatedWatchTimeRef.current.toFixed(
+            2
+          )}s`
+        );
+        playbackStartTimeRef.current = null;
+      }
+    };
+  }, [videoKey, currentUser]);
+
+  // Effect for cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (playbackStartTimeRef.current) {
+        const sessionWatchTime =
+          (Date.now() - playbackStartTimeRef.current) / 1000;
+        accumulatedWatchTimeRef.current += sessionWatchTime;
+      }
+      if (accumulatedWatchTimeRef.current > 0) {
+        console.log("[Player] Component unmounting. Recording watch session.");
+        recordWatchSession();
+      } else {
+        console.log(
+          "[Player] Component unmounting. No accumulated watch time to record."
+        );
+      }
+    };
+  }, [recordWatchSession]);
+  // --- END: Watch Time Tracking Logic ---
+
   const generateStreamLinks = (
     tmdbId,
     mediaType,
@@ -140,6 +218,10 @@ function Player() {
           backdrop: data.backdrop_path
             ? `https://image.tmdb.org/t/p/original${data.backdrop_path}`
             : null,
+          posterPath: data.poster_path
+            ? `https://image.tmdb.org/t/p/w500${data.poster_path}`
+            : null,
+          title: data.name || data.title,
         });
 
         // For TV shows, get season and episode info
@@ -334,9 +416,6 @@ function Player() {
       {/* Top bar - simplified */}
       <div className="player-top-bar">
         <div className="media-title">
-          <Link to="/" className="home-link">
-            <FontAwesomeIcon icon={faHome} />
-          </Link>
           <span className="title-text">{title}</span>
         </div>
         {type === "tv" && (

@@ -13,6 +13,8 @@ import {
   faTv,
 } from "@fortawesome/free-solid-svg-icons";
 import Notification from "../components/Notification";
+import { useAuth } from "../contexts/AuthContext";
+import { useUserData } from "../contexts/UserDataContext";
 
 // Cache for search results
 const searchCache = {};
@@ -21,11 +23,19 @@ const CACHE_EXPIRY = 10 * 60 * 1000; // 10 minutes cache
 function Search() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { currentUser } = useAuth();
+  const {
+    isInFavorites,
+    isInWatchlist,
+    addToFavorites,
+    removeFromFavorites,
+    addToWatchlist,
+    removeFromWatchlist,
+  } = useUserData();
+
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [favorites, setFavorites] = useState([]);
-  const [watchlist, setWatchlist] = useState([]);
   const [notification, setNotification] = useState({
     visible: false,
     message: "",
@@ -79,13 +89,6 @@ function Search() {
       visible: false,
     });
   };
-
-  useEffect(() => {
-    const savedFavorites = JSON.parse(localStorage.getItem("favorites")) || [];
-    const savedWatchlist = JSON.parse(localStorage.getItem("watchlist")) || [];
-    setFavorites(savedFavorites.map((item) => item.id));
-    setWatchlist(savedWatchlist.map((item) => item.id));
-  }, []);
 
   useEffect(() => {
     const searchContent = async () => {
@@ -151,13 +154,10 @@ function Search() {
       }
     };
 
-    // Search immediately without delay since we're already debouncing
-    // in the navbar component
     searchContent();
   }, [query, API_KEY]);
 
   const handleItemClick = (item) => {
-    // Navigate directly to the details page based on media type
     if (item.media_type === "movie") {
       navigate(`/movie/${item.id}`);
     } else if (item.media_type === "tv") {
@@ -165,74 +165,86 @@ function Search() {
     }
   };
 
-  const toggleFavorite = (e, item) => {
-    e.stopPropagation(); // Prevent click from bubbling to parent
-    const currentFavorites =
-      JSON.parse(localStorage.getItem("favorites")) || [];
-    const itemExists = currentFavorites.some((fav) => fav.id === item.id);
+  const toggleFavorite = async (e, item) => {
+    e.stopPropagation();
+    if (!currentUser) {
+      showNotification("Please login to add favorites", "error");
+      return;
+    }
 
-    let updatedFavorites;
     const title = item.media_type === "movie" ? item.title : item.name;
     const releaseDate =
       item.media_type === "movie" ? item.release_date : item.first_air_date;
 
-    if (itemExists) {
-      updatedFavorites = currentFavorites.filter((fav) => fav.id !== item.id);
-      setFavorites(favorites.filter((id) => id !== item.id));
-      showNotification(`Removed "${title}" from favorites`, "favorite-remove");
-    } else {
-      const itemToAdd = {
+    try {
+      const itemData = {
         id: item.id,
         title: title,
         poster_path: getImageUrl(item.poster_path),
-        release_date: formatDate(releaseDate),
-        vote_average: item.vote_average
-          ? formatVoteAverage(item.vote_average)
-          : "N/A",
+        release_date: releaseDate,
+        vote_average: item.vote_average,
         media_type: item.media_type,
+        ...(item.media_type === "tv" && {
+          name: item.name,
+          first_air_date: item.first_air_date,
+        }),
       };
-      updatedFavorites = [...currentFavorites, itemToAdd];
-      setFavorites([...favorites, item.id]);
-      showNotification(`Added "${title}" to favorites`, "favorite-add");
-    }
 
-    localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
+      if (isInFavorites(item.id, item.media_type)) {
+        await removeFromFavorites(item.id, item.media_type);
+        showNotification(
+          `Removed "${title}" from favorites`,
+          "favorite-remove"
+        );
+      } else {
+        await addToFavorites(itemData);
+        showNotification(`Added "${title}" to favorites`, "favorite-add");
+      }
+    } catch (error) {
+      console.error("Error in toggleFavorite (Search.jsx):", error);
+      showNotification("Failed to update favorites", "error");
+    }
   };
 
-  const toggleWatchlist = (e, item) => {
-    e.stopPropagation(); // Prevent click from bubbling to parent
-    const currentWatchlist =
-      JSON.parse(localStorage.getItem("watchlist")) || [];
-    const itemExists = currentWatchlist.some((watch) => watch.id === item.id);
+  const toggleWatchlist = async (e, item) => {
+    e.stopPropagation();
+    if (!currentUser) {
+      showNotification("Please login to add to watchlist", "error");
+      return;
+    }
 
-    let updatedWatchlist;
     const title = item.media_type === "movie" ? item.title : item.name;
     const releaseDate =
       item.media_type === "movie" ? item.release_date : item.first_air_date;
 
-    if (itemExists) {
-      updatedWatchlist = currentWatchlist.filter(
-        (watch) => watch.id !== item.id
-      );
-      setWatchlist(watchlist.filter((id) => id !== item.id));
-      showNotification(`Removed "${title}" from watchlist`, "watchlist-remove");
-    } else {
-      const itemToAdd = {
+    try {
+      const itemData = {
         id: item.id,
         title: title,
         poster_path: getImageUrl(item.poster_path),
-        release_date: formatDate(releaseDate),
-        vote_average: item.vote_average
-          ? formatVoteAverage(item.vote_average)
-          : "N/A",
+        release_date: releaseDate,
+        vote_average: item.vote_average,
         media_type: item.media_type,
+        ...(item.media_type === "tv" && {
+          name: item.name,
+          first_air_date: item.first_air_date,
+        }),
       };
-      updatedWatchlist = [...currentWatchlist, itemToAdd];
-      setWatchlist([...watchlist, item.id]);
-      showNotification(`Added "${title}" to watchlist`, "watchlist-add");
-    }
 
-    localStorage.setItem("watchlist", JSON.stringify(updatedWatchlist));
+      if (isInWatchlist(item.id, item.media_type)) {
+        await removeFromWatchlist(item.id, item.media_type);
+        showNotification(
+          `Removed "${title}" from watchlist`,
+          "watchlist-remove"
+        );
+      } else {
+        await addToWatchlist(itemData);
+        showNotification(`Added "${title}" to watchlist`, "watchlist-add");
+      }
+    } catch (error) {
+      console.error("Error in toggleWatchlist (Search.jsx):", error);
+      showNotification("Failed to update watchlist", "error");
+    }
   };
 
   return (
@@ -270,7 +282,7 @@ function Search() {
                   icon={item.media_type === "movie" ? faFilm : faTv}
                 />
               </div>
-              {favorites.includes(item.id) && (
+              {currentUser && isInFavorites(item.id, item.media_type) && (
                 <div className="favorite_badge">
                   <FontAwesomeIcon icon={faHeart} />
                 </div>
@@ -314,33 +326,37 @@ function Search() {
                 <div className="search_actions">
                   <button
                     className={`action_btn favorite_action ${
-                      favorites.includes(item.id) ? "active" : ""
+                      currentUser && isInFavorites(item.id, item.media_type)
+                        ? "active"
+                        : ""
                     }`}
                     onClick={(e) => toggleFavorite(e, item)}
                     title={
-                      favorites.includes(item.id)
+                      currentUser && isInFavorites(item.id, item.media_type)
                         ? "Remove from Favorites"
                         : "Add to Favorites"
                     }
                   >
                     <FontAwesomeIcon icon={faHeart} />
-                    {favorites.includes(item.id)
+                    {currentUser && isInFavorites(item.id, item.media_type)
                       ? "Remove Favorite"
                       : "Add to Favorites"}
                   </button>
                   <button
                     className={`action_btn watchlist_action ${
-                      watchlist.includes(item.id) ? "active" : ""
+                      currentUser && isInWatchlist(item.id, item.media_type)
+                        ? "active"
+                        : ""
                     }`}
                     onClick={(e) => toggleWatchlist(e, item)}
                     title={
-                      watchlist.includes(item.id)
+                      currentUser && isInWatchlist(item.id, item.media_type)
                         ? "Remove from Watchlist"
                         : "Add to Watchlist"
                     }
                   >
                     <FontAwesomeIcon icon={faBookmark} />
-                    {watchlist.includes(item.id)
+                    {currentUser && isInWatchlist(item.id, item.media_type)
                       ? "Remove from Watchlist"
                       : "Add to Watchlist"}
                   </button>

@@ -169,15 +169,6 @@ function Watchlist() {
                     {formatVoteAverage(item.vote_average)}
                   </span>
                 </div>
-                {item.media_type === "tv" && item.number_of_seasons && (
-                  <div className="tv-info">
-                    <small>
-                      {item.number_of_seasons} Season
-                      {item.number_of_seasons !== 1 ? "s" : ""} •{" "}
-                      {item.status || "Unknown status"}
-                    </small>
-                  </div>
-                )}
                 <button
                   className="watched_btn"
                   onClick={(e) =>

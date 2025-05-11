@@ -103,10 +103,22 @@ export const setupFavoritesListener = (userId, onUpdate, onError) => {
 export const addToFavorites = async (userId, item) => {
   try {
     const mediaType = item.media_type || (item.first_air_date ? "tv" : "movie");
-    const docId = `${userId}_${mediaType}_${item.id}`;
+    // Ensure item.id is a clean numerical ID, not potentially a pre-formatted string from somewhere else.
+    const cleanItemId = String(item.id).split("_").pop();
+    const docId = `${userId}_${mediaType}_${cleanItemId}`;
+
+    console.log("[Firestore addToFavorites] Attempting to add:", {
+      userId,
+      mediaType,
+      itemId: cleanItemId,
+      docId,
+      item,
+    }); // DETAILED LOG
+
     const favouriteRef = doc(db, "favourites", docId);
     const favouriteData = {
       ...item,
+      id: cleanItemId, // Ensure the stored ID is the clean one
       userId,
       media_type: mediaType,
       createdAt: new Date(),
@@ -116,7 +128,11 @@ export const addToFavorites = async (userId, item) => {
     console.log(`Added ${docId} to favorites.`);
     return docId;
   } catch (error) {
-    console.error("Error adding to favourites:", error);
+    console.error(
+      "[Firestore addToFavorites] Error adding to favourites:",
+      error,
+      { userId, item }
+    ); // Log error with item
     throw error;
   }
 };
@@ -226,10 +242,22 @@ export const setupWatchlistListener = (userId, onUpdate, onError) => {
 export const addToWatchlist = async (userId, item) => {
   try {
     const mediaType = item.media_type || (item.first_air_date ? "tv" : "movie");
-    const docId = `${userId}_${mediaType}_${item.id}`;
+    // Ensure item.id is a clean numerical ID
+    const cleanItemId = String(item.id).split("_").pop();
+    const docId = `${userId}_${mediaType}_${cleanItemId}`;
+
+    console.log("[Firestore addToWatchlist] Attempting to add:", {
+      userId,
+      mediaType,
+      itemId: cleanItemId,
+      docId,
+      item,
+    }); // DETAILED LOG
+
     const watchlistRef = doc(db, "watchlist", docId);
     const watchlistData = {
       ...item,
+      id: cleanItemId, // Ensure the stored ID is the clean one
       userId,
       media_type: mediaType,
       createdAt: new Date(),
@@ -239,7 +267,11 @@ export const addToWatchlist = async (userId, item) => {
     console.log(`Added ${docId} to watchlist.`);
     return docId;
   } catch (error) {
-    console.error("Error adding to watchlist:", error);
+    console.error(
+      "[Firestore addToWatchlist] Error adding to watchlist:",
+      error,
+      { userId, item }
+    ); // Log error with item
     throw error;
   }
 };
@@ -368,12 +400,14 @@ export const manageUserDocumentOnLogin = async (user) => {
  * Keeps the list ordered by most recent and capped at RECENTLY_WATCHED_LIMIT.
  * @param {string} userId - The user's ID.
  * @param {object} item - The media item to add (should include id, type, title, posterPath).
+ * @param {number} durationSeconds - The duration in seconds the item was watched.
  */
-export const addRecentlyWatched = async (userId, item) => {
+export const addRecentlyWatched = async (userId, item, durationSeconds = 0) => {
   if (!userId || !item || !item.id || !item.type) {
     console.error("[Firestore] Invalid userId or item for addRecentlyWatched");
     return;
   }
+
   const userRef = doc(db, "users", userId);
   console.log(
     `[Firestore] Adding to recently watched for user ${userId}:`,
@@ -388,7 +422,11 @@ export const addRecentlyWatched = async (userId, item) => {
       throw new Error("User document not found.");
     }
     let currentRecentlyWatched = docSnap.data().recentlyWatched || [];
-    const newItem = { ...item, watchedAt: serverTimestamp() };
+    const newItem = {
+      ...item,
+      watchedAt: new Date(),
+      durationSeconds: durationSeconds,
+    };
     currentRecentlyWatched = currentRecentlyWatched.filter(
       (rwItem) => !(rwItem.id === newItem.id && rwItem.type === newItem.type)
     );

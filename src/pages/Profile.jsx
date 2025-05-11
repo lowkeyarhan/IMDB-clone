@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { db } from "../firebase/config";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { useUserData } from "../contexts/UserDataContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faUser,
@@ -27,36 +26,42 @@ import {
 import "../styles/auth.css";
 import "../styles/profile.css";
 import Footer from "../components/Footer";
-import useWatchlist from "../hooks/useWatchlist";
-import useFavorites from "../hooks/useFavorites";
 
 function Profile() {
   const navigate = useNavigate();
   const { currentUser, logout } = useAuth();
+  const {
+    favorites,
+    watchlist,
+    recentlyWatched,
+    recentlyWatchedLoading,
+    recentlyWatchedError,
+    totalTimeSpentSeconds,
+    isLoading: isUserDataLoading,
+    isInitialized,
+  } = useUserData();
+
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
   const [expandedSections, setExpandedSections] = useState({
-    recentlyWatched: false,
+    recentlyWatched: true,
     watchlist: false,
     favorites: false,
   });
-  const [isLoading, setIsLoading] = useState(false);
-  
-  // Get real data using our hooks
-  const { watchlist, loading: watchlistLoading } = useWatchlist(currentUser);
-  const { favorites, loading: favoritesLoading } = useFavorites(currentUser);
 
   // Calculate stats based on real data
   const userStats = {
-    favorites: favorites.length,
-    watchlist: watchlist.length,
-    // Recent watches would need a similar hook - using empty array for now
-    recentlyWatched: [],
-    totalTimeSpent: 0,
+    favorites: favorites ? favorites.length : 0,
+    watchlist: watchlist ? watchlist.length : 0,
+    recentlyWatchedCount: recentlyWatched ? recentlyWatched.length : 0,
+    totalTimeSpent: totalTimeSpentSeconds || 0,
     totalMoviesWatched: 0,
-    // Calculate days logged in based on user creation date
-    daysLoggedIn: currentUser ? 
-      Math.floor((new Date() - new Date(currentUser.metadata.creationTime)) / (1000 * 60 * 60 * 24)) : 0
+    daysLoggedIn: currentUser
+      ? Math.floor(
+          (new Date() - new Date(currentUser.metadata.creationTime)) /
+            (1000 * 60 * 60 * 24)
+        )
+      : 0,
   };
 
   async function handleLogout() {
@@ -106,11 +111,17 @@ function Profile() {
   }
 
   // Helper to format time in hours and minutes
-  function formatWatchTime(minutes) {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${hours}h ${mins}m`;
+  function formatWatchTime(totalSeconds) {
+    if (typeof totalSeconds !== "number" || totalSeconds < 0) return "0h 0m";
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    return `${hours}h ${minutes}m`;
   }
+
+  const handleItemClick = (item) => {
+    if (!item || !item.type || !item.id) return;
+    navigate(`/${item.type}/${item.id}`);
+  };
 
   return (
     <div className="profile-page">
@@ -198,7 +209,7 @@ function Profile() {
         <div className="profile-content">
           {error && <div className="auth-error">{error}</div>}
 
-          {isLoading ? (
+          {isUserDataLoading && !isInitialized ? (
             <div className="profile-loading">
               <div className="loading-spinner"></div>
               <p>Loading your profile data...</p>
@@ -232,12 +243,15 @@ function Profile() {
                     </div>
 
                     <div className="stats-card">
-                      <div className="stats-icon-wrapper movies-watched-bg">
-                        <FontAwesomeIcon icon={faTv} className="stats-icon" />
+                      <div className="stats-icon-wrapper history-bg">
+                        <FontAwesomeIcon
+                          icon={faHistory}
+                          className="stats-icon"
+                        />
                       </div>
                       <div className="stats-details">
-                        <h3>0</h3>
-                        <p>Series Finished</p>
+                        <h3>{userStats.recentlyWatchedCount}</h3>
+                        <p>Watched</p>
                       </div>
                     </div>
 
@@ -249,7 +263,7 @@ function Profile() {
                         />
                       </div>
                       <div className="stats-details">
-                        <h3>0h 0m</h3>
+                        <h3>{formatWatchTime(userStats.totalTimeSpent)}</h3>
                         <p>Time Spent</p>
                       </div>
                     </div>
@@ -278,18 +292,88 @@ function Profile() {
                     </div>
                   </div>
 
-                  <div className="content-section">
-                    <div className="section-header">
+                  <div className="content-section recently-watched-section">
+                    <div
+                      className="section-header clickable"
+                      onClick={() => toggleSection("recentlyWatched")}
+                    >
                       <h2>Recently Watched</h2>
+                      <FontAwesomeIcon
+                        icon={
+                          expandedSections.recentlyWatched
+                            ? faChevronUp
+                            : faChevronDown
+                        }
+                        className="view-toggle-icon"
+                      />
                     </div>
-                      <div className="empty-state">
-                        <FontAwesomeIcon
-                          icon={faHistory}
-                          className="empty-icon"
-                        />
-                      <h3>Coming Soon</h3>
-                      <p>Watch history features will be available soon</p>
-                      </div>
+                    {expandedSections.recentlyWatched && (
+                      <>
+                        {recentlyWatchedLoading && (
+                          <div className="profile-loading-small">
+                            <FontAwesomeIcon icon={faSpinner} spin /> Loading
+                            history...
+                          </div>
+                        )}
+                        {recentlyWatchedError && (
+                          <div className="profile-error-small">
+                            Error loading history:{" "}
+                            {recentlyWatchedError.message}
+                          </div>
+                        )}
+                        {!recentlyWatchedLoading &&
+                          !recentlyWatchedError &&
+                          recentlyWatched &&
+                          recentlyWatched.length > 0 && (
+                            <div className="media-grid history-grid">
+                              {recentlyWatched.map((item) => (
+                                <div
+                                  key={`${item.id}-${item.watchedAt}`}
+                                  className="history-item-card"
+                                  onClick={() => handleItemClick(item)}
+                                >
+                                  <img
+                                    src={
+                                      item.posterPath ||
+                                      "https://via.placeholder.com/150x225/222/fff?text=No+Image"
+                                    }
+                                    alt={item.title}
+                                    className="history-item-thumbnail"
+                                  />
+                                  <div className="history-item-info">
+                                    <h4 className="history-item-title">
+                                      {item.title}
+                                    </h4>
+                                    {item.watchedAt && (
+                                      <p className="history-item-watched-at">
+                                        <FontAwesomeIcon icon={faClock} />{" "}
+                                        {item.watchedAt.toDate
+                                          ? getTimeAgo(item.watchedAt.toDate())
+                                          : getTimeAgo(
+                                              new Date(item.watchedAt)
+                                            )}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        {!recentlyWatchedLoading &&
+                          !recentlyWatchedError &&
+                          (!recentlyWatched ||
+                            recentlyWatched.length === 0) && (
+                            <div className="empty-state">
+                              <FontAwesomeIcon
+                                icon={faHistory}
+                                className="empty-icon"
+                              />
+                              <h3>No Watch History Yet</h3>
+                              <p>Items you watch will appear here.</p>
+                            </div>
+                          )}
+                      </>
+                    )}
                   </div>
 
                   <div className="content-section">
@@ -332,25 +416,34 @@ function Profile() {
                       </button>
                     )}
                   </div>
-                  
-                  {favoritesLoading ? (
-                    <div className="loading-container">
-                      <FontAwesomeIcon icon={faSpinner} spin className="loading-icon" />
-                      <p>Loading your favorites...</p>
-                    </div>
-                  ) : favorites.length > 0 ? (
-                    <div className={`media-grid ${expandedSections.favorites ? "expanded" : ""}`}>
+
+                  {favorites.length > 0 ? (
+                    <div
+                      className={`media-grid ${
+                        expandedSections.favorites ? "expanded" : ""
+                      }`}
+                    >
                       {favorites
-                        .slice(0, expandedSections.favorites ? favorites.length : 3)
+                        .slice(
+                          0,
+                          expandedSections.favorites ? favorites.length : 3
+                        )
                         .map((item) => (
-                          <div 
-                            key={item.id} 
+                          <div
+                            key={item.id}
                             className="media-card"
-                            onClick={() => navigate(`/${item.media_type || 'movie'}/${item.id}`)}
+                            onClick={() =>
+                              navigate(
+                                `/${item.media_type || "movie"}/${item.id}`
+                              )
+                            }
                           >
                             <div className="media-poster">
                               <img
-                                src={item.poster_path || "https://via.placeholder.com/300x450?text=No+Image"}
+                                src={
+                                  item.poster_path ||
+                                  "https://via.placeholder.com/300x450?text=No+Image"
+                                }
                                 alt={item.title}
                               />
                               <div className="media-poster-overlay">
@@ -420,25 +513,34 @@ function Profile() {
                       </button>
                     )}
                   </div>
-                  
-                  {watchlistLoading ? (
-                    <div className="loading-container">
-                      <FontAwesomeIcon icon={faSpinner} spin className="loading-icon" />
-                    <p>Loading your watchlist...</p>
-                    </div>
-                  ) : watchlist.length > 0 ? (
-                    <div className={`media-grid ${expandedSections.watchlist ? "expanded" : ""}`}>
+
+                  {watchlist.length > 0 ? (
+                    <div
+                      className={`media-grid ${
+                        expandedSections.watchlist ? "expanded" : ""
+                      }`}
+                    >
                       {watchlist
-                        .slice(0, expandedSections.watchlist ? watchlist.length : 3)
+                        .slice(
+                          0,
+                          expandedSections.watchlist ? watchlist.length : 3
+                        )
                         .map((item) => (
-                          <div 
-                            key={item.id} 
+                          <div
+                            key={item.id}
                             className="media-card"
-                            onClick={() => navigate(`/${item.media_type || 'movie'}/${item.id}`)}
+                            onClick={() =>
+                              navigate(
+                                `/${item.media_type || "movie"}/${item.id}`
+                              )
+                            }
                           >
                             <div className="media-poster">
                               <img
-                                src={item.poster_path || "https://via.placeholder.com/300x450?text=No+Image"}
+                                src={
+                                  item.poster_path ||
+                                  "https://via.placeholder.com/300x450?text=No+Image"
+                                }
                                 alt={item.title}
                               />
                               <div className="media-poster-overlay">
@@ -490,14 +592,71 @@ function Profile() {
                   <div className="section-header">
                     <h2>Watch History</h2>
                   </div>
-                    <div className="empty-state">
-                      <FontAwesomeIcon
-                        icon={faHistory}
-                        className="empty-icon"
-                      />
-                    <h3>Coming Soon</h3>
-                    <p>Watch history feature will be available soon.</p>
+                  {recentlyWatchedLoading && (
+                    <div className="profile-loading-small">
+                      <FontAwesomeIcon icon={faSpinner} spin /> Loading
+                      history...
                     </div>
+                  )}
+                  {recentlyWatchedError && (
+                    <div className="profile-error-small">
+                      Error loading history: {recentlyWatchedError.message}
+                    </div>
+                  )}
+                  {!recentlyWatchedLoading &&
+                    !recentlyWatchedError &&
+                    recentlyWatched &&
+                    recentlyWatched.length > 0 && (
+                      <div className="history-list-detailed">
+                        {recentlyWatched.map((item) => (
+                          <div
+                            key={`${item.id}-${item.watchedAt}-detailed`}
+                            className="history-item-card-detailed"
+                            onClick={() => handleItemClick(item)}
+                          >
+                            <img
+                              src={
+                                item.posterPath ||
+                                "https://via.placeholder.com/100x150/222/fff?text=No+Image"
+                              }
+                              alt={item.title}
+                              className="history-item-thumbnail-detailed"
+                            />
+                            <div className="history-item-info-detailed">
+                              <h3 className="history-item-title-detailed">
+                                {item.title}
+                              </h3>
+                              <p className="history-item-type-detailed">
+                                {item.type === "tv" ? "TV Show" : "Movie"}
+                              </p>
+                              {item.watchedAt && (
+                                <p className="history-item-watched-at-detailed">
+                                  <FontAwesomeIcon icon={faClock} /> Watched{" "}
+                                  {item.watchedAt.toDate
+                                    ? getTimeAgo(item.watchedAt.toDate())
+                                    : getTimeAgo(new Date(item.watchedAt))}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  {!recentlyWatchedLoading &&
+                    !recentlyWatchedError &&
+                    (!recentlyWatched || recentlyWatched.length === 0) && (
+                      <div className="empty-state">
+                        <FontAwesomeIcon
+                          icon={faHistory}
+                          className="empty-icon"
+                        />
+                        <h3>No Watch History Yet</h3>
+                        <p>
+                          Your watch history will appear here once you start
+                          watching content.
+                        </p>
+                      </div>
+                    )}
                 </div>
               )}
             </>

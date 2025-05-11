@@ -4,15 +4,25 @@ import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart, faBookmark } from "@fortawesome/free-solid-svg-icons";
 import Notification from "./Notification";
+import { useAuth } from "../contexts/AuthContext";
+import { useUserData } from "../contexts/UserDataContext";
 
 // Create a cache object outside of the component to persist between renders
 const animeCache = {};
 
 function Anime({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
+  const {
+    isInFavorites,
+    isInWatchlist,
+    addToFavorites,
+    removeFromFavorites,
+    addToWatchlist,
+    removeFromWatchlist,
+  } = useUserData();
+
   const [animeList, setAnimeList] = useState([]);
-  const [favorites, setFavorites] = useState([]);
-  const [watchlist, setWatchlist] = useState([]);
   const [notification, setNotification] = useState({
     visible: false,
     message: "",
@@ -23,11 +33,11 @@ function Anime({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
   const BASE_URL = "https://api.themoviedb.org/3";
   const IMAGE_BASE_URL = "https://image.tmdb.org/t/p";
   const POSTER_SIZE = "/w500";
-  const CACHE_EXPIRY = 10 * 60 * 1000; // 10 minutes in milliseconds
+  const CACHE_EXPIRY = 10 * 60 * 1000;
 
   // Anime genre IDs in TMDB - Animation(16) and often from Japan
-  const ANIME_KEYWORDS = "16"; // Animation genre ID
-  const ORIGIN_COUNTRY = "JP"; // Japan as origin country
+  const ANIME_KEYWORDS = "16";
+  const ORIGIN_COUNTRY = "JP";
 
   // Function to get image URL
   const getImageUrl = (path) => {
@@ -59,14 +69,6 @@ function Anime({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
     });
   };
 
-  // Load saved favorites and watchlist
-  useEffect(() => {
-    const savedFavorites = JSON.parse(localStorage.getItem("favorites")) || [];
-    const savedWatchlist = JSON.parse(localStorage.getItem("watchlist")) || [];
-    setFavorites(savedFavorites.map((item) => item.id));
-    setWatchlist(savedWatchlist.map((item) => item.id));
-  }, []);
-
   // Fetch anime when page changes
   useEffect(() => {
     const fetchAnime = async () => {
@@ -80,7 +82,6 @@ function Anime({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
         console.log("Using cached anime data for page", currentPage);
         setAnimeList(animeCache[cacheKey].data);
 
-        // Update total pages from cache as well
         if (onTotalPagesUpdate && animeCache[cacheKey].totalPages) {
           onTotalPagesUpdate(animeCache[cacheKey].totalPages);
         }
@@ -94,9 +95,7 @@ function Anime({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
         );
         const data = await response.json();
 
-        // Filter to most likely be anime (Japanese animation)
         const animeResults = data.results.filter((show) => {
-          // If origin_country includes Japan, it's more likely to be anime
           return show.origin_country && show.origin_country.includes("JP");
         });
 
@@ -131,70 +130,80 @@ function Anime({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
     navigate(`/tv/${animeId}`);
   };
 
-  const toggleFavorite = (e, anime) => {
-    e.stopPropagation(); // Prevent click from bubbling to parent
-    const currentFavorites =
-      JSON.parse(localStorage.getItem("favorites")) || [];
-    const animeExists = currentFavorites.some((item) => item.id === anime.id);
-
-    let updatedFavorites;
-    if (animeExists) {
-      updatedFavorites = currentFavorites.filter(
-        (item) => item.id !== anime.id
-      );
-      setFavorites(favorites.filter((id) => id !== anime.id));
-      showNotification(
-        `Removed "${anime.name}" from favorites`,
-        "favorite-remove"
-      );
-    } else {
-      const animeToAdd = {
-        id: anime.id,
-        title: anime.name,
-        poster_path: getImageUrl(anime.poster_path),
-        release_date: formatDate(anime.first_air_date),
-        vote_average: anime.vote_average.toFixed(1),
-        media_type: "tv",
-      };
-      updatedFavorites = [...currentFavorites, animeToAdd];
-      setFavorites([...favorites, anime.id]);
-      showNotification(`Added "${anime.name}" to favorites`, "favorite-add");
+  const toggleFavorite = async (e, anime) => {
+    e.stopPropagation();
+    if (!currentUser) {
+      showNotification("Please login to add favorites", "error");
+      return;
     }
 
-    localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
+    try {
+      const animeData = {
+        id: anime.id,
+        title: anime.name,
+        name: anime.name,
+        poster_path: getImageUrl(anime.poster_path),
+        first_air_date: anime.first_air_date,
+        release_date: anime.first_air_date,
+        vote_average: anime.vote_average,
+        media_type: "tv",
+      };
+
+      if (isInFavorites(anime.id, "tv")) {
+        await removeFromFavorites(anime.id, "tv");
+        showNotification(
+          `Removed "${animeData.title}" from favorites`,
+          "favorite-remove"
+        );
+      } else {
+        await addToFavorites(animeData);
+        showNotification(
+          `Added "${animeData.title}" to favorites`,
+          "favorite-add"
+        );
+      }
+    } catch (error) {
+      console.error("Error in toggleFavorite (anime.jsx):", error);
+      showNotification("Failed to update favorites", "error");
+    }
   };
 
-  const toggleWatchlist = (e, anime) => {
-    e.stopPropagation(); // Prevent click from bubbling to parent
-    const currentWatchlist =
-      JSON.parse(localStorage.getItem("watchlist")) || [];
-    const animeExists = currentWatchlist.some((item) => item.id === anime.id);
-
-    let updatedWatchlist;
-    if (animeExists) {
-      updatedWatchlist = currentWatchlist.filter(
-        (item) => item.id !== anime.id
-      );
-      setWatchlist(watchlist.filter((id) => id !== anime.id));
-      showNotification(
-        `Removed "${anime.name}" from watchlist`,
-        "watchlist-remove"
-      );
-    } else {
-      const animeToAdd = {
-        id: anime.id,
-        title: anime.name,
-        poster_path: getImageUrl(anime.poster_path),
-        release_date: formatDate(anime.first_air_date),
-        vote_average: anime.vote_average.toFixed(1),
-        media_type: "tv",
-      };
-      updatedWatchlist = [...currentWatchlist, animeToAdd];
-      setWatchlist([...watchlist, anime.id]);
-      showNotification(`Added "${anime.name}" to watchlist`, "watchlist-add");
+  const toggleWatchlist = async (e, anime) => {
+    e.stopPropagation();
+    if (!currentUser) {
+      showNotification("Please login to add to watchlist", "error");
+      return;
     }
 
-    localStorage.setItem("watchlist", JSON.stringify(updatedWatchlist));
+    try {
+      const animeData = {
+        id: anime.id,
+        title: anime.name,
+        name: anime.name,
+        poster_path: getImageUrl(anime.poster_path),
+        first_air_date: anime.first_air_date,
+        release_date: anime.first_air_date,
+        vote_average: anime.vote_average,
+        media_type: "tv",
+      };
+
+      if (isInWatchlist(anime.id, "tv")) {
+        await removeFromWatchlist(anime.id, "tv");
+        showNotification(
+          `Removed "${animeData.title}" from watchlist`,
+          "watchlist-remove"
+        );
+      } else {
+        await addToWatchlist(animeData);
+        showNotification(
+          `Added "${animeData.title}" to watchlist`,
+          "watchlist-add"
+        );
+      }
+    } catch (error) {
+      console.error("Error in toggleWatchlist (anime.jsx):", error);
+      showNotification("Failed to update watchlist", "error");
+    }
   };
 
   return (
@@ -231,16 +240,16 @@ function Anime({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
             <div className="action_buttons">
               <button
                 className={`favorite_btn ${
-                  favorites.includes(anime.id) ? "active" : ""
+                  currentUser && isInFavorites(anime.id, "tv") ? "active" : ""
                 }`}
                 onClick={(e) => toggleFavorite(e, anime)}
                 title={
-                  favorites.includes(anime.id)
+                  currentUser && isInFavorites(anime.id, "tv")
                     ? "Remove from Favorites"
                     : "Add to Favorites"
                 }
                 aria-label={
-                  favorites.includes(anime.id)
+                  currentUser && isInFavorites(anime.id, "tv")
                     ? "Remove from Favorites"
                     : "Add to Favorites"
                 }
@@ -249,16 +258,16 @@ function Anime({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
               </button>
               <button
                 className={`watchlist_btn ${
-                  watchlist.includes(anime.id) ? "active" : ""
+                  currentUser && isInWatchlist(anime.id, "tv") ? "active" : ""
                 }`}
                 onClick={(e) => toggleWatchlist(e, anime)}
                 title={
-                  watchlist.includes(anime.id)
+                  currentUser && isInWatchlist(anime.id, "tv")
                     ? "Remove from Watchlist"
                     : "Add to Watchlist"
                 }
                 aria-label={
-                  watchlist.includes(anime.id)
+                  currentUser && isInWatchlist(anime.id, "tv")
                     ? "Remove from Watchlist"
                     : "Add to Watchlist"
                 }

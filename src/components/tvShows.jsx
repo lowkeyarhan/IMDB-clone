@@ -4,15 +4,25 @@ import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart, faBookmark } from "@fortawesome/free-solid-svg-icons";
 import Notification from "./Notification";
+import { useAuth } from "../contexts/AuthContext";
+import { useUserData } from "../contexts/UserDataContext";
 
 // Create a cache object outside of the component to persist between renders
 const tvShowsCache = {};
 
 function TVShows({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
+  const {
+    isInFavorites,
+    isInWatchlist,
+    addToFavorites,
+    removeFromFavorites,
+    addToWatchlist,
+    removeFromWatchlist,
+  } = useUserData();
+
   const [shows, setShows] = useState([]);
-  const [favorites, setFavorites] = useState([]);
-  const [watchlist, setWatchlist] = useState([]);
   const [notification, setNotification] = useState({
     visible: false,
     message: "",
@@ -55,14 +65,6 @@ function TVShows({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
     });
   };
 
-  // Load saved favorites and watchlist
-  useEffect(() => {
-    const savedFavorites = JSON.parse(localStorage.getItem("favorites")) || [];
-    const savedWatchlist = JSON.parse(localStorage.getItem("watchlist")) || [];
-    setFavorites(savedFavorites.map((item) => item.id));
-    setWatchlist(savedWatchlist.map((item) => item.id));
-  }, []);
-
   // Fetch TV shows when page changes
   useEffect(() => {
     const fetchTVShows = async () => {
@@ -75,14 +77,14 @@ function TVShows({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
       ) {
         console.log("Using cached TV shows data for page", currentPage);
         setShows(tvShowsCache[cacheKey].data);
-        
+
         // Update total pages from cache as well
         if (onTotalPagesUpdate && tvShowsCache[cacheKey].totalPages) {
           onTotalPagesUpdate(tvShowsCache[cacheKey].totalPages);
         }
         return;
       }
-      
+
       try {
         const response = await fetch(
           `${BASE_URL}/tv/popular?api_key=${API_KEY}&page=${currentPage}`
@@ -95,12 +97,12 @@ function TVShows({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
         if (onTotalPagesUpdate) {
           onTotalPagesUpdate(maxPages);
         }
-        
+
         // Cache the fetched data with timestamp
         tvShowsCache[cacheKey] = {
           data: data.results,
           totalPages: maxPages,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         };
       } catch (error) {
         console.error("Error fetching popular TV shows:", error);
@@ -119,66 +121,80 @@ function TVShows({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
     navigate(`/tv/${showId}`);
   };
 
-  const toggleFavorite = (e, show) => {
-    e.stopPropagation(); // Prevent click from bubbling to parent
-    const currentFavorites =
-      JSON.parse(localStorage.getItem("favorites")) || [];
-    const showExists = currentFavorites.some((item) => item.id === show.id);
-
-    let updatedFavorites;
-    if (showExists) {
-      updatedFavorites = currentFavorites.filter((item) => item.id !== show.id);
-      setFavorites(favorites.filter((id) => id !== show.id));
-      showNotification(
-        `Removed "${show.name}" from favorites`,
-        "favorite-remove"
-      );
-    } else {
-      const showToAdd = {
-        id: show.id,
-        title: show.name,
-        poster_path: getImageUrl(show.poster_path),
-        release_date: formatDate(show.first_air_date),
-        vote_average: show.vote_average.toFixed(1),
-        media_type: "tv",
-      };
-      updatedFavorites = [...currentFavorites, showToAdd];
-      setFavorites([...favorites, show.id]);
-      showNotification(`Added "${show.name}" to favorites`, "favorite-add");
+  const toggleFavorite = async (e, show) => {
+    e.stopPropagation();
+    if (!currentUser) {
+      showNotification("Please login to add favorites", "error");
+      return;
     }
 
-    localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
+    try {
+      const showData = {
+        id: show.id,
+        name: show.name,
+        title: show.name,
+        poster_path: getImageUrl(show.poster_path),
+        first_air_date: show.first_air_date,
+        release_date: show.first_air_date,
+        vote_average: show.vote_average,
+        media_type: "tv",
+      };
+
+      if (isInFavorites(show.id, "tv")) {
+        await removeFromFavorites(show.id, "tv");
+        showNotification(
+          `Removed "${showData.name}" from favorites`,
+          "favorite-remove"
+        );
+      } else {
+        await addToFavorites(showData);
+        showNotification(
+          `Added "${showData.name}" to favorites`,
+          "favorite-add"
+        );
+      }
+    } catch (error) {
+      console.error("Error in toggleFavorite (tvShows.jsx):", error);
+      showNotification("Failed to update favorites", "error");
+    }
   };
 
-  const toggleWatchlist = (e, show) => {
-    e.stopPropagation(); // Prevent click from bubbling to parent
-    const currentWatchlist =
-      JSON.parse(localStorage.getItem("watchlist")) || [];
-    const showExists = currentWatchlist.some((item) => item.id === show.id);
-
-    let updatedWatchlist;
-    if (showExists) {
-      updatedWatchlist = currentWatchlist.filter((item) => item.id !== show.id);
-      setWatchlist(watchlist.filter((id) => id !== show.id));
-      showNotification(
-        `Removed "${show.name}" from watchlist`,
-        "watchlist-remove"
-      );
-    } else {
-      const showToAdd = {
-        id: show.id,
-        title: show.name,
-        poster_path: getImageUrl(show.poster_path),
-        release_date: formatDate(show.first_air_date),
-        vote_average: show.vote_average.toFixed(1),
-        media_type: "tv",
-      };
-      updatedWatchlist = [...currentWatchlist, showToAdd];
-      setWatchlist([...watchlist, show.id]);
-      showNotification(`Added "${show.name}" to watchlist`, "watchlist-add");
+  const toggleWatchlist = async (e, show) => {
+    e.stopPropagation();
+    if (!currentUser) {
+      showNotification("Please login to add to watchlist", "error");
+      return;
     }
 
-    localStorage.setItem("watchlist", JSON.stringify(updatedWatchlist));
+    try {
+      const showData = {
+        id: show.id,
+        name: show.name,
+        title: show.name,
+        poster_path: getImageUrl(show.poster_path),
+        first_air_date: show.first_air_date,
+        release_date: show.first_air_date,
+        vote_average: show.vote_average,
+        media_type: "tv",
+      };
+
+      if (isInWatchlist(show.id, "tv")) {
+        await removeFromWatchlist(show.id, "tv");
+        showNotification(
+          `Removed "${showData.name}" from watchlist`,
+          "watchlist-remove"
+        );
+      } else {
+        await addToWatchlist(showData);
+        showNotification(
+          `Added "${showData.name}" to watchlist`,
+          "watchlist-add"
+        );
+      }
+    } catch (error) {
+      console.error("Error in toggleWatchlist (tvShows.jsx):", error);
+      showNotification("Failed to update watchlist", "error");
+    }
   };
 
   return (
@@ -206,7 +222,8 @@ function TVShows({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
                   {formatDate(show.first_air_date)}
                 </span>
                 <span className="rating">
-                  <i className="rating_icon">⭐</i> {show.vote_average.toFixed(1)}
+                  <i className="rating_icon">⭐</i>{" "}
+                  {show.vote_average.toFixed(1)}
                   /10
                 </span>
               </div>
@@ -214,16 +231,16 @@ function TVShows({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
             <div className="action_buttons">
               <button
                 className={`favorite_btn ${
-                  favorites.includes(show.id) ? "active" : ""
+                  currentUser && isInFavorites(show.id, "tv") ? "active" : ""
                 }`}
                 onClick={(e) => toggleFavorite(e, show)}
                 title={
-                  favorites.includes(show.id)
+                  currentUser && isInFavorites(show.id, "tv")
                     ? "Remove from Favorites"
                     : "Add to Favorites"
                 }
                 aria-label={
-                  favorites.includes(show.id)
+                  currentUser && isInFavorites(show.id, "tv")
                     ? "Remove from Favorites"
                     : "Add to Favorites"
                 }
@@ -232,16 +249,16 @@ function TVShows({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
               </button>
               <button
                 className={`watchlist_btn ${
-                  watchlist.includes(show.id) ? "active" : ""
+                  currentUser && isInWatchlist(show.id, "tv") ? "active" : ""
                 }`}
                 onClick={(e) => toggleWatchlist(e, show)}
                 title={
-                  watchlist.includes(show.id)
+                  currentUser && isInWatchlist(show.id, "tv")
                     ? "Remove from Watchlist"
                     : "Add to Watchlist"
                 }
                 aria-label={
-                  watchlist.includes(show.id)
+                  currentUser && isInWatchlist(show.id, "tv")
                     ? "Remove from Watchlist"
                     : "Add to Watchlist"
                 }
