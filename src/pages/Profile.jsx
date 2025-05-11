@@ -619,6 +619,7 @@ function Profile() {
                             <img
                               src={
                                 item.posterPath ||
+                                item.posterPath ||
                                 "https://placehold.co/320x180?text=No+Image"
                               }
                               alt={item.title}
