@@ -12,7 +12,6 @@
   display: flex;
   width: 100%;
   max-width: 900px;
-  min-height: 600px;
   background-color: var(--card-bg);
   border-radius: 32px;
   box-shadow: 0 8px 40px 0 rgba(0, 0, 0, 0.55),
@@ -22,6 +21,7 @@
   overflow: hidden;
   background: rgba(30, 30, 32, 0.92);
   z-index: 2;
+  transition: all 0.5s ease-in-out;
 }
 
 .login-card::after {

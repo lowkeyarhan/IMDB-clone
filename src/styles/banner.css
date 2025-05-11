@@ -17,11 +17,22 @@
 .banner_container {
   position: relative;
   height: 100vh;
-  width: 100vw;
+  width: 100%;
   color: white;
   object-fit: contain;
   margin-bottom: 0;
   overflow: hidden;
+}
+
+/* Add perspective container for 3D effects */
+.banner_perspective {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  perspective: 1500px;
+  overflow: hidden;
+  transform-style: preserve-3d;
+  z-index: 1;
 }
 
 .banner_image {
@@ -32,6 +43,13 @@
   height: 100%;
   z-index: 1;
   overflow: hidden;
+  background-size: cover !important;
+  background-position: center top !important;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+  will-change: transform, opacity;
+  touch-action: pan-y; /* Improve touch behavior */
+  transition: filter 0.6s ease;
 }
 
 .banner_bg {
@@ -40,8 +58,6 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-size: cover !important;
-  background-position: center top !important;
   z-index: 1;
   animation: kenburns-zoom-pan 18s ease-in-out alternate infinite;
 }
@@ -88,6 +104,8 @@
   width: 50%;
   z-index: 3;
   padding: 0;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
 }
 
 .banner_title {
@@ -101,6 +119,35 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   line-height: 1.2;
+  text-shadow: 0 2px 15px rgba(0, 0, 0, 0.5);
+}
+
+/* Genre styles */
+.banner_genres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.banner_genre {
+  background-color: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 6px 14px;
+  border-radius: 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  letter-spacing: 0.5px;
+  transition: all 0.2s ease;
+}
+
+.banner_genre:hover {
+  background-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
 }
 
 .banner_description {
@@ -139,10 +186,19 @@
   border-radius: 25px;
   font-size: 1rem;
   transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
 }
 
 .banner_button:hover {
   opacity: 0.85;
+  transform: translateY(-2px);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+.banner_button:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
 }
 
 .banner_button.play {
@@ -198,6 +254,92 @@
   background-color: #f40612;
 }
 
+/* Banner navigation buttons */
+.banner_navigation {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  pointer-events: none; /* Allow clicks to pass through to the banner itself */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 2rem;
+}
+
+.banner_nav_button {
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: none;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  opacity: 0;
+  pointer-events: auto; /* Make buttons clickable */
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Show navigation buttons on hover */
+.banner_container:hover .banner_nav_button {
+  opacity: 0.7;
+}
+
+.banner_nav_button:hover {
+  background-color: rgba(229, 9, 20, 0.8);
+  transform: scale(1.1);
+  opacity: 1;
+}
+
+.banner_nav_button.prev {
+  margin-left: 1rem;
+}
+
+.banner_nav_button.next {
+  margin-right: 1rem;
+}
+
+/* Loading placeholder styles */
+.banner_loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #0a0812 0%, #1c1a24 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #f40612;
+  font-size: 2rem;
+  z-index: 2;
+  opacity: 1;
+  transition: opacity 0.5s ease-out;
+}
+
+.banner_loading.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Explicit draggable cursor for touch devices */
+@media (hover: none) {
+  .banner_image {
+    cursor: grab;
+  }
+
+  .banner_image:active {
+    cursor: grabbing;
+  }
+}
+
 /* Mobile styles */
 @media (max-width: 950px) {
   .banner_container {
@@ -215,6 +357,16 @@
     line-height: 1.2;
   }
 
+  .banner_genre {
+    padding: 4px 12px;
+    font-size: 0.8rem;
+  }
+
+  .banner_genres {
+    margin-bottom: 10px;
+    gap: 8px;
+  }
+
   .banner_description {
     font-size: 0.9rem;
     -webkit-line-clamp: 3;
@@ -228,9 +380,50 @@
   .banner_image::before {
     width: 20%;
   }
+
+  .banner_nav_button {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+    display: none;
+  }
+
+  .banner_navigation {
+    padding: 0 1rem;
+  }
+
+  /* Always show buttons on mobile, with lower opacity */
+  .banner_container .banner_nav_button {
+    opacity: 0.5;
+  }
+
+  .banner_perspective {
+    perspective: 1000px;
+  }
 }
 
 /* Extra small screens */
+@media (max-width: 480px) {
+  .banner_nav_button {
+    width: 35px;
+    height: 35px;
+    font-size: 0.8rem;
+  }
+
+  .banner_nav_button.prev {
+    margin-left: 0.5rem;
+  }
+
+  .banner_nav_button.next {
+    margin-right: 0.5rem;
+  }
+
+  .banner_genre {
+    padding: 3px 10px;
+    font-size: 0.7rem;
+  }
+}
+
 @media (max-width: 378px) {
   .banner_container {
     height: 100vh;
@@ -245,6 +438,16 @@
     font-size: 1.5rem;
     margin-bottom: 0.5rem;
     line-height: 1.2;
+  }
+
+  .banner_genres {
+    margin-bottom: 8px;
+    gap: 5px;
+  }
+
+  .banner_genre {
+    padding: 2px 8px;
+    font-size: 0.65rem;
   }
 
   .banner_description {

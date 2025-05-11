@@ -13,20 +13,25 @@ import {
 import "../styles/auth.css";
 import { motion, AnimatePresence } from "framer-motion";
 
-// Animation variants for the auth method switching
-const authSwitchVariants = {
-  initial: { opacity: 0, y: 20, scale: 0.98 },
+// A "cooler" animation with a 3D flip effect
+const coolSwitchVariants = {
+  initial: {
+    opacity: 0,
+    rotateY: 180,
+    scale: 0.9,
+    transition: { duration: 0.3, ease: "easeIn" },
+  },
   animate: {
     opacity: 1,
-    y: 0,
+    rotateY: 0,
     scale: 1,
-    transition: { duration: 0.4, ease: [0.25, 1, 0.5, 1] },
+    transition: { duration: 0.5, ease: [0.34, 1.56, 0.64, 1] },
   },
   exit: {
     opacity: 0,
-    y: -20,
-    scale: 0.98,
-    transition: { duration: 0.3, ease: [0.5, 0, 0.75, 0] },
+    rotateY: -180,
+    scale: 0.9,
+    transition: { duration: 0.3, ease: "easeIn" },
   },
 };
 
@@ -120,12 +125,19 @@ function Login() {
 
           <AnimatePresence mode="wait">
             <motion.div
-              key={authMethod} // Key change triggers animation
+              layout
+              key={authMethod}
               className="auth-form-wrapper-animated glassmorphic"
-              variants={authSwitchVariants}
+              variants={coolSwitchVariants}
               initial="initial"
               animate="animate"
               exit="exit"
+              transition={{
+                type: "spring",
+                stiffness: 300,
+                damping: 30,
+                duration: 0.4,
+              }}
             >
               {authMethod === "email" ? (
                 <form
@@ -196,9 +208,7 @@ function Login() {
         </div>
 
         <div className="login-visual-content">
-          {/* Placeholder for image - can be set via CSS background-image */}
           <div className="visual-overlay">
-            {/* Optional: Add some text or subtle graphics on the image */}
             <h3>Your Gateway to Cinematic Adventures</h3>
             <p>
               Track, discover, and immerse yourself in the world of movies and

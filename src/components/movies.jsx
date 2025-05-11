@@ -13,9 +13,7 @@ import {
   addToWatchlist,
   removeFromWatchlist,
 } from "../firebase/firestore";
-
-// Create a cache object outside of the component to persist between renders
-const moviesCache = {};
+import { useHomeData } from "../contexts/HomeDataContext";
 
 function Movies({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
   const navigate = useNavigate();
@@ -29,17 +27,8 @@ function Movies({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
     type: "",
   });
 
-  const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
-  const BASE_URL = "https://api.themoviedb.org/3";
-  const IMAGE_BASE_URL = "https://image.tmdb.org/t/p";
-  const POSTER_SIZE = "/w500";
-  const CACHE_EXPIRY = 10 * 60 * 1000; // 10 minutes in milliseconds
-
-  // Function to get image URL
-  const getImageUrl = (path) => {
-    if (!path) return null;
-    return `${IMAGE_BASE_URL}${POSTER_SIZE}${path}`;
-  };
+  // Use the HomeData context for cached data
+  const { fetchTrendingMovies, getImageUrl } = useHomeData();
 
   // Format the date to a more readable format
   const formatDate = (dateString) => {
@@ -65,33 +54,19 @@ function Movies({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
     });
   };
 
-  // Load saved favorites and watchlist from Firestore
+  // Load user favorites and watchlist from Firebase
   useEffect(() => {
-    async function loadUserData() {
+    const loadUserData = async () => {
       if (!currentUser) {
-        // If not logged in, reset favorites and watchlist
-        console.log("No user logged in, resetting favorites and watchlist");
         setFavorites([]);
         setWatchlist([]);
         return;
       }
 
-      console.log("Loading data for user:", currentUser.uid);
-      console.log(
-        "Current Firebase config:",
-        import.meta.env.VITE_FIREBASE_PROJECT_ID || "Not found"
-      );
-
       try {
-        // Load favorites from Firestore
-        console.log("Fetching favorites from collection 'favourites'");
-        console.log("User authenticated:", !!currentUser);
-        console.log("User ID being used:", currentUser.uid);
-        const favoriteItems = await getUserFavorites(currentUser.uid);
-        console.log("Favorites received:", favoriteItems);
-
-        const favoriteIds = favoriteItems.map((item) => {
-          // Extract the media ID from the document ID (format: userId_mediaId)
+        // Load favorites
+        const favoritesItems = await getUserFavorites(currentUser.uid);
+        const favoriteIds = favoritesItems.map((item) => {
           let mediaId;
           if (item.id && typeof item.id === "string" && item.id.includes("_")) {
             mediaId = item.id.split("_")[1];
@@ -102,11 +77,8 @@ function Movies({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
         });
         setFavorites(favoriteIds);
 
-        // Load watchlist from Firestore
-        console.log("Fetching watchlist from collection 'watchlist'");
+        // Load watchlist
         const watchlistItems = await getUserWatchlist(currentUser.uid);
-        console.log("Watchlist received:", watchlistItems);
-
         const watchlistIds = watchlistItems.map((item) => {
           let mediaId;
           if (item.id && typeof item.id === "string" && item.id.includes("_")) {
@@ -123,62 +95,36 @@ function Movies({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
         setFavorites([]);
         setWatchlist([]);
       }
-    }
+    };
 
     loadUserData();
   }, [currentUser]);
 
-  // Fetch movies when page changes
+  // Fetch movies when page changes using the HomeData context
   useEffect(() => {
-    const fetchMovies = async () => {
-      const cacheKey = `trending-movies-page-${currentPage}`;
-
-      // Check if we have cached data that's not expired
-      if (
-        moviesCache[cacheKey] &&
-        moviesCache[cacheKey].timestamp > Date.now() - CACHE_EXPIRY
-      ) {
-        console.log("Using cached movies data for page", currentPage);
-        setMovies(moviesCache[cacheKey].data);
-
-        // Update total pages from cache as well
-        if (onTotalPagesUpdate && moviesCache[cacheKey].totalPages) {
-          onTotalPagesUpdate(moviesCache[cacheKey].totalPages);
-        }
-        return;
-      }
-
+    const getMovies = async () => {
       try {
-        const response = await fetch(
-          `${BASE_URL}/trending/movie/week?api_key=${API_KEY}&page=${currentPage}`
-        );
-        const data = await response.json();
-        setMovies(data.results);
+        // Use the cached data from the context
+        const { movies: trendingMovies, totalPages } =
+          await fetchTrendingMovies(currentPage);
+        setMovies(trendingMovies);
 
         // Update total pages in the parent component
-        const maxPages = Math.min(data.total_pages, 500);
         if (onTotalPagesUpdate) {
-          onTotalPagesUpdate(maxPages);
+          onTotalPagesUpdate(totalPages);
         }
-
-        // Cache the fetched data with timestamp
-        moviesCache[cacheKey] = {
-          data: data.results,
-          totalPages: maxPages,
-          timestamp: Date.now(),
-        };
       } catch (error) {
         console.error("Error fetching trending movies:", error);
       }
     };
 
-    fetchMovies();
+    getMovies();
 
     // Set this as the active section when it's being viewed
     if (setActiveSection) {
       setActiveSection();
     }
-  }, [currentPage, API_KEY, onTotalPagesUpdate, setActiveSection]);
+  }, [currentPage, onTotalPagesUpdate, setActiveSection, fetchTrendingMovies]);
 
   const handleMovieClick = (movieId) => {
     navigate(`/movie/${movieId}`);
@@ -226,8 +172,7 @@ function Movies({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
       }
     } catch (error) {
       console.error("Error updating favorites:", error);
-      console.log("Error details:", JSON.stringify(error));
-      showNotification("Failed to update favorites", "error");
+      showNotification("Error updating favorites", "error");
     }
   };
 
@@ -235,7 +180,7 @@ function Movies({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
     e.stopPropagation(); // Prevent click from bubbling to parent
 
     if (!currentUser) {
-      showNotification("Please login to add to watchlist", "error");
+      showNotification("Please login to add items to your watchlist", "error");
       return;
     }
 
@@ -260,7 +205,6 @@ function Movies({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
           vote_average: movie.vote_average.toFixed(1),
           media_type: "movie",
         };
-
         await addToWatchlist(currentUser.uid, movieToAdd);
         setWatchlist([...watchlist, movie.id.toString()]);
         showNotification(
@@ -270,7 +214,7 @@ function Movies({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
       }
     } catch (error) {
       console.error("Error updating watchlist:", error);
-      showNotification("Failed to update watchlist", "error");
+      showNotification("Error updating watchlist", "error");
     }
   };
 
@@ -298,48 +242,35 @@ function Movies({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
                 </span>
               </div>
             </div>
-            <div className="action_buttons">
-              <button
-                className={`favorite_btn ${
-                  favorites.includes(movie.id.toString()) ? "active" : ""
-                }`}
-                onClick={(e) => toggleFavorite(e, movie)}
-                title={
-                  favorites.includes(movie.id.toString())
-                    ? "Remove from Favorites"
-                    : "Add to Favorites"
-                }
-                aria-label={
-                  favorites.includes(movie.id.toString())
-                    ? "Remove from Favorites"
-                    : "Add to Favorites"
-                }
-              >
-                <FontAwesomeIcon icon={faHeart} />
-              </button>
-              <button
-                className={`watchlist_btn ${
-                  watchlist.includes(movie.id.toString()) ? "active" : ""
-                }`}
-                onClick={(e) => toggleWatchlist(e, movie)}
-                title={
-                  watchlist.includes(movie.id.toString())
-                    ? "Remove from Watchlist"
-                    : "Add to Watchlist"
-                }
-                aria-label={
-                  watchlist.includes(movie.id.toString())
-                    ? "Remove from Watchlist"
-                    : "Add to Watchlist"
-                }
-              >
-                <FontAwesomeIcon icon={faBookmark} />
-              </button>
-            </div>
+            <button
+              className={`favorite_btn ${
+                favorites.includes(movie.id.toString()) ? "active" : ""
+              }`}
+              onClick={(e) => toggleFavorite(e, movie)}
+              aria-label={
+                favorites.includes(movie.id.toString())
+                  ? "Remove from favorites"
+                  : "Add to favorites"
+              }
+            >
+              <FontAwesomeIcon icon={faHeart} />
+            </button>
+            <button
+              className={`watchlist_btn ${
+                watchlist.includes(movie.id.toString()) ? "active" : ""
+              }`}
+              onClick={(e) => toggleWatchlist(e, movie)}
+              aria-label={
+                watchlist.includes(movie.id.toString())
+                  ? "Remove from watchlist"
+                  : "Add to watchlist"
+              }
+            >
+              <FontAwesomeIcon icon={faBookmark} />
+            </button>
           </div>
         ))}
       </div>
-
       <Notification
         message={notification.message}
         type={notification.type}

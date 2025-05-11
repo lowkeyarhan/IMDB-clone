@@ -198,8 +198,8 @@ function Search() {
         );
       } else {
         await addToFavorites(itemData);
-        showNotification(`Added "${title}" to favorites`, "favorite-add");
-      }
+      showNotification(`Added "${title}" to favorites`, "favorite-add");
+    }
     } catch (error) {
       console.error("Error in toggleFavorite (Search.jsx):", error);
       showNotification("Failed to update favorites", "error");
@@ -239,7 +239,7 @@ function Search() {
         );
       } else {
         await addToWatchlist(itemData);
-        showNotification(`Added "${title}" to watchlist`, "watchlist-add");
+      showNotification(`Added "${title}" to watchlist`, "watchlist-add");
       }
     } catch (error) {
       console.error("Error in toggleWatchlist (Search.jsx):", error);

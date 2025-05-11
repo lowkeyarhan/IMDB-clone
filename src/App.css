@@ -217,3 +217,8 @@ button {
     font-size: 13px;
   }
 }
+
+/* Style to prevent body scroll when modal is open */
+.modal-open-noscroll {
+  overflow: hidden;
+}

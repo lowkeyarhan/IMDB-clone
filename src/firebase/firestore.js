@@ -324,173 +324,176 @@ export const removeFromWatchlist = async (userId, itemId, mediaType) => {
   }
 };
 
-// --- NEW USER DATA FUNCTIONS ---
-
-/**
- * Creates or updates a user's document in Firestore upon login.
- * Initializes stats and profile information.
- * Updates login-related stats.
- * @param {object} user - The Firebase Auth user object.
- */
+// User Data Operations (centralized)
 export const manageUserDocumentOnLogin = async (user) => {
   if (!user || !user.uid) {
-    console.error("Invalid user object provided to manageUserDocumentOnLogin");
-    return;
+    console.error("manageUserDocumentOnLogin: Invalid user object", user);
+    return null;
   }
+
   const userRef = doc(db, "users", user.uid);
-  console.log(`[Firestore] Managing document for user: ${user.uid}`);
+  console.log(
+    `[Firestore DEBUG] Checking or creating user document for UID: ${user.uid}`
+  );
+
   try {
-    const docSnap = await getDoc(userRef);
-    if (docSnap.exists()) {
-      const userData = docSnap.data();
-      const today = new Date().setHours(0, 0, 0, 0);
-      const lastLoginTimestamp = userData.stats?.lastLoginDate;
-      const lastLogin = lastLoginTimestamp
-        ? lastLoginTimestamp.toDate().setHours(0, 0, 0, 0)
-        : null;
-      let consecutiveDays = userData.stats?.consecutiveLoginDays || 0;
-      if (lastLogin === null) {
-        consecutiveDays = 1;
-      } else if (today === lastLogin + 24 * 60 * 60 * 1000) {
-        consecutiveDays++;
-      } else if (today !== lastLogin) {
-        consecutiveDays = 1;
-      }
-      await updateDoc(userRef, {
-        "profile.displayName":
-          user.displayName || userData.profile?.displayName || "",
-        "profile.email": user.email || userData.profile?.email || "",
-        "profile.photoURL": user.photoURL || userData.profile?.photoURL || "",
-        "stats.lastLoginDate": serverTimestamp(),
-        "stats.consecutiveLoginDays": consecutiveDays,
-        "stats.totalLogins": increment(1),
-      });
-      console.log(`[Firestore] User document updated for ${user.uid}`);
-    } else {
-      await setDoc(userRef, {
-        createdAt: serverTimestamp(),
+    const userSnap = await getDoc(userRef);
+
+    if (userSnap.exists()) {
+      // User document exists, update last login and potentially profile info
+      const existingData = userSnap.data();
+      console.log(
+        `[Firestore DEBUG] User document found for UID: ${user.uid}`,
+        existingData
+      );
+
+      const updateData = {
+        lastLoginAt: serverTimestamp(),
         profile: {
-          displayName: user.displayName || "",
+          email: user.email || existingData.profile?.email || "",
+          displayName:
+            user.displayName || existingData.profile?.displayName || "User",
+          photoURL: user.photoURL || existingData.profile?.photoURL || "",
+        },
+      };
+
+      // Initialize fields if they are missing (for older documents)
+      if (existingData.hasSeenWelcomeModal === undefined) {
+        updateData.hasSeenWelcomeModal = false;
+      }
+      if (!existingData.favorites) {
+        updateData.favorites = []; // Ensure it's an array
+      }
+      if (!existingData.watchlist) {
+        updateData.watchlist = []; // Ensure it's an array
+      }
+      if (!existingData.recentlyWatched) {
+        updateData.recentlyWatched = []; // Ensure it's an array
+      }
+      // DO NOT update createdAt for existing users. It should reflect the original creation time.
+
+      console.log(
+        "[Firestore DEBUG] Updating EXISTING user document for UID:",
+        user.uid,
+        "with data:",
+        updateData
+      );
+      await updateDoc(userRef, updateData);
+      const updatedUserSnap = await getDoc(userRef); // Re-fetch to get server timestamp
+      return updatedUserSnap.data();
+    } else {
+      // User document does not exist, create it
+      console.log(
+        `[Firestore DEBUG] No user document for UID: ${user.uid}. Creating new one.`
+      );
+      const newUserDoc = {
+        uid: user.uid,
+        profile: {
+          // Correctly nest profile information
           email: user.email || "",
-          photoURL: user.photoURL || "",
+          displayName: user.displayName || "User",
+          photoURL: user.photoURL || "", // Get photoURL from Google Auth user object
         },
-        stats: {
-          lastLoginDate: serverTimestamp(),
-          consecutiveLoginDays: 1,
-          totalLogins: 1,
-          moviesWatchedCount: 0,
-          seriesWatchedCount: 0,
-          animeWatchedCount: 0,
-        },
-        recentlyWatched: [],
-      });
-      console.log(`[Firestore] New user document created for ${user.uid}`);
+        createdAt: serverTimestamp(), // Set createdAt on new document creation
+        lastLoginAt: serverTimestamp(),
+        hasSeenWelcomeModal: false, // New users haven't seen it
+        favorites: [], // Initialize as empty array
+        watchlist: [], // Initialize as empty array
+        recentlyWatched: [], // Initialize as empty array
+        // Add any other default fields for new users here
+      };
+      console.log(
+        "[Firestore DEBUG] Creating NEW user document for UID:",
+        user.uid,
+        "with data:",
+        newUserDoc
+      );
+      await setDoc(userRef, newUserDoc);
+      const createdUserSnap = await getDoc(userRef); // Re-fetch to get server timestamp
+      return createdUserSnap.data();
     }
   } catch (error) {
     console.error(
-      `[Firestore] Error managing user document for ${user.uid}:`,
+      `[Firestore DEBUG] Error managing user document for ${user.uid}:`,
       error
     );
     throw error;
   }
 };
 
-/**
- * Adds an item to the user's recently watched list.
- * Keeps the list ordered by most recent and capped at RECENTLY_WATCHED_LIMIT.
- * @param {string} userId - The user's ID.
- * @param {object} item - The media item to add (should include id, type, title, posterPath).
- * @param {number} durationSeconds - The duration in seconds the item was watched.
- */
-export const addRecentlyWatched = async (
-  userId,
-  item,
-  durationSeconds = 0,
-  watchTimeInMinutes
-) => {
-  if (!userId || !item || !item.id) {
-    console.error("User ID or item details are missing for recently watched.");
+export const markWelcomeModalAsSeen = async (userId) => {
+  if (!userId) {
+    console.error("[Firestore] markWelcomeModalAsSeen: No userId provided.");
     return;
   }
-
-  if (watchTimeInMinutes <= 5) {
-    console.log(
-      `Item ${item.id} (${
-        item.title || item.name
-      }) not added to recently watched, watchTimeInMinutes: ${watchTimeInMinutes}`
-    );
-    return;
-  }
-
-  const userDocRef = doc(db, "users", userId);
-  const mediaType = item.media_type || (item.first_air_date ? "tv" : "movie");
-  const cleanItemId = String(item.id).split("_").pop();
-
-  const newItem = {
-    id: cleanItemId,
-    title: item.title || item.name,
-    poster_path: item.poster_path,
-    media_type: mediaType,
-    watchedAt: new Date(),
-    durationSeconds: durationSeconds || 0,
-    ...(mediaType === "tv" && {
-      name: item.name,
-      first_air_date: item.first_air_date,
-    }),
-    ...(mediaType === "movie" && {
-      release_date: item.release_date,
-    }),
-  };
-
-  console.log(
-    `[Firestore addRecentlyWatched] Attempting to add for user ${userId}:`,
-    newItem
-  );
-
+  const userRef = doc(db, "users", userId);
   try {
-    const userDocSnap = await getDoc(userDocRef);
-
-    if (userDocSnap.exists()) {
-      let currentRecentlyWatched = userDocSnap.data().recentlyWatched || [];
-
-      currentRecentlyWatched = currentRecentlyWatched.filter(
-        (rwItem) =>
-          !(
-            rwItem.id === newItem.id && rwItem.media_type === newItem.media_type
-          )
-      );
-
-      const updatedRecentlyWatched = [newItem, ...currentRecentlyWatched];
-
-      if (updatedRecentlyWatched.length > RECENTLY_WATCHED_LIMIT) {
-        updatedRecentlyWatched.length = RECENTLY_WATCHED_LIMIT;
-      }
-
-      await updateDoc(userDocRef, {
-        recentlyWatched: updatedRecentlyWatched,
-      });
-      console.log(
-        `Updated recently watched for user ${userId} with item ${newItem.id}`
-      );
-    } else {
-      await setDoc(userDocRef, {
-        recentlyWatched: [newItem],
-        favorites_count: 0,
-        watchlist_count: 0,
-        watched_movies_count: 0,
-        watched_tv_shows_count: 0,
-      });
-      console.log(
-        `Created recently watched for user ${userId} with item ${newItem.id}`
-      );
-    }
-    invalidateCache("userData", userId);
+    await setDoc(userRef, { hasSeenWelcomeModal: true }, { merge: true });
+    console.log(
+      `[Firestore] User ${userId} marked (or document created/merged) as having seen the welcome modal.`
+    );
   } catch (error) {
     console.error(
-      `[Firestore addRecentlyWatched] Error adding to recently watched for user ${userId}:`,
-      error,
-      { item }
+      `[Firestore] Error in markWelcomeModalAsSeen for user ${userId}:`,
+      error
     );
+    throw error;
+  }
+};
+
+export const addRecentlyWatched = async (userId, item, durationSeconds = 0) => {
+  if (!userId || !item) {
+    console.error(
+      "[Firestore] AddRecentlyWatched: Invalid userId or item provided."
+    );
+    return;
+  }
+  console.log(`[Firestore] Adding to recently watched for user ${userId}:`, {
+    item,
+    durationSeconds,
+  });
+
+  const userRef = doc(db, "users", userId);
+
+  const newItem = {
+    ...item,
+    id: String(item.id),
+    watchedAt: new Date(),
+    durationSeconds: durationSeconds || 0,
+  };
+
+  try {
+    const userDoc = await getDoc(userRef);
+    let currentRecentlyWatched = [];
+    if (userDoc.exists() && userDoc.data().recentlyWatched) {
+      currentRecentlyWatched = userDoc.data().recentlyWatched;
+    }
+
+    const filteredWatched = currentRecentlyWatched.filter(
+      (watchedItem) =>
+        !(watchedItem.id === newItem.id && watchedItem.type === newItem.type)
+    );
+
+    const updatedRecentlyWatched = [newItem, ...filteredWatched];
+
+    if (updatedRecentlyWatched.length > RECENTLY_WATCHED_LIMIT) {
+      updatedRecentlyWatched.length = RECENTLY_WATCHED_LIMIT;
+    }
+
+    await updateDoc(userRef, {
+      recentlyWatched: updatedRecentlyWatched,
+      [`stats.totalTimeSpentSeconds`]: increment(durationSeconds || 0),
+    });
+
+    console.log(
+      `[Firestore] Successfully added/updated recently watched for ${userId} and incremented time by ${durationSeconds}.`
+    );
+  } catch (error) {
+    console.error(
+      `[Firestore] Error adding to recently watched for user ${userId}:`,
+      error
+    );
+    throw error;
   }
 };
 
@@ -549,23 +552,34 @@ export const incrementMediaWatchCount = async (userId, mediaType) => {
  * @returns {Promise<object|null>} The user data or null if not found.
  */
 export const getUserData = async (userId) => {
-  if (!userId) return null;
-  console.log(`[Firestore] Getting user data for: ${userId}`);
-  const cachedData = getFromCache("userData", userId);
-  if (cachedData) {
-    console.log(`[Firestore] Returning cached user data for ${userId}`);
-    return cachedData;
+  if (!userId) {
+    console.warn("[Firestore] getUserData: No userId provided.");
+    return null;
   }
+  const userRef = doc(db, "users", userId);
   try {
-    const userRef = doc(db, "users", userId);
     const docSnap = await getDoc(userRef);
     if (docSnap.exists()) {
-      const userData = { id: docSnap.id, ...docSnap.data() };
-      storeInCache("userData", userId, userData);
-      return userData;
+      const data = docSnap.data();
+      console.log(`[Firestore] User data fetched for ${userId}:`, data);
+      return {
+        id: docSnap.id,
+        ...data,
+        hasSeenWelcomeModal:
+          data.hasSeenWelcomeModal === undefined
+            ? false
+            : data.hasSeenWelcomeModal,
+        // Ensure stats exist and have default values if not present
+        stats: {
+          moviesWatched: data.stats?.moviesWatched || 0,
+          tvShowsWatched: data.stats?.tvShowsWatched || 0,
+          totalTimeSpentSeconds: data.stats?.totalTimeSpentSeconds || 0,
+        },
+        recentlyWatched: data.recentlyWatched || [],
+      };
     } else {
-      console.log(`[Firestore] No user document found for ${userId}`);
-      return null;
+      console.log(`[Firestore] No user document found for ${userId}.`);
+      return null; // Or you might want to create it here as in manageUserDocumentOnLogin
     }
   } catch (error) {
     console.error(`[Firestore] Error getting user data for ${userId}:`, error);
@@ -582,29 +596,53 @@ export const getUserData = async (userId) => {
  */
 export const setupUserDataListener = (userId, onUpdate, onError) => {
   if (!userId) {
-    if (onError) onError(new Error("User ID is required for listener."));
-    return () => {};
+    console.warn("[Firestore] setupUserDataListener: No userId provided.");
+    return () => {}; // Return a no-op unsubscribe function
   }
+
   const listenerKey = `userData_${userId}`;
+
+  // If a listener for this user already exists, unsubscribe from it first
   if (activeListeners.has(listenerKey)) {
-    activeListeners.get(listenerKey)();
-    activeListeners.delete(listenerKey);
+    const existingUnsubscribe = activeListeners.get(listenerKey);
+    existingUnsubscribe();
+    console.log(
+      `[Firestore] Removed existing user data listener for ${userId} before setting up new one.`
+    );
   }
-  console.log(`[Firestore] Setting up user data listener for: ${userId}`);
+
   const userRef = doc(db, "users", userId);
+  console.log(`[Firestore] Setting up user data listener for ${userId}`);
+
   const unsubscribe = onSnapshot(
     userRef,
     (docSnap) => {
       if (docSnap.exists()) {
-        const userData = { id: docSnap.id, ...docSnap.data() };
-        storeInCache("userData", userId, userData);
-        if (onUpdate) onUpdate(userData);
-        console.log(`[Firestore] User data listener updated for ${userId}`);
-      } else {
-        if (onUpdate) onUpdate(null);
+        const data = docSnap.data();
         console.log(
-          `[Firestore] User document not found for ${userId} in listener.`
+          `[Firestore] User data listener update for ${userId}:`,
+          data
         );
+        const processedData = {
+          id: docSnap.id,
+          ...data,
+          hasSeenWelcomeModal:
+            data.hasSeenWelcomeModal === undefined
+              ? false
+              : data.hasSeenWelcomeModal,
+          stats: {
+            moviesWatched: data.stats?.moviesWatched || 0,
+            tvShowsWatched: data.stats?.tvShowsWatched || 0,
+            totalTimeSpentSeconds: data.stats?.totalTimeSpentSeconds || 0,
+          },
+          recentlyWatched: data.recentlyWatched || [],
+        };
+        onUpdate(processedData);
+      } else {
+        console.log(
+          `[Firestore] User document does not exist for ${userId} in listener.`
+        );
+        onUpdate(null); // Notify that data is null (user doc deleted or non-existent)
       }
     },
     (error) => {
@@ -612,11 +650,19 @@ export const setupUserDataListener = (userId, onUpdate, onError) => {
         `[Firestore] User data listener error for ${userId}:`,
         error
       );
-      if (onError) onError(error);
+      if (onError) {
+        onError(error);
+      }
     }
   );
-  activeListeners.set(listenerKey, unsubscribe);
-  return unsubscribe;
+
+  activeListeners.set(listenerKey, unsubscribe); // Store the new unsubscribe function
+
+  return () => {
+    unsubscribe();
+    activeListeners.delete(listenerKey);
+    console.log(`[Firestore] User data listener removed for ${userId}`);
+  };
 };
 
 // Helper function to clean up listeners when component unmounts

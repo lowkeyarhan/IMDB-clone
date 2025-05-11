@@ -1,9 +1,19 @@
-import React, { createContext, useState, useContext, useEffect } from "react";
+import React, {
+  createContext,
+  useState,
+  useContext,
+  useEffect,
+  useCallback,
+} from "react";
 import { useAuth } from "./AuthContext";
 import useFavorites from "../hooks/useFavorites";
 import useWatchlist from "../hooks/useWatchlist";
 import { clearAllCache } from "../firebase/cacheService";
-import { setupUserDataListener, getUserData } from "../firebase/firestore";
+import {
+  setupUserDataListener,
+  getUserData,
+  markWelcomeModalAsSeen as markWelcomeModalAsSeenFS,
+} from "../firebase/firestore";
 
 // Create the context
 const UserDataContext = createContext();
@@ -37,27 +47,34 @@ export function UserDataProvider({ children }) {
     isInWatchlist,
   } = useWatchlist(currentUser);
 
-  // State for recentlyWatched
+  // State for recentlyWatched and user-specific flags
   const [recentlyWatched, setRecentlyWatched] = useState([]);
   const [recentlyWatchedLoading, setRecentlyWatchedLoading] = useState(true);
   const [recentlyWatchedError, setRecentlyWatchedError] = useState(null);
   const [totalTimeSpentSeconds, setTotalTimeSpentSeconds] = useState(0);
+  const [hasSeenWelcomeModal, setHasSeenWelcomeModal] = useState(undefined);
 
   // Combined loading state - now includes recentlyWatchedLoading
   const isLoading =
     favoritesLoading || watchlistLoading || recentlyWatchedLoading;
 
-  // Effect to fetch/listen to user data for recentlyWatched
+  // Effect to fetch/listen to user data for recentlyWatched and other user flags
   useEffect(() => {
     if (currentUser && currentUser.uid) {
       setRecentlyWatchedLoading(true);
       setRecentlyWatchedError(null);
+      setHasSeenWelcomeModal(undefined);
 
       // Initial fetch
       getUserData(currentUser.uid)
         .then((userData) => {
-          if (userData && userData.recentlyWatched) {
-            setRecentlyWatched(userData.recentlyWatched);
+          if (userData) {
+            setRecentlyWatched(userData.recentlyWatched || []);
+            setHasSeenWelcomeModal(
+              userData.hasSeenWelcomeModal === undefined
+                ? false
+                : userData.hasSeenWelcomeModal
+            );
           }
           setRecentlyWatchedLoading(false);
         })
@@ -68,16 +85,23 @@ export function UserDataProvider({ children }) {
           );
           setRecentlyWatchedError(err);
           setRecentlyWatchedLoading(false);
+          setHasSeenWelcomeModal(false);
         });
 
       // Setup listener for real-time updates
       const unsubscribe = setupUserDataListener(
         currentUser.uid,
         (userData) => {
-          if (userData && userData.recentlyWatched) {
-            setRecentlyWatched(userData.recentlyWatched);
+          if (userData) {
+            setRecentlyWatched(userData.recentlyWatched || []);
+            setHasSeenWelcomeModal(
+              userData.hasSeenWelcomeModal === undefined
+                ? false
+                : userData.hasSeenWelcomeModal
+            );
           } else {
             setRecentlyWatched([]);
+            setHasSeenWelcomeModal(false);
           }
           setRecentlyWatchedLoading(false);
         },
@@ -88,12 +112,14 @@ export function UserDataProvider({ children }) {
           );
           setRecentlyWatchedError(err);
           setRecentlyWatchedLoading(false);
+          setHasSeenWelcomeModal(false);
         }
       );
       return () => unsubscribe();
     } else {
       setRecentlyWatched([]);
       setRecentlyWatchedLoading(false);
+      setHasSeenWelcomeModal(false);
     }
   }, [currentUser]);
 
@@ -116,11 +142,28 @@ export function UserDataProvider({ children }) {
     }
   }, [isLoading, isInitialized]);
 
-  // Clear cache when user logs out
+  // Clear cache and reset states when user logs out
   useEffect(() => {
     if (!currentUser) {
       clearAllCache();
       setRecentlyWatched([]);
+      setTotalTimeSpentSeconds(0);
+      setHasSeenWelcomeModal(false);
+    }
+  }, [currentUser]);
+
+  const markWelcomeModalAsSeen = useCallback(async () => {
+    if (currentUser && currentUser.uid) {
+      try {
+        await markWelcomeModalAsSeenFS(currentUser.uid);
+        setHasSeenWelcomeModal(true);
+        console.log("[UserDataContext] Welcome modal marked as seen.");
+      } catch (error) {
+        console.error(
+          "[UserDataContext] Error marking welcome modal as seen:",
+          error
+        );
+      }
     }
   }, [currentUser]);
 
@@ -144,6 +187,9 @@ export function UserDataProvider({ children }) {
     recentlyWatchedLoading,
     recentlyWatchedError,
     totalTimeSpentSeconds,
+
+    hasSeenWelcomeModal,
+    markWelcomeModalAsSeen,
 
     isLoading,
     isInitialized,

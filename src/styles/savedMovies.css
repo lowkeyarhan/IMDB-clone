@@ -267,6 +267,37 @@
   }
 }
 
+/* Fix for very small screens to ensure 2 columns */
+@media (max-width: 400px) {
+  .saved_movies_container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .saved_movie_card {
+    min-width: 0;
+  }
+
+  .saved_movie_info {
+    padding: 10px;
+  }
+
+  .saved_movie_info h3 {
+    font-size: 0.8rem;
+    margin-bottom: 5px;
+  }
+
+  .watchlist_actions {
+    gap: 5px;
+  }
+
+  .remove_btn,
+  .watched_btn {
+    padding: 5px;
+    font-size: 0.7rem;
+  }
+}
+
 .search_results_grid .saved_movie_card {
   min-height: 450px;
   display: flex;
