@@ -402,51 +402,95 @@ export const manageUserDocumentOnLogin = async (user) => {
  * @param {object} item - The media item to add (should include id, type, title, posterPath).
  * @param {number} durationSeconds - The duration in seconds the item was watched.
  */
-export const addRecentlyWatched = async (userId, item, durationSeconds = 0) => {
-  if (!userId || !item || !item.id || !item.type) {
-    console.error("[Firestore] Invalid userId or item for addRecentlyWatched");
+export const addRecentlyWatched = async (
+  userId,
+  item,
+  durationSeconds = 0,
+  watchTimeInMinutes
+) => {
+  if (!userId || !item || !item.id) {
+    console.error("User ID or item details are missing for recently watched.");
     return;
   }
 
-  const userRef = doc(db, "users", userId);
-  console.log(
-    `[Firestore] Adding to recently watched for user ${userId}:`,
-    item.title || item.name
-  );
-  try {
-    const docSnap = await getDoc(userRef);
-    if (!docSnap.exists()) {
-      console.warn(
-        `[Firestore] User document ${userId} not found. Cannot add to recently watched. Call manageUserDocumentOnLogin first.`
-      );
-      throw new Error("User document not found.");
-    }
-    let currentRecentlyWatched = docSnap.data().recentlyWatched || [];
-    const newItem = {
-      ...item,
-      watchedAt: new Date(),
-      durationSeconds: durationSeconds,
-    };
-    currentRecentlyWatched = currentRecentlyWatched.filter(
-      (rwItem) => !(rwItem.id === newItem.id && rwItem.type === newItem.type)
-    );
-    currentRecentlyWatched.unshift(newItem);
-    if (currentRecentlyWatched.length > RECENTLY_WATCHED_LIMIT) {
-      currentRecentlyWatched = currentRecentlyWatched.slice(
-        0,
-        RECENTLY_WATCHED_LIMIT
-      );
-    }
-    await updateDoc(userRef, { recentlyWatched: currentRecentlyWatched });
+  if (watchTimeInMinutes <= 5) {
     console.log(
-      `[Firestore] Successfully updated recently watched for ${userId}`
+      `Item ${item.id} (${
+        item.title || item.name
+      }) not added to recently watched, watchTimeInMinutes: ${watchTimeInMinutes}`
     );
+    return;
+  }
+
+  const userDocRef = doc(db, "users", userId);
+  const mediaType = item.media_type || (item.first_air_date ? "tv" : "movie");
+  const cleanItemId = String(item.id).split("_").pop();
+
+  const newItem = {
+    id: cleanItemId,
+    title: item.title || item.name,
+    poster_path: item.poster_path,
+    media_type: mediaType,
+    watchedAt: new Date(),
+    durationSeconds: durationSeconds || 0,
+    ...(mediaType === "tv" && {
+      name: item.name,
+      first_air_date: item.first_air_date,
+    }),
+    ...(mediaType === "movie" && {
+      release_date: item.release_date,
+    }),
+  };
+
+  console.log(
+    `[Firestore addRecentlyWatched] Attempting to add for user ${userId}:`,
+    newItem
+  );
+
+  try {
+    const userDocSnap = await getDoc(userDocRef);
+
+    if (userDocSnap.exists()) {
+      let currentRecentlyWatched = userDocSnap.data().recentlyWatched || [];
+
+      currentRecentlyWatched = currentRecentlyWatched.filter(
+        (rwItem) =>
+          !(
+            rwItem.id === newItem.id && rwItem.media_type === newItem.media_type
+          )
+      );
+
+      const updatedRecentlyWatched = [newItem, ...currentRecentlyWatched];
+
+      if (updatedRecentlyWatched.length > RECENTLY_WATCHED_LIMIT) {
+        updatedRecentlyWatched.length = RECENTLY_WATCHED_LIMIT;
+      }
+
+      await updateDoc(userDocRef, {
+        recentlyWatched: updatedRecentlyWatched,
+      });
+      console.log(
+        `Updated recently watched for user ${userId} with item ${newItem.id}`
+      );
+    } else {
+      await setDoc(userDocRef, {
+        recentlyWatched: [newItem],
+        favorites_count: 0,
+        watchlist_count: 0,
+        watched_movies_count: 0,
+        watched_tv_shows_count: 0,
+      });
+      console.log(
+        `Created recently watched for user ${userId} with item ${newItem.id}`
+      );
+    }
+    invalidateCache("userData", userId);
   } catch (error) {
     console.error(
-      `[Firestore] Error adding to recently watched for ${userId}:`,
-      error
+      `[Firestore addRecentlyWatched] Error adding to recently watched for user ${userId}:`,
+      error,
+      { item }
     );
-    throw error;
   }
 };
 

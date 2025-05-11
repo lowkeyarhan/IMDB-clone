@@ -79,18 +79,32 @@ function Player() {
 
   // --- START: Watch Time Tracking Logic ---
   const recordWatchSession = useCallback(async () => {
+    console.log("[Player] recordWatchSession: Function entered.");
     if (currentUser && mediaDetails && mediaDetails.title) {
       console.log(`[Player] Recording watch session for ${mediaDetails.title}`);
       const watchedDurationSeconds = accumulatedWatchTimeRef.current;
+      const watchedDurationMinutes = watchedDurationSeconds / 60; // Calculate minutes
 
       const item = {
         id: id,
-        type: type,
+        media_type: type, // Use 'type' from params as media_type
         title: mediaDetails.title,
-        posterPath: mediaDetails.posterPath || mediaDetails.backdrop,
+        poster_path: mediaDetails.posterPath || mediaDetails.backdrop, // Ensure poster_path is used
+        ...(type === "tv" && {
+          name: mediaDetails.title, // or specific name field if different
+          first_air_date: mediaDetails.releaseDate, // Assuming releaseDate holds first_air_date for TV
+        }),
+        ...(type === "movie" && {
+          release_date: mediaDetails.releaseDate,
+        }),
       };
 
-      await addRecentlyWatched(currentUser.uid, item, watchedDurationSeconds);
+      await addRecentlyWatched(
+        currentUser.uid,
+        item,
+        watchedDurationSeconds,
+        watchedDurationMinutes // Pass watchedDurationMinutes
+      );
       accumulatedWatchTimeRef.current = 0;
     }
   }, [currentUser, id, type, mediaDetails, addRecentlyWatched]);
@@ -132,17 +146,42 @@ function Player() {
   // Effect for cleanup on unmount
   useEffect(() => {
     return () => {
+      console.log("[Player] Unmount effect: Cleanup running.");
       if (playbackStartTimeRef.current) {
         const sessionWatchTime =
           (Date.now() - playbackStartTimeRef.current) / 1000;
         accumulatedWatchTimeRef.current += sessionWatchTime;
+        console.log(
+          `[Player] Unmount effect: Final accumulated time before record: ${accumulatedWatchTimeRef.current.toFixed(
+            2
+          )}s`
+        );
       }
+      console.log(
+        `[Player] Unmount effect: accumulatedWatchTimeRef.current = ${accumulatedWatchTimeRef.current}`
+      );
+
       if (accumulatedWatchTimeRef.current > 0) {
-        console.log("[Player] Component unmounting. Recording watch session.");
-        recordWatchSession();
+        console.log(
+          "[Player] Unmount effect: accumulatedWatchTime > 0, attempting to call recordWatchSession."
+        );
+        try {
+          console.log(
+            "[Player] Unmount effect: BEFORE recordWatchSession() call."
+          );
+          recordWatchSession();
+          console.log(
+            "[Player] Unmount effect: AFTER recordWatchSession() call."
+          );
+        } catch (e) {
+          console.error(
+            "[Player] Unmount effect: Error calling recordWatchSession:",
+            e
+          );
+        }
       } else {
         console.log(
-          "[Player] Component unmounting. No accumulated watch time to record."
+          "[Player] Unmount effect: No accumulated watch time to record."
         );
       }
     };
