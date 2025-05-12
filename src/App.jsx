@@ -1,5 +1,5 @@
 import "./App.css";
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import NavBar from "./components/navBar.jsx";
 import Home from "./pages/Home.jsx";
@@ -29,65 +29,85 @@ function PrivateRoute({ children }) {
   return children;
 }
 
-function App() {
-  const [firstVisit, setFirstVisit] = useState(false);
-  const [modalShown, setModalShown] = useState(false);
+// New component to handle layout and routes, consuming context
+function AppLayoutAndRoutes() {
+  const { currentUser } = useAuth();
+  const { hasSeenWelcomeModal, markWelcomeModalAsSeen, isInitialized } =
+    useUserData();
 
-  useEffect(() => {
-    // Check if it's the user's first visit
-    if (!localStorage.getItem("hasVisited")) {
-      setFirstVisit(true);
-      setModalShown(true);
-      localStorage.setItem("hasVisited", "true");
+  const handleCloseWelcomeModal = () => {
+    if (currentUser) {
+      markWelcomeModalAsSeen();
     }
-  }, []);
-
-  const handleCloseModal = () => {
-    setModalShown(false);
   };
 
+  const shouldShowWelcomeModal =
+    currentUser && isInitialized && hasSeenWelcomeModal === false;
+
+  // Effect to handle body scroll based on modal visibility
+  useEffect(() => {
+    if (shouldShowWelcomeModal) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+    // Cleanup function to reset overflow when component unmounts or before effect re-runs
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [shouldShowWelcomeModal]);
+
+  return (
+    <>
+      <NavBar />
+      {shouldShowWelcomeModal && (
+        <FirstVisitModal isOpen={true} onClose={handleCloseWelcomeModal} />
+      )}
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route
+          path="/favorites"
+          element={
+            <PrivateRoute>
+              <Favorites />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/watchlist"
+          element={
+            <PrivateRoute>
+              <Watchlist />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <PrivateRoute>
+              <Profile />
+            </PrivateRoute>
+          }
+        />
+        <Route path="/search" element={<Search />} />
+        <Route path="/explore" element={<Explore />} />
+        <Route path="/movie/:id" element={<MovieDetails />} />
+        <Route path="/tv/:id" element={<TVShowDetails />} />
+        <Route path="/watch/:type/:id" element={<Player />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+      </Routes>
+    </>
+  );
+}
+
+// App component now primarily sets up providers
+function App() {
   return (
     <AuthProvider>
       <UserDataProvider>
         <HomeDataProvider>
-          <NavBar />
-          {firstVisit && modalShown && (
-            <FirstVisitModal onClose={handleCloseModal} />
-          )}
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route
-              path="/favorites"
-              element={
-                <PrivateRoute>
-                  <Favorites />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/watchlist"
-              element={
-                <PrivateRoute>
-                  <Watchlist />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/profile"
-              element={
-                <PrivateRoute>
-                  <Profile />
-                </PrivateRoute>
-              }
-            />
-            <Route path="/search" element={<Search />} />
-            <Route path="/explore" element={<Explore />} />
-            <Route path="/movie/:id" element={<MovieDetails />} />
-            <Route path="/tv/:id" element={<TVShowDetails />} />
-            <Route path="/watch/:type/:id" element={<Player />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-          </Routes>
+          <AppLayoutAndRoutes />
         </HomeDataProvider>
       </UserDataProvider>
     </AuthProvider>

@@ -86,7 +86,7 @@ const FirstVisitModal = ({ isOpen, onClose }) => {
             exit="exit"
             onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal content
           >
-            <h2>Welcome to ScreenKiss!</h2>
+            <h2>Welcome to Riyura!</h2>
             <p>A few tips to enhance your viewing experience:</p>
 
             <div className="modal-section-fm modal-section-ads-fm">
@@ -173,7 +173,7 @@ const FirstVisitModal = ({ isOpen, onClose }) => {
             </div>
 
             <button className="modal-got-it-btn-fm" onClick={onClose}>
-              Got it, done with the steps, take me to ScreenKiss!
+              Got it, done with the steps, take me to Riyura!
             </button>
           </motion.div>
         </motion.div>

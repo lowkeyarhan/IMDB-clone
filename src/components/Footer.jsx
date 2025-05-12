@@ -49,7 +49,7 @@ function Footer() {
           </div>
         </div>
         <div className="footer-bottom">
-          <p>© {currentYear} ScreenKiss. All rights reserved.</p>
+          <p>© {currentYear} Riyura. All rights reserved.</p>
           <p className="credits">
             Powered by{" "}
             <a

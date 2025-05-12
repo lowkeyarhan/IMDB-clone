@@ -442,58 +442,77 @@ export const markWelcomeModalAsSeen = async (userId) => {
 };
 
 export const addRecentlyWatched = async (userId, item, durationSeconds = 0) => {
-  if (!userId || !item) {
-    console.error(
-      "[Firestore] AddRecentlyWatched: Invalid userId or item provided."
-    );
+  if (!userId || !item || typeof item.id === "undefined") {
+    console.error("[Firestore] Invalid arguments for addRecentlyWatched:", {
+      userId,
+      item,
+      durationSeconds,
+    });
     return;
   }
-  console.log(`[Firestore] Adding to recently watched for user ${userId}:`, {
-    item,
-    durationSeconds,
-  });
 
-  const userRef = doc(db, "users", userId);
+  console.log(
+    `[Firestore] Adding to recently watched for user ${userId}, item ID: ${item.id}, duration: ${durationSeconds}s`
+  );
+
+  const userDocRef = doc(db, "users", userId);
 
   const newItem = {
     ...item,
-    id: String(item.id),
-    watchedAt: new Date(),
-    durationSeconds: durationSeconds || 0,
+    watchedAt: new Date(), // Use client-side timestamp, Firestore serverTimestamp can't be in arrayUnion
+    durationSeconds: durationSeconds || 0, // Ensure it's a number
   };
 
   try {
-    const userDoc = await getDoc(userRef);
-    let currentRecentlyWatched = [];
-    if (userDoc.exists() && userDoc.data().recentlyWatched) {
-      currentRecentlyWatched = userDoc.data().recentlyWatched;
-    }
-
-    const filteredWatched = currentRecentlyWatched.filter(
-      (watchedItem) =>
-        !(watchedItem.id === newItem.id && watchedItem.type === newItem.type)
+    // Use setDoc with merge: true to create the document if it doesn't exist,
+    // or update it if it does.
+    await setDoc(
+      userDocRef,
+      {
+        recentlyWatched: arrayUnion(newItem),
+        // Optionally, initialize other user fields here if they don't exist
+        // e.g., createdAt: serverTimestamp() // but only if doc is new
+      },
+      { merge: true }
     );
 
-    const updatedRecentlyWatched = [newItem, ...filteredWatched];
-
-    if (updatedRecentlyWatched.length > RECENTLY_WATCHED_LIMIT) {
-      updatedRecentlyWatched.length = RECENTLY_WATCHED_LIMIT;
+    // After adding, check if the array exceeds the limit and trim it.
+    const userDoc = await getDoc(userDocRef);
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      if (
+        userData.recentlyWatched &&
+        userData.recentlyWatched.length > RECENTLY_WATCHED_LIMIT
+      ) {
+        const sortedWatched = userData.recentlyWatched.sort(
+          (a, b) => b.watchedAt.toMillis() - a.watchedAt.toMillis()
+        );
+        const trimmedWatched = sortedWatched.slice(0, RECENTLY_WATCHED_LIMIT);
+        await updateDoc(userDocRef, { recentlyWatched: trimmedWatched });
+        console.log(
+          `[Firestore] Trimmed recently watched for user ${userId} to ${RECENTLY_WATCHED_LIMIT} items.`
+        );
+      }
     }
-
-    await updateDoc(userRef, {
-      recentlyWatched: updatedRecentlyWatched,
-      [`stats.totalTimeSpentSeconds`]: increment(durationSeconds || 0),
-    });
 
     console.log(
-      `[Firestore] Successfully added/updated recently watched for ${userId} and incremented time by ${durationSeconds}.`
+      `[Firestore] Successfully added/updated recently watched for user ${userId}, item ID: ${item.id}`
     );
+    invalidateCache("userData", userId); // Invalidate user data cache which includes recentlyWatched
   } catch (error) {
     console.error(
       `[Firestore] Error adding to recently watched for user ${userId}:`,
       error
     );
-    throw error;
+    // Log the item as well for better debugging
+    console.error("[Firestore] Item details:", item);
+    if (error.code === "permission-denied") {
+      console.error(
+        "[Firestore] Permission denied. Check Firestore security rules for users collection."
+      );
+    }
+    // Potentially re-throw the error if the caller needs to handle it
+    // throw error;
   }
 };
 
