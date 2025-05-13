@@ -5,7 +5,9 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.85);
+  background-color: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -16,11 +18,12 @@
 .modal-content-fm {
   background-color: var(--card-bg, #181818);
   padding: 30px 35px;
+  font-family: "Montserrat", sans-serif;
   border-radius: 12px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
   width: 100%;
   max-width: 650px;
-  max-height: 90vh;
+  max-height: 85vh;
   overflow-y: auto;
   position: relative;
   color: var(--text-color, #e0e0e0);
@@ -28,7 +31,7 @@
 
 .modal-content-fm h2 {
   font-size: 2rem;
-  font-weight: 700;
+  font-family: "Poppins", sans-serif;
   color: var(--primary-accent, #e50914);
   margin-top: 0;
   margin-bottom: 10px;
@@ -135,7 +138,7 @@
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.2s ease, transform 0.1s ease;
-  margin-top: 30px;
+  /* margin-top: 30px; */
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -172,16 +175,25 @@
 /* Responsive adjustments */
 @media (max-width: 950px) {
   .modal-content-fm {
-    padding: 25px 20px;
+    padding: 15px;
     margin: 0 10px;
   }
 
+  .modal-content-fm .modal-section-ads-fm {
+    margin-bottom: 15px;
+  }
+
+  .modal-content-fm .modal-section-4k-fm {
+    margin-bottom: 15px;
+  }
+
   .modal-content-fm h2 {
-    font-size: 1.7rem;
+    font-size: 1.5rem;
+    font-weight: 600;
   }
 
   .modal-content-fm p {
-    font-size: 0.95rem;
+    font-size: 0.9rem;
   }
 
   .modal-section-fm {
@@ -194,8 +206,7 @@
   }
 
   .modal-section-fm li {
-    font-size: 0.9rem;
-    padding-left: 20px;
+    font-size: 0.8rem;
   }
 
   .modal-got-it-btn-fm {
@@ -204,17 +215,11 @@
   }
 }
 
-@media (max-width: 480px) {
-  .modal-content-fm h2 {
-    font-size: 1.5rem;
+@media (max-width: 376px) {
+  .modal-content-fm p {
+    font-size: 0.8rem;
   }
-  .modal-section-fm h3 {
-    font-size: 1.1rem;
-  }
-  .modal-section-fm li {
-    font-size: 0.85rem;
-  }
-  .modal-got-it-btn-fm {
-    font-size: 0.9rem;
+  .modal-content-fm {
+    margin: 0;
   }
 }

@@ -51,13 +51,13 @@ const modalVariants = {
     transition: {
       duration: 0.3,
       ease: "easeOut",
-      delay: 0.1, // Slight delay for content to pop after overlay
+      delay: 0.1,
     },
   },
   exit: {
     opacity: 0,
     scale: 0.95,
-    y: 10, // Slightly different exit y
+    y: 10,
     transition: {
       duration: 0.2,
       ease: "easeIn",
@@ -81,17 +81,17 @@ const FirstVisitModal = ({ isOpen, onClose }) => {
             className="modal-content-fm"
             key="modal-content"
             variants={modalVariants}
-            initial="hidden" // Already part of overlay animation, but good for direct use
+            initial="hidden"
             animate="visible"
             exit="exit"
-            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal content
+            onClick={(e) => e.stopPropagation()}
           >
-            <h2>Welcome to Riyura!</h2>
-            <p>A few tips to enhance your viewing experience:</p>
+            <h2>Riyura welcomes you!</h2>
+            <p>Some essential Setup Before You Begin:</p>
 
             <div className="modal-section-fm modal-section-ads-fm">
               <h3>
-                <FontAwesomeIcon icon={faShieldAlt} /> Block Ads & Popups
+                <FontAwesomeIcon icon={faShieldAlt} /> Block Ads & Redirects
               </h3>
               <ul>
                 <li>
@@ -99,9 +99,7 @@ const FirstVisitModal = ({ isOpen, onClose }) => {
                     icon={faDesktop}
                     className="platform-icon-fm"
                   />
-                  <strong>
-                    Desktop Browsers (Chrome, Safari, Opera, Edge):
-                  </strong>
+                  <strong>Chrome, Safari, Opera, Firefox...</strong>
                   <br />
                   Install the{" "}
                   <a
@@ -120,15 +118,16 @@ const FirstVisitModal = ({ isOpen, onClose }) => {
                   />
                   <strong>Android Users:</strong>
                   <br />
-                  Use Private DNS: <code>dns.adguard.com</code> (Set in
-                  Wi-Fi/Network settings).
+                  Use Private DNS: <code>dns.adguard.com</code> or{" "}
+                  <code>p3.freedns.controld.com</code>(Set in Wi-Fi/Network
+                  settings).
                 </li>
                 <li>
                   <FontAwesomeIcon
                     icon={faBrave}
                     className="platform-icon-fm"
                   />
-                  <strong>Brave Browser Users:</strong>
+                  <strong>Brave Users:</strong>
                   <br />
                   You're all set! Grab some popcorn. 🍿
                 </li>
@@ -139,15 +138,17 @@ const FirstVisitModal = ({ isOpen, onClose }) => {
                   />
                   <strong>iOS Users:</strong>
                   <br />
-                  Try enabling content blockers in Safari settings or use an
-                  ad-blocking app from the App Store.
+                  Try enabling content blockers in Safari settings, use an
+                  ad-blocking app from the App Store, or maybe try any of the
+                  above steps.
                 </li>
               </ul>
             </div>
 
             <div className="modal-section-fm modal-section-4k-fm">
               <h3>
-                <FontAwesomeIcon icon={faVideo} /> How to Stream in 4K
+                <FontAwesomeIcon icon={faVideo} />
+                Stream in 4K HDR
               </h3>
               <ul>
                 <li>
@@ -167,13 +168,13 @@ const FirstVisitModal = ({ isOpen, onClose }) => {
                 </li>
                 <li>
                   Ensure your internet connection is stable (25+ Mbps) and your
-                  device/display supports 4K.
+                  device/display supports HLG.
                 </li>
               </ul>
             </div>
 
             <button className="modal-got-it-btn-fm" onClick={onClose}>
-              Got it, done with the steps, take me to Riyura!
+              All set!
             </button>
           </motion.div>
         </motion.div>

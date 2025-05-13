@@ -32,17 +32,20 @@ function PrivateRoute({ children }) {
 // New component to handle layout and routes, consuming context
 function AppLayoutAndRoutes() {
   const { currentUser } = useAuth();
-  const { hasSeenWelcomeModal, markWelcomeModalAsSeen, isInitialized } =
-    useUserData();
+  const {
+    hasSeenWelcomeModal,
+    markWelcomeModalAsSeen,
+    isInitialized,
+    hasVisitedSiteInitially,
+  } = useUserData();
 
   const handleCloseWelcomeModal = () => {
-    if (currentUser) {
-      markWelcomeModalAsSeen();
-    }
+    markWelcomeModalAsSeen();
   };
 
   const shouldShowWelcomeModal =
-    currentUser && isInitialized && hasSeenWelcomeModal === false;
+    hasVisitedSiteInitially === false ||
+    (currentUser && isInitialized && hasSeenWelcomeModal === false);
 
   // Effect to handle body scroll based on modal visibility
   useEffect(() => {

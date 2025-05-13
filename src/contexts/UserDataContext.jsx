@@ -53,6 +53,8 @@ export function UserDataProvider({ children }) {
   const [recentlyWatchedError, setRecentlyWatchedError] = useState(null);
   const [totalTimeSpentSeconds, setTotalTimeSpentSeconds] = useState(0);
   const [hasSeenWelcomeModal, setHasSeenWelcomeModal] = useState(undefined);
+  const [hasVisitedSiteInitially, setHasVisitedSiteInitially] =
+    useState(undefined);
 
   // Combined loading state - now includes recentlyWatchedLoading
   const isLoading =
@@ -60,6 +62,15 @@ export function UserDataProvider({ children }) {
 
   // Effect to fetch/listen to user data for recentlyWatched and other user flags
   useEffect(() => {
+    // Check local storage for first site visit
+    const siteVisited = localStorage.getItem("hasVisitedSite");
+    if (siteVisited === null) {
+      setHasVisitedSiteInitially(false);
+      // Don't set localStorage here yet, only when modal is closed.
+    } else {
+      setHasVisitedSiteInitially(true);
+    }
+
     if (currentUser && currentUser.uid) {
       setRecentlyWatchedLoading(true);
       setRecentlyWatchedError(null);
@@ -149,21 +160,32 @@ export function UserDataProvider({ children }) {
       setRecentlyWatched([]);
       setTotalTimeSpentSeconds(0);
       setHasSeenWelcomeModal(false);
+      // Don't reset hasVisitedSiteInitially here, as it's browser-specific
     }
   }, [currentUser]);
 
   const markWelcomeModalAsSeen = useCallback(async () => {
+    // Always mark in local storage
+    localStorage.setItem("hasVisitedSite", "true");
+    setHasVisitedSiteInitially(true); // Update state to reflect this immediately
+
     if (currentUser && currentUser.uid) {
       try {
         await markWelcomeModalAsSeenFS(currentUser.uid);
-        setHasSeenWelcomeModal(true);
-        console.log("[UserDataContext] Welcome modal marked as seen.");
+        setHasSeenWelcomeModal(true); // This will be set by the listener too, but good for immediate feedback
+        console.log(
+          "[UserDataContext] Welcome modal marked as seen in DB and local storage."
+        );
       } catch (error) {
         console.error(
-          "[UserDataContext] Error marking welcome modal as seen:",
+          "[UserDataContext] Error marking welcome modal as seen in DB:",
           error
         );
       }
+    } else {
+      console.log(
+        "[UserDataContext] Welcome modal marked as seen in local storage (user not logged in)."
+      );
     }
   }, [currentUser]);
 
@@ -190,6 +212,7 @@ export function UserDataProvider({ children }) {
 
     hasSeenWelcomeModal,
     markWelcomeModalAsSeen,
+    hasVisitedSiteInitially,
 
     isLoading,
     isInitialized,
