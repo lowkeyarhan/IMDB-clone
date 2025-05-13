@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background with subtle radial gradient -->
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#23243a"/>
+      <stop offset="100%" stop-color="#10111a"/>
+    </radialGradient>
+    <linearGradient id="rgrad" x1="0" y1="0" x2="0" y2="32" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#e50914"/>
+      <stop offset="1" stop-color="#a1061a"/>
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="7" fill="url(#bg)"/>
+  <!-- Modern, stylized R -->
+  <path d="M9 7.5C9 6.67 9.67 6 10.5 6H18C21 6 23 8 23 10.5C23 12.5 21.5 14 19.5 14L22.5 21.5C22.83 22.22 22.32 23 21.5 23H18.5C17.92 23 17.43 22.65 17.22 22.13L14.5 15.5H12.5V23H10.5C9.67 23 9 22.33 9 21.5V7.5ZM12.5 13H17C18.1 13 19 12.1 19 11C19 9.9 18.1 9 17 9H12.5V13Z" fill="url(#rgrad)"/>
+  <!-- Play button cutout in the R's bowl -->
+  <circle cx="14.5" cy="10.5" r="1.2" fill="#fff" fill-opacity="0.85"/>
+  <polygon points="16.5,10.5 18,11.3 16.5,12.1" fill="#fff" fill-opacity="0.85"/>
+</svg> 
