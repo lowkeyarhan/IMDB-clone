@@ -452,67 +452,75 @@ export const addRecentlyWatched = async (userId, item, durationSeconds = 0) => {
   }
 
   console.log(
-    `[Firestore] Adding to recently watched for user ${userId}, item ID: ${item.id}, duration: ${durationSeconds}s`
+    `[Firestore] Adding/Updating recently watched for user ${userId}, item ID: ${item.id}, duration: ${durationSeconds}s`
   );
 
   const userDocRef = doc(db, "users", userId);
 
-  const newItem = {
-    ...item,
-    watchedAt: new Date(), // Use client-side timestamp, Firestore serverTimestamp can't be in arrayUnion
-    durationSeconds: durationSeconds || 0, // Ensure it's a number
-  };
-
   try {
-    // Use setDoc with merge: true to create the document if it doesn't exist,
-    // or update it if it does.
+    const userDoc = await getDoc(userDocRef);
+    let recentlyWatched = [];
+
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      recentlyWatched = userData.recentlyWatched || [];
+    }
+
+    // Prepare the new item or item to update
+    const newItemData = {
+      ...item,
+      watchedAt: new Date(),
+      durationSeconds: parseFloat(durationSeconds) || 0,
+    };
+
+    // Check if the item already exists
+    const existingItemIndex = recentlyWatched.findIndex(
+      (watchedItem) =>
+        watchedItem.id === newItemData.id &&
+        watchedItem.media_type === newItemData.media_type
+    );
+
+    if (existingItemIndex > -1) {
+      // Item exists, remove it from its current position
+      recentlyWatched.splice(existingItemIndex, 1);
+    }
+
+    // Add the new/updated item to the beginning of the array
+    recentlyWatched.unshift(newItemData);
+
+    // Ensure the array does not exceed the limit
+    if (recentlyWatched.length > RECENTLY_WATCHED_LIMIT) {
+      recentlyWatched = recentlyWatched.slice(0, RECENTLY_WATCHED_LIMIT);
+    }
+
     await setDoc(
       userDocRef,
       {
-        recentlyWatched: arrayUnion(newItem),
-        // Optionally, initialize other user fields here if they don't exist
-        // e.g., createdAt: serverTimestamp() // but only if doc is new
+        recentlyWatched: recentlyWatched,
       },
       { merge: true }
     );
 
-    // After adding, check if the array exceeds the limit and trim it.
-    const userDoc = await getDoc(userDocRef);
-    if (userDoc.exists()) {
-      const userData = userDoc.data();
-      if (
-        userData.recentlyWatched &&
-        userData.recentlyWatched.length > RECENTLY_WATCHED_LIMIT
-      ) {
-        const sortedWatched = userData.recentlyWatched.sort(
-          (a, b) => b.watchedAt.toMillis() - a.watchedAt.toMillis()
-        );
-        const trimmedWatched = sortedWatched.slice(0, RECENTLY_WATCHED_LIMIT);
-        await updateDoc(userDocRef, { recentlyWatched: trimmedWatched });
-        console.log(
-          `[Firestore] Trimmed recently watched for user ${userId} to ${RECENTLY_WATCHED_LIMIT} items.`
-        );
-      }
-    }
-
     console.log(
-      `[Firestore] Successfully added/updated recently watched for user ${userId}, item ID: ${item.id}`
+      `[Firestore] Successfully updated recently watched for user ${userId}, item ID: ${item.id}. Total items: ${recentlyWatched.length}`
     );
     invalidateCache("userData", userId); // Invalidate user data cache which includes recentlyWatched
   } catch (error) {
     console.error(
-      `[Firestore] Error adding to recently watched for user ${userId}:`,
+      `[Firestore] Error updating recently watched for user ${userId}:`,
       error
     );
-    // Log the item as well for better debugging
-    console.error("[Firestore] Item details:", item);
+    console.error(
+      "[Firestore] Item details:",
+      item,
+      "Duration:",
+      durationSeconds
+    );
     if (error.code === "permission-denied") {
       console.error(
         "[Firestore] Permission denied. Check Firestore security rules for users collection."
       );
     }
-    // Potentially re-throw the error if the caller needs to handle it
-    // throw error;
   }
 };
 
@@ -598,7 +606,7 @@ export const getUserData = async (userId) => {
       };
     } else {
       console.log(`[Firestore] No user document found for ${userId}.`);
-      return null; // Or you might want to create it here as in manageUserDocumentOnLogin
+      return null;
     }
   } catch (error) {
     console.error(`[Firestore] Error getting user data for ${userId}:`, error);
@@ -675,7 +683,7 @@ export const setupUserDataListener = (userId, onUpdate, onError) => {
     }
   );
 
-  activeListeners.set(listenerKey, unsubscribe); // Store the new unsubscribe function
+  activeListeners.set(listenerKey, unsubscribe);
 
   return () => {
     unsubscribe();

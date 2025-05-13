@@ -119,8 +119,12 @@ function Profile() {
   }
 
   const handleItemClick = (item) => {
-    if (!item || !item.type || !item.id) return;
-    navigate(`/${item.type}/${item.id}`);
+    if (item && item.id && item.media_type) {
+      navigate(`/watch/${item.media_type}/${item.id}`);
+    } else {
+      console.warn("Attempted to navigate with invalid item data:", item);
+      // Optionally, show a user-facing error or navigate to a fallback
+    }
   };
 
   return (
