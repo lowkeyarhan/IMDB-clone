@@ -59,9 +59,11 @@ This platform supports **4K HDR** streaming for most newer movies and web series
 
 ---
 
-## 📅 ChangeLog – May 11, 2025
+## 📅 ChangeLog – May 13, 2025
 
 - ✅ Major UI changes, now uses glass morphism design.
+- ✅ Added a popup modal for new users to correctly setup their device for the optimal viewing experince.
+- ✅ Improved favicon and UI/UX.
 - ✅ Added user authentication.
 - ✅ Added a new explore page, find your desired movie/webseries/anime using genre filters.
 - ✅ Added a new profile page, keep track of your data.
