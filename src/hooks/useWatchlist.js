@@ -28,73 +28,89 @@ export default function useWatchlist(currentUser) {
         const parts = item.id.split("_");
 
         if (parts.length >= 2) {
-          mediaId = parseInt(parts[parts.length - 1], 10) || item.id; // last part should be numeric id
+          mediaId = parseInt(parts[parts.length - 1], 10) || item.id;
         }
       }
       return {
         ...item,
-        id: typeof mediaId === "string" ? parseInt(mediaId, 10) : mediaId, // Ensure id is a number
+        id: typeof mediaId === "string" ? parseInt(mediaId, 10) : mediaId,
         media_type: mediaType,
       };
     });
   };
 
-  // Extreme Debugging useEffect - ONLY uses the listener
   useEffect(() => {
     let unsubscribe = null;
-    if (!currentUser || !currentUser.uid) {
-      setWatchlist([]);
-      setLoading(false);
-      setError(null);
-      return;
-    }
 
-    // Log result of shouldFetchFromFirebase for watchlist
-    const shouldFetch = shouldFetchFromFirebase("watchlist", currentUser.uid);
-    console.log(
-      `[useWatchlist DEBUG] shouldFetchFromFirebase for watchlist/${currentUser.uid}: ${shouldFetch}`
-    );
-
-    setLoading(true);
-    setError(null);
-    setWatchlist([]); // Start clean
-
-    console.log(
-      "[useWatchlist DEBUG] ONLY setting up listener for user:",
-      currentUser.uid
-    );
-    unsubscribe = setupWatchlistListener(
-      currentUser.uid,
-      (itemsFromListener) => {
-        console.log(
-          "[useWatchlist DEBUG] Watchlist Listener triggered. Items:",
-          itemsFromListener.length,
-          itemsFromListener
-        );
-        setWatchlist(processItems(itemsFromListener));
-        setError(null);
+    async function loadAndListenWatchlist() {
+      if (!currentUser || !currentUser.uid) {
+        setWatchlist([]);
         setLoading(false);
-      },
-      (listenerError) => {
-        console.error(
-          "[useWatchlist DEBUG] Watchlist Listener error:",
-          listenerError
+        setError(null);
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      // Attempt to load from cache first for faster initial UI
+      const cachedData = getFromCache("watchlist", currentUser.uid);
+      if (cachedData) {
+        console.log(
+          "[useWatchlist] Using cached watchlist for initial display:",
+          cachedData.length
         );
-        setError("Error in watchlist listener.");
+        setWatchlist(processItems(cachedData));
+      } else {
+        setWatchlist([]);
+      }
+
+      console.log(
+        "[useWatchlist] Setting up real-time listener for user:",
+        currentUser.uid
+      );
+      try {
+        unsubscribe = setupWatchlistListener(
+          currentUser.uid,
+          (itemsFromListener) => {
+            console.log(
+              "[useWatchlist] Firestore listener triggered. Items:",
+              itemsFromListener.length,
+              itemsFromListener
+            );
+            setWatchlist(processItems(itemsFromListener)); // Listener updates state & cache (via firestore.js)
+            setError(null);
+            setLoading(false); // Loading is false once listener provides data
+          },
+          (listenerError) => {
+            console.error(
+              "[useWatchlist] Error in Firestore listener:",
+              listenerError
+            );
+            setError(listenerError.message || "Failed to sync watchlist.");
+            setLoading(false);
+          }
+        );
+      } catch (setupError) {
+        console.error("[useWatchlist] Error setting up listener:", setupError);
+        setError(setupError.message || "Failed to initialize watchlist sync.");
+        setWatchlist([]); // Ensure watchlist is empty on error
         setLoading(false);
       }
-    );
+    }
+
+    loadAndListenWatchlist();
 
     return () => {
       if (unsubscribe) {
         console.log(
-          "[useWatchlist DEBUG] Cleaning up watchlist listener for",
-          currentUser.uid
+          "[useWatchlist] Cleaning up listener for user:",
+          currentUser?.uid
         );
         unsubscribe();
       }
     };
-  }, [currentUser]);
+  }, [currentUser]); // processItems can be memoized if it becomes complex
 
   const addItem = async (item) => {
     if (!currentUser || !currentUser.uid || !item || !item.id) {
@@ -103,30 +119,23 @@ export default function useWatchlist(currentUser) {
         item
       );
       setError("User not logged in or item invalid.");
-      return;
+      return false; // Indicate failure
     }
-
-    // Ensure media_type is correctly determined before sending to firestore
-    const mediaType = item.media_type || (item.first_air_date ? "tv" : "movie");
-    const itemToAdd = { ...item, media_type: mediaType };
-
-    console.log(
-      "[useWatchlist] addItem called with:",
-      itemToAdd,
-      "User UID:",
-      currentUser.uid
-    );
-
     try {
+      const mediaType =
+        item.media_type || (item.first_air_date ? "tv" : "movie");
+      const itemToAdd = { ...item, media_type: mediaType };
       await addToWatchlist(currentUser.uid, itemToAdd);
-
       console.log(
-        "[useWatchlist] Item added to Firestore, waiting for listener update",
+        "[useWatchlist] Item add request sent to Firestore for:",
         itemToAdd.id
       );
+      return true; // Indicate success
     } catch (err) {
       console.error("[useWatchlist] Error in addItem:", err);
-      setError("Failed to add to watchlist.");
+      setError(err.message || "Failed to add to watchlist.");
+      // setLoading(false);
+      return false; // Indicate failure
     }
   };
 
@@ -134,37 +143,32 @@ export default function useWatchlist(currentUser) {
     if (!currentUser || !currentUser.uid) {
       console.error("[useWatchlist] RemoveItem: User not logged in");
       setError("User not logged in.");
-      return;
+      return false; // Indicate failure
     }
-    console.log(
-      "[useWatchlist] removeItem called with ID:",
-      itemId,
-      "Type:",
-      mediaType,
-      "User UID:",
-      currentUser.uid
-    );
 
-    // Optimistic update (optional)
     try {
       await removeFromWatchlist(currentUser.uid, itemId, mediaType);
-
+      // UI should update via listener. Cache invalidation in firestore.js is a backup.
       console.log(
-        "[useWatchlist] Item removed from Firestore, waiting for listener update",
-        itemId
+        "[useWatchlist] Item remove request sent to Firestore for ID:",
+        itemId,
+        "Type:",
+        mediaType
       );
+      return true; // Indicate success
     } catch (err) {
       console.error("[useWatchlist] Error in removeItem:", err);
-      setError("Failed to remove from watchlist.");
+      setError(err.message || "Failed to remove from watchlist.");
+      return false; // Indicate failure
     }
   };
 
   const isInWatchlist = (itemId, mediaType) => {
-    const itemExists = watchlist.some(
-      (item) => item.id === itemId && item.media_type === mediaType
+    const numericItemId = Number(itemId);
+    return watchlist.some(
+      (item) =>
+        Number(item.id) === numericItemId && item.media_type === mediaType
     );
-
-    return itemExists;
   };
 
   return { watchlist, loading, error, addItem, removeItem, isInWatchlist };

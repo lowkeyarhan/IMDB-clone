@@ -3,7 +3,6 @@ import axios from "axios";
 import { Link } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faSpinner,
   faFilm,
   faTv,
   faTheaterMasks,
@@ -15,6 +14,9 @@ const PAGE_SIZE = 20; // TMDB default
 
 // Action genre ID for default selection (28 is Action in TMDB)
 const ACTION_GENRE_ID = 28;
+
+// Number of skeleton items to display during loading
+const SKELETON_COUNT = 20;
 
 function Explore() {
   const [genres, setGenres] = useState([]);
@@ -93,7 +95,8 @@ function Explore() {
         setError(null);
         if (loadingTimerRef.current) clearTimeout(loadingTimerRef.current);
         if (contentTimerRef.current) clearTimeout(contentTimerRef.current);
-        loadingTimerRef.current = setTimeout(() => setShowLoading(true), 400);
+        // Always show skeleton loader instead of spinner
+        loadingTimerRef.current = setTimeout(() => setShowLoading(true), 200);
       } else {
         // For infinite scroll, use bottom loader
         setBottomLoading(true);
@@ -204,13 +207,15 @@ function Explore() {
   // Initial load: fetch genres and then media
   useEffect(() => {
     setInitialLoading(true);
+    // Show skeleton loader immediately instead of waiting
     setShowLoading(true);
     setMovies([]);
     setPage({ movie: 1, tv: 1, anime: 1 });
     setHasMore({ movie: true, tv: true, anime: true });
     fetchAllGenres().then(() => {
       setInitialLoading(false);
-      setShowLoading(false);
+      // Don't turn off the loading indicator until we have content
+      // setShowLoading(false);
       fetchMedia();
     });
     // eslint-disable-next-line
@@ -259,6 +264,32 @@ function Explore() {
     setSelectedGenres([]);
   };
 
+  // Helper function to render skeleton genre buttons
+  const renderSkeletonGenres = () => {
+    // Create an array of dummy items for the skeleton
+    return Array.from({ length: 12 }).map((_, index) => (
+      <div key={`skeleton-genre-${index}`} className="skeleton-genre-btn"></div>
+    ));
+  };
+
+  // Helper function to render skeleton media cards
+  const renderSkeletonCards = () => {
+    return Array.from({ length: SKELETON_COUNT }).map((_, index) => (
+      // Make skeleton card structure identical to actual media-card structure
+      <div key={`skeleton-card-${index}`} className="skeleton-card">
+        <div className="skeleton-poster">
+          <div className="skeleton-overlay">
+            <div className="skeleton-rating"></div>
+          </div>
+        </div>
+        <div className="skeleton-details">
+          <div className="skeleton-title"></div>
+          <div className="skeleton-year"></div>
+        </div>
+      </div>
+    ));
+  };
+
   // UI shows genres and content
   return (
     <div className="explore-container">
@@ -279,26 +310,30 @@ function Explore() {
           )}
         </div>
         <div className="genre-scroll-container">
-          <div className="genre-list">
-            {genres.map((genre) => (
-              <button
-                key={genre.id}
-                className={`genre-btn ${
-                  selectedGenres.includes(genre.id) ? "active" : ""
-                }`}
-                onClick={() => handleGenreClick(genre.id)}
-                disabled={loading}
-              >
-                {genre.name}
-              </button>
-            ))}
-          </div>
+          {genres.length === 0 && loading ? (
+            <div className="skeleton-genre-list">{renderSkeletonGenres()}</div>
+          ) : (
+            <div className="genre-list">
+              {genres.map((genre) => (
+                <button
+                  key={genre.id}
+                  className={`genre-btn ${
+                    selectedGenres.includes(genre.id) ? "active" : ""
+                  }`}
+                  onClick={() => handleGenreClick(genre.id)}
+                  disabled={loading}
+                >
+                  {genre.name}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
       {showLoading ? (
-        <div className="slick-loader">
-          <div className="slick-loader-ring"></div>
-          <div className="slick-loader-text">Loading content...</div>
+        // Replace the spinner loader with skeleton cards
+        <div className="explore-results">
+          <div className="skeleton-grid">{renderSkeletonCards()}</div>
         </div>
       ) : error ? (
         <div className="error-container">
@@ -373,11 +408,7 @@ function Explore() {
             <div ref={bottomRef} className="infinite-scroll-sentinel">
               {bottomLoading && (
                 <div className="bottom-loader">
-                  <div className="bottom-loader-indicator">
-                    <div className="bottom-loader-dot"></div>
-                    <div className="bottom-loader-dot"></div>
-                    <div className="bottom-loader-dot"></div>
-                  </div>
+                  <div className="skeleton-bottom-loader"></div>
                 </div>
               )}
             </div>
@@ -389,4 +420,3 @@ function Explore() {
 }
 
 export default Explore;
- 

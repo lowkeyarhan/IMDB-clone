@@ -22,10 +22,12 @@ import {
   faTv,
   faSpinner,
   faStar,
+  faTrashAlt,
 } from "@fortawesome/free-solid-svg-icons";
 import "../styles/auth.css";
 import "../styles/profile.css";
 import Footer from "../components/Footer";
+import { removeFromRecentlyWatched } from "../firebase/firestore";
 
 function Profile() {
   const navigate = useNavigate();
@@ -124,6 +126,17 @@ function Profile() {
     } else {
       console.warn("Attempted to navigate with invalid item data:", item);
       // Optionally, show a user-facing error or navigate to a fallback
+    }
+  };
+
+  const handleRemoveFromHistory = async (e, itemToRemove) => {
+    e.stopPropagation();
+    if (!currentUser || !itemToRemove) return;
+    try {
+      await removeFromRecentlyWatched(currentUser.uid, itemToRemove);
+      console.log("Successfully removed from history:", itemToRemove.title);
+    } catch (err) {
+      console.error("Error removing from history:", err);
     }
   };
 
@@ -359,6 +372,12 @@ function Profile() {
                                             )}
                                       </p>
                                     )}
+                                    {item.durationSeconds > 0 && (
+                                      <p className="history-item-duration">
+                                        <FontAwesomeIcon icon={faStopwatch} />{" "}
+                                        {formatWatchTime(item.durationSeconds)}
+                                      </p>
+                                    )}
                                   </div>
                                 </div>
                               ))}
@@ -391,7 +410,8 @@ function Profile() {
                         className="recommendation-icon"
                       />
                       <p>
-                        Personalized recommendations coming soon... Stay tuned!
+                        AI presonalized recommendations coming soon... Stay
+                        tuned!
                       </p>
                     </div>
                   </div>
@@ -618,7 +638,6 @@ function Profile() {
                           <div
                             key={`${item.id}-${item.watchedAt}-detailed`}
                             className="history-item-card-detailed"
-                            onClick={() => handleItemClick(item)}
                           >
                             <img
                               src={
@@ -628,23 +647,40 @@ function Profile() {
                               }
                               alt={item.title}
                               className="history-item-thumbnail-detailed"
+                              onClick={() => handleItemClick(item)}
                             />
-                            <div className="history-item-info-detailed">
+                            <div
+                              className="history-item-info-detailed"
+                              onClick={() => handleItemClick(item)}
+                            >
                               <h3 className="history-item-title-detailed">
                                 {item.title}
                               </h3>
                               <p className="history-item-type-detailed">
-                                {item.type === "tv" ? "TV Show" : "Movie"}
+                                {item.media_type === "tv" ? "TV Show" : "Movie"}
                               </p>
                               {item.watchedAt && (
                                 <p className="history-item-watched-at-detailed">
-                                  <FontAwesomeIcon icon={faClock} /> Watched{" "}
+                                  <FontAwesomeIcon icon={faClock} />{" "}
                                   {item.watchedAt.toDate
                                     ? getTimeAgo(item.watchedAt.toDate())
                                     : getTimeAgo(new Date(item.watchedAt))}
                                 </p>
                               )}
+                              {item.durationSeconds > 0 && (
+                                <p className="history-item-duration-detailed">
+                                  <FontAwesomeIcon icon={faStopwatch} />{" "}
+                                  {formatWatchTime(item.durationSeconds)}
+                                </p>
+                              )}
                             </div>
+                            <button
+                              className="history-item-delete-button"
+                              onClick={(e) => handleRemoveFromHistory(e, item)}
+                              title="Remove from history"
+                            >
+                              <FontAwesomeIcon icon={faTrashAlt} />
+                            </button>
                           </div>
                         ))}
                       </div>

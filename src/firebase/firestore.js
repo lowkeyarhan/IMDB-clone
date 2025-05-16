@@ -481,7 +481,16 @@ export const addRecentlyWatched = async (userId, item, durationSeconds = 0) => {
     );
 
     if (existingItemIndex > -1) {
-      // Item exists, remove it from its current position
+      // Item exists, get the previous duration and add it to the new duration
+      const existingItem = recentlyWatched[existingItemIndex];
+      const previousDuration = parseFloat(existingItem.durationSeconds) || 0;
+      newItemData.durationSeconds += previousDuration;
+
+      console.log(
+        `[Firestore] Found existing item. Previous duration: ${previousDuration}s, New total: ${newItemData.durationSeconds}s`
+      );
+
+      // Remove the existing item from its current position
       recentlyWatched.splice(existingItemIndex, 1);
     }
 
@@ -521,6 +530,85 @@ export const addRecentlyWatched = async (userId, item, durationSeconds = 0) => {
         "[Firestore] Permission denied. Check Firestore security rules for users collection."
       );
     }
+  }
+};
+
+export const removeFromRecentlyWatched = async (userId, itemToRemove) => {
+  if (
+    !userId ||
+    !itemToRemove ||
+    typeof itemToRemove.id === "undefined" ||
+    typeof itemToRemove.media_type === "undefined"
+  ) {
+    console.error(
+      "[Firestore] Invalid arguments for removeFromRecentlyWatched:",
+      {
+        userId,
+        itemToRemove,
+      }
+    );
+    return;
+  }
+
+  console.log(
+    `[Firestore] Attempting to remove from recently watched for user ${userId}, item ID: ${itemToRemove.id}, type: ${itemToRemove.media_type}`
+  );
+
+  const userDocRef = doc(db, "users", userId);
+
+  try {
+    const userDoc = await getDoc(userDocRef);
+    if (!userDoc.exists()) {
+      console.error(
+        `[Firestore] User document not found for user ${userId} when trying to remove history item.`
+      );
+      return;
+    }
+
+    const userData = userDoc.data();
+    let recentlyWatched = userData.recentlyWatched || [];
+
+    // Find the item and remove it
+    const updatedRecentlyWatched = recentlyWatched.filter(
+      (watchedItem) =>
+        !(
+          watchedItem.id === itemToRemove.id &&
+          watchedItem.media_type === itemToRemove.media_type
+        )
+    );
+
+    if (recentlyWatched.length === updatedRecentlyWatched.length) {
+      console.warn(
+        `[Firestore] Item to remove not found in recently watched list for user ${userId}. Item:`,
+        itemToRemove
+      );
+      // Optionally, still proceed to setDoc to ensure consistency if the client thinks it was there.
+    }
+
+    await setDoc(
+      userDocRef,
+      {
+        recentlyWatched: updatedRecentlyWatched,
+      },
+      { merge: true }
+    );
+
+    console.log(
+      `[Firestore] Successfully updated recently watched for user ${userId} after removing item. New count: ${updatedRecentlyWatched.length}`
+    );
+    invalidateCache("userData", userId); // Invalidate user data cache which includes recentlyWatched
+  } catch (error) {
+    console.error(
+      `[Firestore] Error removing item from recently watched for user ${userId}:`,
+      error
+    );
+    console.error("[Firestore] Item details:", itemToRemove);
+    if (error.code === "permission-denied") {
+      console.error(
+        "[Firestore] Permission denied. Check Firestore security rules for users collection."
+      );
+    }
+    throw error; // Re-throw the error so the caller can handle it if needed
   }
 };
 

@@ -286,14 +286,27 @@
   margin-top: 10px;
 }
 
+/* Updated Bottom Loader - Skeleton Style */
 .bottom-loader {
   display: flex;
   justify-content: center;
   align-items: center;
   width: 100%;
   height: 40px;
+  margin: 10px 0;
 }
 
+.skeleton-bottom-loader {
+  width: 180px;
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(110deg, #242424 8%, #333333 18%, #242424 33%);
+  background-size: 200% 100%;
+  animation: shine 1.5s linear infinite;
+}
+
+/* Keep existing bottom-loader styles for fallback but comment out the dot animations */
+/*
 .bottom-loader-indicator {
   display: flex;
   gap: 6px;
@@ -334,6 +347,7 @@
     box-shadow: 0 0 10px rgba(229, 9, 20, 0.7);
   }
 }
+*/
 
 .error-container {
   display: flex;
@@ -523,6 +537,165 @@
     font-size: 0.7rem;
   }
   .media-card-overlay {
+    padding: 6px;
+    height: 45%;
+  }
+}
+
+/* Skeleton Loader Styles */
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.5rem;
+  animation: fadeIn 0.5s ease;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+  min-height: 200px;
+}
+
+.skeleton-card {
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  background: rgba(30, 30, 30, 0.6);
+  backdrop-filter: blur(12px) saturate(120%);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.skeleton-poster {
+  position: relative;
+  aspect-ratio: 1/1;
+  background: linear-gradient(110deg, #242424 8%, #333333 18%, #242424 33%);
+  background-size: 200% 100%;
+  animation: shine 1.5s linear infinite;
+  overflow: hidden;
+}
+
+.skeleton-details {
+  padding: 12px;
+  text-align: left;
+  flex-grow: 1;
+  position: relative;
+  z-index: 0;
+}
+
+.skeleton-title {
+  height: 20px;
+  width: 80%;
+  background: linear-gradient(110deg, #242424 8%, #333333 18%, #242424 33%);
+  background-size: 200% 100%;
+  animation: shine 1.5s linear infinite;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.skeleton-year {
+  height: 16px;
+  width: 50%;
+  background: linear-gradient(110deg, #242424 8%, #333333 18%, #242424 33%);
+  background-size: 200% 100%;
+  animation: shine 1.5s linear infinite;
+  border-radius: 4px;
+}
+
+.skeleton-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60%;
+  background: linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.85) 0%,
+    rgba(0, 0, 0, 0.75) 25%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.skeleton-rating {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  height: 18px;
+  width: 40px;
+  background: linear-gradient(110deg, #242424 8%, #333333 18%, #242424 33%);
+  background-size: 200% 100%;
+  animation: shine 1.5s linear infinite;
+  border-radius: 4px;
+  padding: 5px 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes shine {
+  to {
+    background-position-x: -200%;
+  }
+}
+
+/* Skeleton genre buttons */
+.skeleton-genre-btn {
+  height: 30px;
+  width: 80px;
+  background: linear-gradient(110deg, #242424 8%, #333333 18%, #242424 33%);
+  background-size: 200% 100%;
+  animation: shine 1.5s linear infinite;
+  border-radius: 10px;
+}
+
+.skeleton-genre-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+/* Media query adjustments for skeleton loaders */
+@media (max-width: 768px) {
+  .skeleton-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 20px;
+  }
+
+  .skeleton-card {
+    border-radius: 10px;
+  }
+
+  .skeleton-details {
+    padding: 10px;
+  }
+
+  .skeleton-overlay {
+    padding: 8px;
+    height: 50%;
+  }
+}
+
+@media (max-width: 480px) {
+  .skeleton-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 15px;
+  }
+
+  .skeleton-card {
+    border-radius: 8px;
+  }
+
+  .skeleton-details {
+    padding: 8px;
+  }
+
+  .skeleton-overlay {
     padding: 6px;
     height: 45%;
   }

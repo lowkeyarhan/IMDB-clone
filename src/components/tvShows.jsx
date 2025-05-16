@@ -34,6 +34,7 @@ function TVShows({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
   const IMAGE_BASE_URL = "https://image.tmdb.org/t/p";
   const POSTER_SIZE = "/w500";
   const CACHE_EXPIRY = 10 * 60 * 1000; // 10 minutes in milliseconds
+  const EXCLUDED_GENRE_IDS = [10767, 10766]; // Talk and Soap
 
   // Function to get image URL
   const getImageUrl = (path) => {
@@ -68,7 +69,7 @@ function TVShows({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
   // Fetch TV shows when page changes
   useEffect(() => {
     const fetchTVShows = async () => {
-      const cacheKey = `popular-tvshows-page-${currentPage}`;
+      const cacheKey = `trending-tvshows-page-${currentPage}`;
 
       // Check if we have cached data that's not expired
       if (
@@ -87,10 +88,17 @@ function TVShows({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
 
       try {
         const response = await fetch(
-          `${BASE_URL}/tv/popular?api_key=${API_KEY}&page=${currentPage}`
+          `${BASE_URL}/trending/tv/week?api_key=${API_KEY}&page=${currentPage}`
         );
         const data = await response.json();
-        setShows(data.results);
+
+        // Filter out excluded genres
+        const filteredShows = data.results.filter(
+          (show) =>
+            !show.genre_ids.some((id) => EXCLUDED_GENRE_IDS.includes(id))
+        );
+
+        setShows(filteredShows);
 
         // Update total pages in the parent component
         const maxPages = Math.min(data.total_pages, 500);
@@ -100,12 +108,12 @@ function TVShows({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
 
         // Cache the fetched data with timestamp
         tvShowsCache[cacheKey] = {
-          data: data.results,
+          data: filteredShows,
           totalPages: maxPages,
           timestamp: Date.now(),
         };
       } catch (error) {
-        console.error("Error fetching popular TV shows:", error);
+        console.error("Error fetching trending TV shows:", error);
       }
     };
 
@@ -199,7 +207,7 @@ function TVShows({ currentPage = 1, onTotalPagesUpdate, setActiveSection }) {
 
   return (
     <div className="parent_container">
-      <h1 id="tvshows-section">Popular TV Shows</h1>
+      <h1 id="tvshows-section">Trending TV Shows</h1>
       <div className="movies_container">
         {shows.map((show) => (
           <div
