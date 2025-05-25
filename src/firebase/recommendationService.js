@@ -65,7 +65,7 @@ Please give strong priority to the earlier items in this list (which represent w
 Recommend 10 other movies or TV shows.`;
 
   if (variant > 0) {
-    prompt += `\nPlease provide a different set of recommendations if possible (variation ${variant}).`;
+    prompt += `\nAlways provide a different set of recommendations (variation ${variant}).`;
   }
 
   prompt += `\nProvide only a comma-separated list of the titles. For example: Movie Title 1, TV Show Title A, Movie Title 2. Do not add any extra text, numbering, or formatting.`;
