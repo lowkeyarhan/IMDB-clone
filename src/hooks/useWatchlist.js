@@ -119,23 +119,49 @@ export default function useWatchlist(currentUser) {
         item
       );
       setError("User not logged in or item invalid.");
-      return false; // Indicate failure
+      return false;
     }
+
+    const mediaType = item.media_type || (item.first_air_date ? "tv" : "movie");
+    // Ensure ID is a number for consistent checks, especially with isInWatchlist
+    const numericId =
+      typeof item.id === "string" ? parseInt(item.id, 10) : item.id;
+    const itemToAdd = {
+      ...item,
+      id: numericId,
+      media_type: mediaType,
+    };
+
+    // Optimistic update
+    const previousWatchlist = watchlist;
+    setWatchlist((prevWatchlist) => {
+      // Avoid duplicates if somehow called rapidly before listener updates
+      if (
+        prevWatchlist.some(
+          (i) => i.id === itemToAdd.id && i.media_type === itemToAdd.media_type
+        )
+      ) {
+        return prevWatchlist;
+      }
+      return processItems([...prevWatchlist, itemToAdd]);
+    });
+
     try {
-      const mediaType =
-        item.media_type || (item.first_air_date ? "tv" : "movie");
-      const itemToAdd = { ...item, media_type: mediaType };
-      await addToWatchlist(currentUser.uid, itemToAdd);
+      await addToWatchlist(currentUser.uid, itemToAdd); // itemToAdd already has processed id and media_type
       console.log(
-        "[useWatchlist] Item add request sent to Firestore for:",
+        "[useWatchlist] Item add request successful for:",
         itemToAdd.id
       );
-      return true; // Indicate success
+      // Cache will be updated by the listener eventually, or by firestore.js invalidation + next read
+      return true;
     } catch (err) {
-      console.error("[useWatchlist] Error in addItem:", err);
+      console.error(
+        "[useWatchlist] Error in addItem, reverting optimistic update:",
+        err
+      );
       setError(err.message || "Failed to add to watchlist.");
-      // setLoading(false);
-      return false; // Indicate failure
+      setWatchlist(previousWatchlist); // Revert
+      return false;
     }
   };
 
@@ -143,23 +169,41 @@ export default function useWatchlist(currentUser) {
     if (!currentUser || !currentUser.uid) {
       console.error("[useWatchlist] RemoveItem: User not logged in");
       setError("User not logged in.");
-      return false; // Indicate failure
+      return false;
     }
 
+    const numericItemId = Number(itemId);
+    const itemToRemove = watchlist.find(
+      (i) => Number(i.id) === numericItemId && i.media_type === mediaType
+    );
+
+    // Optimistic update
+    const previousWatchlist = watchlist;
+    setWatchlist((prevWatchlist) =>
+      prevWatchlist.filter(
+        (item) =>
+          !(Number(item.id) === numericItemId && item.media_type === mediaType)
+      )
+    );
+
     try {
-      await removeFromWatchlist(currentUser.uid, itemId, mediaType);
-      // UI should update via listener. Cache invalidation in firestore.js is a backup.
+      await removeFromWatchlist(currentUser.uid, numericItemId, mediaType);
       console.log(
-        "[useWatchlist] Item remove request sent to Firestore for ID:",
-        itemId,
+        "[useWatchlist] Item remove request successful for ID:",
+        numericItemId,
         "Type:",
         mediaType
       );
-      return true; // Indicate success
+      // Cache will be updated by the listener or next read after invalidation
+      return true;
     } catch (err) {
-      console.error("[useWatchlist] Error in removeItem:", err);
+      console.error(
+        "[useWatchlist] Error in removeItem, reverting optimistic update:",
+        err
+      );
       setError(err.message || "Failed to remove from watchlist.");
-      return false; // Indicate failure
+      setWatchlist(previousWatchlist); // Revert
+      return false;
     }
   };
 
