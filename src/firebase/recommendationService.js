@@ -60,15 +60,21 @@ export async function fetchRecommendations(
     return { error: "No media data", recommendations: [] };
   }
 
-  let prompt = `Based on the following list of movies and TV shows: ${mediaList}, 
-Please give strong priority to the earlier items in this list (which represent watched history) when generating recommendations. 
-Recommend 10 other movies or TV shows.`;
+  // New, more detailed prompt structure
+  let prompt = `You are an expert movie and TV show recommendation engine.
+Analyze this user's viewing history (earlier items in the list represent more heavily weighted preferences, often more recently watched): ${mediaList}.
+
+Based on these preferences, recommend 10 high-quality movies or TV shows that the user likely hasn't seen but would genuinely enjoy. Aim for a thoughtful mix that might include critically acclaimed titles, popular hits they might have missed, and perhaps some lesser-known hidden gems relevant to their taste.
+`;
 
   if (variant > 0) {
-    prompt += `\nAlways provide a different set of recommendations (variation ${variant}).`;
+    prompt += `\nThis is request number ${
+      variant + 1
+    } for recommendations. Please try to offer a distinctively different selection than any previous suggestions, perhaps by exploring related sub-genres, different actors/directors inspired by their history, or varying the balance between well-known and niche titles.
+`;
   }
 
-  prompt += `\nProvide only a comma-separated list of the titles. For example: Movie Title 1, TV Show Title A, Movie Title 2. Do not add any extra text, numbering, or formatting.`;
+  prompt += `\nProvide ONLY a comma-separated list of the movie or TV show titles. Do not add any extra text, numbering, or formatting. For example: Movie Title 1, TV Show Title A, Movie Title 2.`;
 
   try {
     const response = await fetch(GEMINI_API_URL, {
@@ -87,12 +93,11 @@ Recommend 10 other movies or TV shows.`;
         //   { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
         //   // ... other categories
         // ],
-        // Optional: Add generationConfig if needed
-        // generationConfig: {
-        //   temperature: 0.7,
-        //   topK: 40,
-        //   candidateCount: 1,
-        // }
+        generationConfig: {
+          temperature: 1.25,
+          // topK: 40, // Example: can be added if needed
+          // candidateCount: 1, // Example: can be added if needed
+        },
       }),
     });
 
