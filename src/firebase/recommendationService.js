@@ -88,15 +88,8 @@ Based on these preferences, recommend 10 high-quality movies or TV shows that th
             parts: [{ text: prompt }],
           },
         ],
-        // Optional: Add safetySettings if needed
-        // safetySettings: [
-        //   { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-        //   // ... other categories
-        // ],
         generationConfig: {
           temperature: 1.25,
-          // topK: 40, // Example: can be added if needed
-          // candidateCount: 1, // Example: can be added if needed
         },
       }),
     });

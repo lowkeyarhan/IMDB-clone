@@ -336,17 +336,10 @@ function Profile() {
 
       // If cache wasn't used or was invalid, and no titles are loaded yet, fetch them.
       if (allRecommendedTitles.length === 0) {
-        triggerFetchRecommendations(false); // `false` because this is not a manual refresh
+        triggerFetchRecommendations(false);
       }
     }
-  }, [
-    isInitialized,
-    currentUser,
-    recentlyWatched,
-    favorites,
-    // allRecommendedTitles.length, // Removed to allow cache check to always run first
-    isMobile, // Added isMobile because slicing depends on it
-  ]);
+  }, [isInitialized, currentUser, recentlyWatched, favorites, isMobile]);
 
   return (
     <div className="profile-page">
