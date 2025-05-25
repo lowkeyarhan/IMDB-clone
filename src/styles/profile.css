@@ -701,37 +701,54 @@
 }
 
 .history-item-info {
-  padding: 0.8rem 1rem;
+  padding: 0.75rem 1rem;
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+  justify-content: flex-start;
 }
 
 .history-item-title {
   font-size: 0.95rem;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-primary);
-  margin: 0 0 0.3rem 0;
-  line-height: 1.35;
+  margin: 0 0 0.15rem 0;
+  line-height: 1.3;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
-  min-height: 2.7em;
 }
 
-.history-item-watched-at {
+.history-item-episode-info {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  margin: 0 0 0.4rem 0;
+  line-height: 1.25;
+}
+
+.history-item-watched-at,
+.history-item-duration {
   font-size: 0.8rem;
   color: var(--text-secondary);
-  margin-top: auto;
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.35rem;
+  margin-top: 0.2rem;
 }
 
-.history-item-watched-at .faClock {
+.history-item-watched-at .faClock,
+.history-item-duration .faStopwatch {
   font-size: 0.75rem;
+}
+
+.history-item-duration {
+  color: #aaa;
+}
+
+.history-item-info > *:last-child {
+  margin-bottom: 0;
 }
 
 /* Styles for the detailed history list on the History Tab */
@@ -743,16 +760,12 @@
 
 .history-item-card-detailed {
   background: rgba(45, 45, 45, 0.6);
-  /* border-radius: 10px; */
-  border-radius: calc(
-    50px + 1rem
-  ); /* Ensures pill shape based on content height (100px) + vertical padding (1rem top/bottom) */
+  border-radius: calc(50px + 1rem);
   backdrop-filter: blur(10px) saturate(110%);
   font-family: "Poppins", sans-serif;
   cursor: pointer;
   display: flex;
   gap: 1rem;
-  /* margin-top: 1.5rem; */
   padding: 0.75rem;
   transition: background-color 0.2s ease-in-out;
   border-bottom: 1px solid var(--card-border, rgba(255, 255, 255, 0.08));
@@ -770,7 +783,6 @@
   width: 100px;
   height: 100px;
   object-fit: cover;
-  /* border-radius: 10px; */
   border-radius: 50px;
   background-color: var(--placeholder-bg);
   flex-shrink: 0;
@@ -782,15 +794,15 @@
   justify-content: flex-start;
   flex-grow: 1;
   overflow: hidden;
-  max-height: 100px; /* Match the poster height */
+  max-height: 100px;
 }
 
 .history-item-title-detailed {
   font-size: 1rem;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-primary);
   margin: 0;
-  margin-bottom: 0.2rem;
+  margin-bottom: 0.1rem;
   line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
@@ -821,7 +833,7 @@
 .history-item-duration {
   font-size: 0.8rem;
   color: #aaa;
-  margin-top: 3px;
+  margin-top: 0.2rem;
   display: flex;
   align-items: center;
   gap: 0.3rem;
@@ -830,7 +842,7 @@
 .history-item-duration-detailed {
   font-size: 0.8rem;
   color: #aaa;
-  margin-top: 0.2rem;
+  margin-top: 0.1rem;
   margin-bottom: 0;
   display: flex;
   align-items: center;
@@ -839,30 +851,25 @@
 
 /* Ensure spacing between duration and watched-at times */
 .history-item-watched-at + .history-item-duration {
-  margin-top: 3px;
 }
 
 .history-item-watched-at-detailed + .history-item-duration-detailed {
-  margin-top: 3px;
 }
 
 .history-item-delete-button {
   background: transparent;
   border: none;
   color: rgba(255, 255, 255, 0.5);
-  font-size: 1.25rem; /* Adjust size as needed */
+  font-size: 1.25rem;
   cursor: pointer;
-  padding: 0.5rem; /* Add some padding for easier clicking */
+  padding: 0.5rem;
   margin-right: 1rem;
-  align-self: center; /* Vertically align with content */
+  align-self: center;
   transition: color 0.2s ease-in-out;
 }
 
 .history-item-delete-button:hover {
-  color: var(
-    --danger-color,
-    #ff5555
-  ); /* Use danger color from variables or fallback */
+  color: var(--danger-color, #ff5555);
 }
 
 .profile-loading-small {

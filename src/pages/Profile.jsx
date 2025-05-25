@@ -362,6 +362,13 @@ function Profile() {
                                     <h4 className="history-item-title">
                                       {item.title}
                                     </h4>
+                                    {item.media_type === "tv" &&
+                                      item.season_number &&
+                                      item.episode_number && (
+                                        <p className="history-item-episode-info">
+                                          {`S${item.season_number} E${item.episode_number}`}
+                                        </p>
+                                      )}
                                     {item.watchedAt && (
                                       <p className="history-item-watched-at">
                                         <FontAwesomeIcon icon={faClock} />{" "}
@@ -656,6 +663,13 @@ function Profile() {
                               <h3 className="history-item-title-detailed">
                                 {item.title}
                               </h3>
+                              {item.media_type === "tv" &&
+                                item.season_number &&
+                                item.episode_number && (
+                                  <p className="history-item-episode-info-detailed subtitle-style">
+                                    {`S${item.season_number} E${item.episode_number}`}
+                                  </p>
+                                )}
                               <p className="history-item-type-detailed">
                                 {item.media_type === "tv" ? "TV Show" : "Movie"}
                               </p>

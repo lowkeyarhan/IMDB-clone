@@ -83,7 +83,7 @@ function Player() {
     if (currentUser && mediaDetails && mediaDetails.title) {
       console.log(`[Player] Recording watch session for ${mediaDetails.title}`);
       const watchedDurationSeconds = accumulatedWatchTimeRef.current;
-      const watchedDurationMinutes = watchedDurationSeconds / 60; // Calculate minutes
+      // const watchedDurationMinutes = watchedDurationSeconds / 60; // No longer passing minutes explicitly
 
       const item = {
         id: id,
@@ -93,21 +93,27 @@ function Player() {
         ...(type === "tv" && {
           name: mediaDetails.title, // or specific name field if different
           first_air_date: mediaDetails.releaseDate, // Assuming releaseDate holds first_air_date for TV
+          season_number: seasonNumber, // Added season number
+          episode_number: episodeNumber, // Added episode number
         }),
         ...(type === "movie" && {
           release_date: mediaDetails.releaseDate,
         }),
       };
 
-      await addRecentlyWatched(
-        currentUser.uid,
-        item,
-        watchedDurationSeconds,
-        watchedDurationMinutes // Pass watchedDurationMinutes
-      );
+      // Pass only watchedDurationSeconds, firestore will handle the rest
+      await addRecentlyWatched(currentUser.uid, item, watchedDurationSeconds);
       accumulatedWatchTimeRef.current = 0;
     }
-  }, [currentUser, id, type, mediaDetails, addRecentlyWatched]);
+  }, [
+    currentUser,
+    id,
+    type,
+    mediaDetails,
+    addRecentlyWatched,
+    seasonNumber,
+    episodeNumber,
+  ]);
 
   // Effect to handle watch time accumulation
   useEffect(() => {

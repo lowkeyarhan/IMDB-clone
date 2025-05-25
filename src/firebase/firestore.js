@@ -470,32 +470,69 @@ export const addRecentlyWatched = async (userId, item, durationSeconds = 0) => {
     const newItemData = {
       ...item,
       watchedAt: new Date(),
-      durationSeconds: parseFloat(durationSeconds) || 0,
+      durationSeconds: parseFloat(durationSeconds) || 0, // This is the current session's duration
     };
 
     // Check if the item already exists
-    const existingItemIndex = recentlyWatched.findIndex(
-      (watchedItem) =>
+    const existingItemIndex = recentlyWatched.findIndex((watchedItem) => {
+      // For both TV and Movies, we identify the "item" by its ID and media_type.
+      // The specific episode/season details for TV shows will be updated on this single entry.
+      return (
         watchedItem.id === newItemData.id &&
         watchedItem.media_type === newItemData.media_type
-    );
+      );
+    });
 
     if (existingItemIndex > -1) {
-      // Item exists, get the previous duration and add it to the new duration
+      // Item for this ID and media_type exists.
       const existingItem = recentlyWatched[existingItemIndex];
-      const previousDuration = parseFloat(existingItem.durationSeconds) || 0;
-      newItemData.durationSeconds += previousDuration;
 
-      console.log(
-        `[Firestore] Found existing item. Previous duration: ${previousDuration}s, New total: ${newItemData.durationSeconds}s`
-      );
+      if (newItemData.media_type === "tv") {
+        // For TV shows, update to reflect the latest watched episode and its session duration.
+        existingItem.season_number = newItemData.season_number;
+        existingItem.episode_number = newItemData.episode_number;
+        existingItem.durationSeconds = newItemData.durationSeconds; // Set to current session's duration
+        existingItem.watchedAt = newItemData.watchedAt; // Update watchedAt timestamp
+        // Ensure other fields like title, poster_path are also updated if they can change (though less likely for an existing series entry)
+        existingItem.title = newItemData.title;
+        existingItem.poster_path = newItemData.poster_path;
+        // any other relevant fields from newItemData that should reflect the latest state.
 
-      // Remove the existing item from its current position
+        console.log(
+          `[Firestore] Updating TV show ${newItemData.title} to S${newItemData.season_number}E${newItemData.episode_number}, session duration: ${newItemData.durationSeconds}s`
+        );
+      } else {
+        // For movies, accumulate duration.
+        const previousDuration = parseFloat(existingItem.durationSeconds) || 0;
+        existingItem.durationSeconds =
+          previousDuration + newItemData.durationSeconds;
+        existingItem.watchedAt = newItemData.watchedAt; // Update watchedAt timestamp
+        // Update other fields if necessary
+        existingItem.title = newItemData.title;
+        existingItem.poster_path = newItemData.poster_path;
+
+        console.log(
+          `[Firestore] Updating movie ${newItemData.title}. Previous duration: ${previousDuration}s, New total: ${existingItem.durationSeconds}s`
+        );
+      }
+
+      // Remove the existing item from its current position to re-insert at the top
       recentlyWatched.splice(existingItemIndex, 1);
+      // Add the updated item to the beginning of the array
+      recentlyWatched.unshift(existingItem);
+    } else {
+      // This is a new item (new movie, or first time watching a TV show)
+      // For TV shows, newItemData already includes season/episode and session duration.
+      // For movies, newItemData includes session duration.
+      recentlyWatched.unshift(newItemData);
+      console.log(
+        `[Firestore] Adding new item: ${newItemData.title} (${
+          newItemData.media_type === "tv"
+            ? `S${newItemData.season_number}E${newItemData.episode_number}, session duration: ${newItemData.durationSeconds}s`
+            : `ID ${newItemData.id}, duration: ${newItemData.durationSeconds}s`
+        })`
+      );
     }
-
-    // Add the new/updated item to the beginning of the array
-    recentlyWatched.unshift(newItemData);
 
     // Ensure the array does not exceed the limit
     if (recentlyWatched.length > RECENTLY_WATCHED_LIMIT) {
