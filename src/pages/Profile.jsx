@@ -23,11 +23,18 @@ import {
   faSpinner,
   faStar,
   faTrashAlt,
+  faSync,
 } from "@fortawesome/free-solid-svg-icons";
 import "../styles/auth.css";
 import "../styles/profile.css";
 import Footer from "../components/Footer";
 import { removeFromRecentlyWatched } from "../firebase/firestore";
+import { fetchRecommendations } from "../firebase/recommendationService";
+import { searchMediaByTitle } from "../services/tmdbService";
+import RecommendationSkeletonCard from "../components/RecommendationSkeletonCard";
+
+const RECOMMENDATIONS_CACHE_KEY_PREFIX = "recommendationsCache_";
+const RECOMMENDATIONS_CACHE_DURATION_MS = 30 * 60 * 1000; // 30 minutes
 
 function Profile() {
   const navigate = useNavigate();
@@ -50,6 +57,16 @@ function Profile() {
     watchlist: false,
     favorites: false,
   });
+
+  // State for recommendations
+  const [recommendations, setRecommendations] = useState([]);
+  const [allRecommendedTitles, setAllRecommendedTitles] = useState([]);
+  const [recommendationsLoading, setRecommendationsLoading] = useState(false);
+  const [recommendationsError, setRecommendationsError] = useState(null);
+  const [recommendationStatusMessage, setRecommendationStatusMessage] =
+    useState(null);
+  const [recommendationVariant, setRecommendationVariant] = useState(0);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 600); // Initial mobile check
 
   // Calculate stats based on real data
   const userStats = {
@@ -139,6 +156,197 @@ function Profile() {
       console.error("Error removing from history:", err);
     }
   };
+
+  // Helper function to shuffle an array
+  function shuffleArray(array) {
+    let currentIndex = array.length,
+      randomIndex;
+    // While there remain elements to shuffle.
+    while (currentIndex !== 0) {
+      // Pick a remaining element.
+      randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex--;
+      // And swap it with the current element.
+      [array[currentIndex], array[randomIndex]] = [
+        array[randomIndex],
+        array[currentIndex],
+      ];
+    }
+    return array;
+  }
+
+  // Encapsulated function to fetch recommendations
+  const triggerFetchRecommendations = (isRefresh = false) => {
+    if (
+      (recentlyWatched && recentlyWatched.length > 0) ||
+      (favorites && favorites.length > 0)
+    ) {
+      setRecommendationsLoading(true);
+      setRecommendationsError(null);
+      setRecommendationStatusMessage(null);
+
+      // If it's not a refresh and we already have all titles, shuffle and display
+      if (!isRefresh && allRecommendedTitles.length > 0) {
+        const shuffled = shuffleArray([...allRecommendedTitles]);
+        setRecommendations(shuffled.slice(0, isMobile ? 6 : 5));
+        setRecommendationsLoading(false); // Already have data, no loading needed
+        return;
+      }
+
+      // If it's a refresh, increment variant. The actual new fetch will happen below.
+      if (isRefresh) {
+        setRecommendationVariant((prev) => prev + 1);
+      }
+
+      // Step 1: Fetch titles from Gemini
+      fetchRecommendations(
+        recentlyWatched,
+        favorites,
+        isRefresh ? recommendationVariant + 1 : 0
+      )
+        .then(async (geminiResult) => {
+          if (geminiResult.error) {
+            setRecommendationsError(geminiResult.error);
+            setRecommendations([]);
+            setAllRecommendedTitles([]);
+            setRecommendationsLoading(false);
+            return; // Stop processing if Gemini failed
+          }
+
+          if (
+            geminiResult.recommendations &&
+            geminiResult.recommendations.length > 0
+          ) {
+            setRecommendationStatusMessage(
+              "Fetching details for recommendations..."
+            );
+
+            const tmdbPromises = geminiResult.recommendations.map((title) =>
+              searchMediaByTitle(title)
+            );
+            const tmdbResults = await Promise.all(tmdbPromises);
+
+            const validTmdbResults = tmdbResults.filter(
+              (item) => item !== null && item.id
+            );
+            setAllRecommendedTitles(validTmdbResults); // Store full TMDB objects
+
+            if (validTmdbResults.length > 0) {
+              const shuffledTmdbResults = shuffleArray([...validTmdbResults]);
+              setRecommendations(
+                shuffledTmdbResults.slice(0, isMobile ? 6 : 5)
+              );
+              setRecommendationStatusMessage(null);
+              setRecommendationsError(null);
+
+              // Save to cache
+              if (currentUser && currentUser.uid) {
+                const cacheKey = `${RECOMMENDATIONS_CACHE_KEY_PREFIX}${currentUser.uid}`;
+                const cacheData = {
+                  timestamp: Date.now(),
+                  data: validTmdbResults,
+                };
+                try {
+                  sessionStorage.setItem(cacheKey, JSON.stringify(cacheData));
+                } catch (e) {
+                  console.warn(
+                    "Failed to save recommendations to session storage",
+                    e
+                  );
+                }
+              }
+            } else {
+              setRecommendations([]);
+              setRecommendationsError(
+                "Could not find details for the recommended titles."
+              );
+              setRecommendationStatusMessage(null);
+            }
+          } else {
+            setRecommendations([]);
+            setAllRecommendedTitles([]);
+            setRecommendationStatusMessage(null);
+            // No error message here if Gemini simply returns no recommendations,
+            // the existing UI handles empty recommendations state.
+          }
+        })
+        .catch((err) => {
+          console.error("Error in recommendation pipeline:", err);
+          setRecommendationsError(
+            "Could not load recommendations due to an unexpected error."
+          );
+          setRecommendations([]);
+          setAllRecommendedTitles([]);
+          setRecommendationStatusMessage(null);
+        })
+        .finally(() => {
+          // Ensure loading is false only after all async ops (Gemini + TMDB) might have finished
+          // The individual TMDB fetch might resolve before this, so we clear specific TMDB loading error earlier.
+          setRecommendationsLoading(false);
+        });
+    } else {
+      setRecommendations([]);
+      setAllRecommendedTitles([]);
+      setRecommendationsLoading(false);
+    }
+  };
+
+  // Effect for responsive mobile check
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 600);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Fetch recommendations on initial load or when primary data changes
+  useEffect(() => {
+    if (isInitialized && currentUser) {
+      const cacheKey = `${RECOMMENDATIONS_CACHE_KEY_PREFIX}${currentUser.uid}`;
+      try {
+        const cachedItem = sessionStorage.getItem(cacheKey);
+        if (cachedItem) {
+          const parsedCache = JSON.parse(cachedItem);
+          if (
+            parsedCache &&
+            parsedCache.data &&
+            parsedCache.timestamp &&
+            Date.now() - parsedCache.timestamp <
+              RECOMMENDATIONS_CACHE_DURATION_MS
+          ) {
+            console.log("[Profile] Using cached recommendations.");
+            setAllRecommendedTitles(parsedCache.data);
+            const shuffled = shuffleArray([...parsedCache.data]);
+            setRecommendations(shuffled.slice(0, isMobile ? 6 : 5));
+            // No loading indicators needed as we are using cache
+            setRecommendationsLoading(false);
+            setRecommendationStatusMessage(null);
+            setRecommendationsError(null);
+            return; // Exit early, cache is valid and used
+          } else {
+            // Cache expired or invalid, remove it
+            sessionStorage.removeItem(cacheKey);
+          }
+        }
+      } catch (e) {
+        console.warn("Failed to read recommendations from session storage", e);
+        sessionStorage.removeItem(cacheKey); // Clear potentially corrupted cache item
+      }
+
+      // If cache wasn't used or was invalid, and no titles are loaded yet, fetch them.
+      if (allRecommendedTitles.length === 0) {
+        triggerFetchRecommendations(false); // `false` because this is not a manual refresh
+      }
+    }
+  }, [
+    isInitialized,
+    currentUser,
+    recentlyWatched,
+    favorites,
+    // allRecommendedTitles.length, // Removed to allow cache check to always run first
+    isMobile, // Added isMobile because slicing depends on it
+  ]);
 
   return (
     <div className="profile-page">
@@ -409,18 +617,184 @@ function Profile() {
 
                   <div className="content-section">
                     <div className="section-header">
-                      <h2>Recommended For You</h2>
+                      <h2>Suggested For You</h2>
+                      {/* Desktop Refresh Button - hidden on mobile via CSS */}
+                      {!recommendationsLoading &&
+                        ((recentlyWatched && recentlyWatched.length > 0) ||
+                          (favorites && favorites.length > 0)) && (
+                          <button
+                            onClick={() => triggerFetchRecommendations(true)}
+                            className="view-toggle-button refresh-recommendations-btn desktop-refresh-btn"
+                            title="Refresh Recommendations"
+                            disabled={recommendationsLoading}
+                          >
+                            <FontAwesomeIcon icon={faSync} />
+                            <span>Refresh</span>
+                          </button>
+                        )}
                     </div>
-                    <div className="recommendations-placeholder">
-                      <FontAwesomeIcon
-                        icon={faFilm}
-                        className="recommendation-icon"
-                      />
-                      <p>
-                        AI presonalized recommendations coming soon... Stay
-                        tuned!
-                      </p>
-                    </div>
+
+                    {/* Skeleton Loader for Recommendations */}
+                    {recommendationsLoading && (
+                      <div className="media-grid recommendations-grid">
+                        {Array.from({ length: isMobile ? 6 : 5 }).map(
+                          (_, index) => (
+                            <RecommendationSkeletonCard
+                              key={`skeleton-${index}`}
+                            />
+                          )
+                        )}
+                      </div>
+                    )}
+
+                    {/* Error Message for Recommendations */}
+                    {!recommendationsLoading && recommendationsError && (
+                      <div className="profile-error-small">
+                        {recommendationsError === "API Key missing"
+                          ? "Gemini API Key is missing. Please set VITE_GEMINI_API_KEY in .env file."
+                          : recommendationsError === "No media data"
+                          ? "Not enough watch history or favorites to generate recommendations yet."
+                          : `Error: ${recommendationsError}`}
+                      </div>
+                    )}
+
+                    {/* Status Message for Recommendations (e.g., fetching details) */}
+                    {!recommendationsLoading &&
+                      !recommendationsError &&
+                      recommendationStatusMessage && (
+                        <div className="profile-status-message-small">
+                          {recommendationStatusMessage}
+                        </div>
+                      )}
+
+                    {/* Actual Recommendations Grid */}
+                    {!recommendationsLoading &&
+                      !recommendationsError &&
+                      !recommendationStatusMessage &&
+                      recommendations.length > 0 && (
+                        <div className="media-grid recommendations-grid">
+                          {recommendations.map((item) => (
+                            <div
+                              key={item.id}
+                              className="media-card recommendation-item-card"
+                              onClick={() => {
+                                if (item.id && item.media_type) {
+                                  navigate(`/${item.media_type}/${item.id}`);
+                                } else {
+                                  console.warn(
+                                    "Cannot navigate, missing TMDB id or media_type",
+                                    item
+                                  );
+                                }
+                              }}
+                            >
+                              <div className="media-poster">
+                                <img
+                                  src={
+                                    item.poster_path ||
+                                    `https://placehold.co/220x330/2B2F3C/E0E0E0?text=${encodeURIComponent(
+                                      (item.title || "Untitled").substring(
+                                        0,
+                                        15
+                                      )
+                                    )}`
+                                  }
+                                  alt={item.title || "Recommendation"}
+                                />
+                                <div className="media-poster-overlay">
+                                  <button className="play-button">
+                                    <FontAwesomeIcon icon={faPlay} />
+                                  </button>
+                                </div>
+                                <div className="media-badge">
+                                  {item.media_type === "tv"
+                                    ? "TV Show"
+                                    : item.media_type === "movie"
+                                    ? "Movie"
+                                    : "Media"}
+                                </div>
+                              </div>
+                              <div className="media-info">
+                                <h3 className="media-title">
+                                  {item.title || "Untitled"}
+                                </h3>
+                                <div className="media-meta">
+                                  <span className="rating">
+                                    <FontAwesomeIcon icon={faStar} />
+                                    {item.vote_average
+                                      ? item.vote_average.toFixed(1)
+                                      : "N/A"}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                    {/* Placeholder when no recommendations, no error, no status, and not enough data to generate */}
+                    {!recommendationsLoading &&
+                      !recommendationsError &&
+                      !recommendationStatusMessage &&
+                      recommendations.length === 0 &&
+                      !(
+                        (recentlyWatched && recentlyWatched.length > 0) ||
+                        (favorites && favorites.length > 0)
+                      ) && (
+                        <div className="recommendations-placeholder">
+                          <FontAwesomeIcon
+                            icon={faFilm}
+                            className="recommendation-icon"
+                          />
+                          <p>
+                            Watch some content or add to favorites to get
+                            personalized recommendations!
+                          </p>
+                        </div>
+                      )}
+
+                    {/* Placeholder when no recommendations, no error, no status, but had data (Gemini might have returned empty or TMDB failed) */}
+                    {!recommendationsLoading &&
+                      !recommendationsError &&
+                      !recommendationStatusMessage &&
+                      recommendations.length === 0 &&
+                      ((recentlyWatched && recentlyWatched.length > 0) ||
+                        (favorites && favorites.length > 0)) &&
+                      recommendationsError !== "No media data" && (
+                        <div className="recommendations-placeholder">
+                          <FontAwesomeIcon
+                            icon={faFilm}
+                            className="recommendation-icon"
+                          />
+                          <p>
+                            Could not fetch recommendations at this time, or no
+                            new recommendations based on your current history.
+                          </p>
+                        </div>
+                      )}
+
+                    {/* Mobile Refresh Button */}
+                    {!recommendationsLoading &&
+                      !recommendationsError &&
+                      !recommendationStatusMessage &&
+                      ((recentlyWatched && recentlyWatched.length > 0) ||
+                        (favorites && favorites.length > 0)) &&
+                      recommendations.length > 0 && ( // Only show if there are recommendations displayed
+                        <div
+                          className="mobile-refresh-btn-container"
+                          style={{ display: isMobile ? "flex" : "none" }}
+                        >
+                          <button
+                            onClick={() => triggerFetchRecommendations(true)}
+                            className="view-toggle-button refresh-recommendations-btn"
+                            title="Refresh Recommendations"
+                            disabled={recommendationsLoading}
+                          >
+                            <FontAwesomeIcon icon={faSync} />
+                            <span>Refresh</span>
+                          </button>
+                        </div>
+                      )}
                   </div>
                 </div>
               )}

@@ -147,7 +147,6 @@
 
 .banner_genre:hover {
   background-color: rgba(255, 255, 255, 0.25);
-  transform: translateY(-2px);
 }
 
 .banner_description {
@@ -192,7 +191,6 @@
 
 .banner_button:hover {
   opacity: 0.85;
-  transform: translateY(-2px);
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
 }
 
