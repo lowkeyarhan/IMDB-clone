@@ -1,6 +1,6 @@
 # 🎬 Movie Streaming Website – README
 
-Welcome to the **Alpha** version of our movie streaming platform, ScreenKiss!  
+Welcome to  our movie streaming platform, Riyura!  
 This project is under active development, with several features pending integration and known bugs currently being addressed. Please follow the instructions below for an optimal experience.
 
 ---
@@ -59,15 +59,12 @@ This platform supports **4K HDR** streaming for most newer movies and web series
 
 ---
 
-## 📅 ChangeLog – May 13, 2025
+## 📅 ChangeLog – May 26, 2025
 
-- ✅ Major UI changes, now uses glass morphism design.
-- ✅ Added a popup modal for new users to correctly setup their device for the optimal viewing experince.
-- ✅ Improved favicon and UI/UX.
-- ✅ Added user authentication.
-- ✅ Added a new explore page, find your desired movie/webseries/anime using genre filters.
-- ✅ Added a new profile page, keep track of your data.
-- ✅ Now uses database for storing your watchlist and favourites data for improved cross-device experience.
+- ✅ Changes in profile page.
+- ✅ AI powered recommendation engine is now live, it analyzes your watch history and favourites and suggests content you might like.
+- ✅ Minor changes in the homescreen and detals UI.
+- ✅ Watchlist bug fixed, now uses caching and updates in realtime.
 
 ---
 
@@ -81,19 +78,6 @@ This platform supports **4K HDR** streaming for most newer movies and web series
 
 - YouTube-style ads (max **15 seconds**) will be added at the **start and end** of each movie—no mid-roll interruptions.
 
-3. **Watch History & Recommendations**
-
-- Save your watch history
-- Receive intelligent movie recommendations based on your viewing patterns
-
----
-
-## 🚫 Confidential Access
-
-The website is currently shared **only with a closed group of people** for internal testing.  
-**Do not share the link or access with anyone else.**  
-Your feedback is crucial in building a refined and safe user experience.
-
 ---
 
 ## 📩 Feedback & Suggestions
@@ -103,4 +87,4 @@ Please reach out directly at arhan.24bcs10023@sst.scaler.com so we can improve y
 
 ---
 
-> ⚙️ Built with love by Arhan Das❤️
+> ⚙️ Built with love by Arhan Das ❤️

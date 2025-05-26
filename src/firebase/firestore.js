@@ -475,8 +475,6 @@ export const addRecentlyWatched = async (userId, item, durationSeconds = 0) => {
 
     // Check if the item already exists
     const existingItemIndex = recentlyWatched.findIndex((watchedItem) => {
-      // For both TV and Movies, we identify the "item" by its ID and media_type.
-      // The specific episode/season details for TV shows will be updated on this single entry.
       return (
         watchedItem.id === newItemData.id &&
         watchedItem.media_type === newItemData.media_type
@@ -521,9 +519,6 @@ export const addRecentlyWatched = async (userId, item, durationSeconds = 0) => {
       // Add the updated item to the beginning of the array
       recentlyWatched.unshift(existingItem);
     } else {
-      // This is a new item (new movie, or first time watching a TV show)
-      // For TV shows, newItemData already includes season/episode and session duration.
-      // For movies, newItemData includes session duration.
       recentlyWatched.unshift(newItemData);
       console.log(
         `[Firestore] Adding new item: ${newItemData.title} (${
