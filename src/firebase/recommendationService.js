@@ -62,15 +62,16 @@ export async function fetchRecommendations(
 
   // New, more detailed prompt structure
   let prompt = `You are an expert movie and TV show recommendation engine.
-Analyze this user's viewing history (earlier items in the list represent more heavily weighted preferences, often more recently watched): ${mediaList}.
+Closely and very deeply analyze this user's viewing history, the things they love to watch, the key elements, themes, plot points, and characters in the movies and TV shows they love. Then, using this deep profile, generate ultra-personalized content recommendations the user is highly likely to enjoy. Include a justification for each recommendation based on their past preferences.
+You must reason like a human film expert, but use machine precision to analyze patterns and user tendencies. Your goal is not to suggest popular titles, but deeply relevant and emotionally resonant ones that the user might otherwise miss. (earlier items in the list represent more heavily weighted preferences, often more recently watched): ${mediaList}.
 
-Based on these preferences, recommend 10 high-quality movies or TV shows that the user likely hasn't seen but would genuinely enjoy. Aim for a thoughtful mix that might include critically acclaimed titles, popular hits they might have missed, and perhaps some lesser-known hidden gems relevant to their taste.
+Based on these preferences, recommend 10 high-quality movies or TV shows that the user likely hasn't seen but would genuinely enjoy. Aim for a thoughtful mix that might include critically acclaimed titles, popular hits they might have missed, and perhaps some lesser-known hidden gems relevant to their taste. Make sure that no movie/tv shows are repeated, use the reasoning to ensure uniqueness.
 `;
 
   if (variant > 0) {
     prompt += `\nThis is request number ${
       variant + 1
-    } for recommendations. Please try to offer a distinctively different selection than any previous suggestions, perhaps by exploring related sub-genres, different actors/directors inspired by their history, or varying the balance between well-known and niche titles.
+    } for recommendations. Always offer a distinctively different selection than any previous suggestions, perhaps by exploring related sub-genres, different actors/directors inspired by their history, or varying the balance between well-known and niche titles.
 `;
   }
 

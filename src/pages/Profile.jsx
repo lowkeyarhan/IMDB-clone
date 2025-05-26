@@ -610,7 +610,7 @@ function Profile() {
 
                   <div className="content-section">
                     <div className="section-header">
-                      <h2>Suggested For You</h2>
+                      <h2>AI Suggestions</h2>
                       {/* Desktop Refresh Button - hidden on mobile via CSS */}
                       {!recommendationsLoading &&
                         ((recentlyWatched && recentlyWatched.length > 0) ||
