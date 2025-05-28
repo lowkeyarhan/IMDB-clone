@@ -67,6 +67,9 @@ function Profile() {
     useState(null);
   const [recommendationVariant, setRecommendationVariant] = useState(0);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 600); // Initial mobile check
+  const [geminiConversationHistory, setGeminiConversationHistory] = useState(
+    []
+  );
 
   // Calculate stats based on real data
   const userStats = {
@@ -202,21 +205,45 @@ function Profile() {
       fetchRecommendations(
         recentlyWatched,
         favorites,
-        isRefresh ? recommendationVariant + 1 : 0
+        isRefresh ? recommendationVariant + 1 : 0,
+        geminiConversationHistory
       )
         .then(async (geminiResult) => {
+          let newHistoryEntries = [];
+
+          // Always add user prompt if it exists
+          if (geminiResult.prompt) {
+            newHistoryEntries.push({
+              role: "user",
+              parts: [{ text: geminiResult.prompt }],
+            });
+          }
+
           if (geminiResult.error) {
             setRecommendationsError(geminiResult.error);
             setRecommendations([]);
             setAllRecommendedTitles([]);
-            setRecommendationsLoading(false);
-            return; // Stop processing if Gemini failed
-          }
-
-          if (
+            // If there was an error, the model didn't respond successfully.
+            // The user turn (prompt) is already added if available.
+          } else if (
             geminiResult.recommendations &&
             geminiResult.recommendations.length > 0
           ) {
+            // Successful response with recommendations
+            if (geminiResult.rawModelResponse) {
+              newHistoryEntries.push({
+                role: "model",
+                parts: [{ text: geminiResult.rawModelResponse }],
+              });
+            } else {
+              // Fallback if rawModelResponse isn't available for some reason (should not happen)
+              const modelResponseText = geminiResult.recommendations.join(", ");
+              newHistoryEntries.push({
+                role: "model",
+                parts: [{ text: modelResponseText }],
+              });
+            }
+
             setRecommendationStatusMessage(
               "Fetching details for recommendations..."
             );
@@ -263,11 +290,21 @@ function Profile() {
               setRecommendationStatusMessage(null);
             }
           } else {
+            // No recommendations, but no error (e.g., Gemini returned empty but valid response)
+            newHistoryEntries.push({
+              role: "model",
+              parts: [{ text: geminiResult.rawModelResponse || "" }],
+            });
             setRecommendations([]);
             setAllRecommendedTitles([]);
             setRecommendationStatusMessage(null);
-            // No error message here if Gemini simply returns no recommendations,
-            // the existing UI handles empty recommendations state.
+          }
+
+          if (newHistoryEntries.length > 0) {
+            setGeminiConversationHistory((prevHistory) => [
+              ...prevHistory,
+              ...newHistoryEntries,
+            ]);
           }
         })
         .catch((err) => {

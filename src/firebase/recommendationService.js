@@ -8,28 +8,37 @@ const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/
  * @returns {string} A comma-separated string of unique titles.
  */
 function generateSimplifiedMediaList(recentlyWatched, favorites) {
-  const watchedTitles = new Set();
-  recentlyWatched.forEach(
-    (item) => item.title && watchedTitles.add(item.title)
+  const processedWatched = recentlyWatched
+    .slice(0, 10) // Take up to 10 watched titles
+    .map((item) => {
+      if (item.title) {
+        if (
+          typeof item.percentageWatched === "number" &&
+          item.percentageWatched >= 0 &&
+          item.percentageWatched <= 100
+        ) {
+          return `${item.title} (watched ${item.percentageWatched}%)`;
+        }
+        return `${item.title} (watched unknown %)`;
+      }
+      return null;
+    })
+    .filter(Boolean);
+
+  const watchedTitlesForExclusion = new Set(
+    recentlyWatched.map((item) => item.title).filter(Boolean)
   );
 
-  const favoriteTitles = new Set();
-  favorites.forEach((item) => item.title && favoriteTitles.add(item.title));
+  const processedFavorites = favorites
+    .filter((item) => item.title && !watchedTitlesForExclusion.has(item.title)) // Ensure favorites are unique and not in recent
+    .slice(0, 5) // Add up to 5 unique favorites
+    .map((item) => item.title)
+    .filter(Boolean);
 
-  // Prioritize watched titles, then add unique favorite titles
-  let combinedTitles = Array.from(watchedTitles).slice(0, 10); // Take up to 10 watched titles
-
-  const remainingSlots = 15 - combinedTitles.length;
-  if (remainingSlots > 0) {
-    const uniqueFavoriteTitles = Array.from(favoriteTitles).filter(
-      (title) => !watchedTitles.has(title)
-    );
-    combinedTitles = combinedTitles.concat(
-      uniqueFavoriteTitles.slice(0, Math.min(remainingSlots, 5))
-    ); // Add up to 5 unique favorites
-  }
-
-  return combinedTitles.join(", ");
+  return {
+    watchedString: processedWatched.join(", "),
+    favoritesString: processedFavorites.join(", "),
+  };
 }
 
 /**
@@ -37,12 +46,14 @@ function generateSimplifiedMediaList(recentlyWatched, favorites) {
  * @param {Array<Object>} recentlyWatched - User's recently watched items.
  * @param {Array<Object>} favorites - User's favorite items.
  * @param {number} variant - A number to help request varied recommendations.
+ * @param {Array<{role: string, parts: Array<{text: string}>}>} conversationHistory - Array of previously recommended titles.
  * @returns {Promise<Array<string>>} A promise that resolves to an array of recommended titles.
  */
 export async function fetchRecommendations(
   recentlyWatched,
   favorites,
-  variant = 0
+  variant = 0,
+  conversationHistory = []
 ) {
   if (!GEMINI_API_KEY) {
     console.error(
@@ -51,9 +62,9 @@ export async function fetchRecommendations(
     return { error: "API Key missing", recommendations: [] };
   }
 
-  const mediaList = generateSimplifiedMediaList(recentlyWatched, favorites);
+  const mediaData = generateSimplifiedMediaList(recentlyWatched, favorites);
 
-  if (!mediaList) {
+  if (!mediaData.watchedString && !mediaData.favoritesString) {
     console.log(
       "No media history or favorites to generate recommendations from."
     );
@@ -62,16 +73,27 @@ export async function fetchRecommendations(
 
   // New, more detailed prompt structure
   let prompt = `You are an expert movie and TV show recommendation engine.
-Closely and very deeply analyze this user's viewing history, the plot points, themes, emotions, and complex characters in the content they watch (provided in the list below). Then, using this deep profile, generate ultra-personalized content recommendations the user is highly likely to enjoy. Include a justification for each recommendation based on their past preferences.
-You must reason like a human film expert, but use machine precision to analyze patterns and user tendencies. Your goal is not to suggest popular titles, but deeply relevant and emotionally resonant ones that the user might otherwise miss. (earlier items in the list represent more heavily weighted preferences, often more recently watched): ${mediaList}.
+Closely and very deeply analyze this user's viewing history, favourites and watchlist. Pay close attention to the genre,plot points, themes, emotions, and complex characters in the content they engage with. Pay morenattention to the favourites, followed by the watch history and watchlist.
 
-Based on these preferences, recommend 10 high-quality and top-rated movies or TV shows that the user likely hasn't seen but would genuinely love. Aim for a thoughtful mix that might include critically acclaimed titles, popular hits they might have missed, and perhaps some lesser-known hidden gems relevant to their taste. Make sure that no movie/tv shows are repeated, use the reasoning to ensure uniqueness.
+User's Watched History (titles are followed by the percentage of the movie/show watched, indicating their engagement level; earlier items are more recent or heavily weighted):
+${mediaData.watchedString || "No recently watched movies or shows provided."}
+
+User's Favorite Movies and TV Shows (these are explicitly marked by the user as their favorites):
+${mediaData.favoritesString || "No favorite movies or shows provided."}
+
+Using this deep profile of the user's preferences, generate ultra-personalized content recommendations they are highly likely to enjoy.
+For each recommendation, include a brief justification explaining how it connects to their past preferences, considering both their watched history (and how much they watched) and their declared favorites.
+You must reason like a human film expert but use machine precision to analyze patterns and user tendencies. 
+Your goal is not to suggest merely popular titles, but deeply relevant and emotionally resonant ones that the user might otherwise miss. 
+Prioritize titles the user likely hasn't seen.
+
+Based on these preferences, recommend 10 high-quality and top-rated movies or TV shows. Aim for a thoughtful mix that might include critically acclaimed titles, popular hits they might have missed, and perhaps some lesser-known hidden gems relevant to their taste. Ensure that no movie/TV shows are repeated in your recommendations; use your reasoning and justification process to guarantee uniqueness.
 `;
 
   if (variant > 0) {
     prompt += `\nThis is request number ${
       variant + 1
-    } for recommendations. Always offer a distinctively different selection than any previous suggestions, perhaps by exploring related sub-genres, different actors/directors inspired by their history, or varying the balance between well-known and niche titles.
+    } for recommendations. Always offer a different selection than any previous suggestions, perhaps by exploring related sub-genres, different actors/directors inspired by their history, or varying the balance between well-known and niche titles.
 `;
   }
 
@@ -85,7 +107,9 @@ Based on these preferences, recommend 10 high-quality and top-rated movies or TV
       },
       body: JSON.stringify({
         contents: [
+          ...conversationHistory,
           {
+            role: "user",
             parts: [{ text: prompt }],
           },
         ],
@@ -122,13 +146,21 @@ Based on these preferences, recommend 10 high-quality and top-rated movies or TV
         "[recommendationService] Recommended Titles from Gemini:",
         recommendedTitles
       );
-      return { recommendations: recommendedTitles };
+      return {
+        recommendations: recommendedTitles,
+        prompt: prompt,
+        rawModelResponse: textResponse,
+      };
     } else {
       console.warn(
         "[recommendationService] No valid content in Gemini response:",
         data
       );
-      return { error: "No content from Gemini", recommendations: [] };
+      return {
+        error: "No content from Gemini",
+        recommendations: [],
+        prompt: prompt,
+      };
     }
   } catch (error) {
     console.error(
@@ -138,6 +170,7 @@ Based on these preferences, recommend 10 high-quality and top-rated movies or TV
     return {
       error: error.message || "Failed to fetch recommendations",
       recommendations: [],
+      prompt: prompt,
     };
   }
 }
