@@ -205,10 +205,8 @@ function Player() {
         server: "Syntherion",
         link:
           mediaType === "tv"
-            ? `https://vidsrc.su/embed/tv/${tmdbId}/${season}/${episode}?next-ep=${
-                episode + 1
-              }`
-            : `https://vidsrc.su/embed/movie/${tmdbId}`,
+            ? `https://player.vidsrc.co/embed/tv/${tmdbId}/${season}/${episode}?primarycolor=E50914&secondarycolor=F8F8F8&server=3`
+            : `https://player.vidsrc.co/embed/movie/${tmdbId}?primarycolor=E50914&secondarycolor=F8F8F8&server=3`,
         quality: "1080p",
       },
       {
@@ -461,15 +459,19 @@ function Player() {
       {/* Top bar - simplified */}
       <div className="player-top-bar">
         <div className="media-title">
-          <span className="title-text">{title}</span>
-        </div>
-        {type === "tv" && (
-          <div className="season-indicator">
-            <span>
-              S{seasonNumber} · E{episodeNumber}
+          <span className="title-text">
+            Currently watching:{" "}
+            <span className="title-text-now">
+              {title}
+              {type === "tv" && (
+                <span>
+                  {" "}
+                  S{seasonNumber} · E{episodeNumber}
+                </span>
+              )}
             </span>
-          </div>
-        )}
+          </span>
+        </div>
       </div>
 
       {/* Player container */}

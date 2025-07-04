@@ -587,15 +587,25 @@ function Profile() {
                                   className="history-item-card"
                                   onClick={() => handleItemClick(item)}
                                 >
-                                  <img
-                                    src={
-                                      item.poster_path ||
-                                      item.posterPath ||
-                                      "https://placehold.co/320x180?text=No+Image"
-                                    }
-                                    alt={item.title}
-                                    className="history-item-thumbnail"
-                                  />
+                                  <div className="history-item-thumbnail-container">
+                                    <img
+                                      src={
+                                        item.poster_path ||
+                                        item.posterPath ||
+                                        "https://placehold.co/320x180?text=No+Image"
+                                      }
+                                      alt={item.title}
+                                      className="history-item-thumbnail"
+                                    />
+                                    <div className="media-badge">
+                                      {item.media_type === "tv"
+                                        ? "TV Show"
+                                        : item.media_type === "movie"
+                                        ? "Movie"
+                                        : "Media"}
+                                    </div>
+                                  </div>
+
                                   <div className="history-item-info">
                                     <h4 className="history-item-title">
                                       {item.title}
