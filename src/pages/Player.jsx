@@ -34,6 +34,7 @@ import {
   faTelegram,
   faRedditAlien,
 } from "@fortawesome/free-brands-svg-icons";
+import { motion, AnimatePresence } from "framer-motion";
 import "../styles/Player.css";
 import { useAuth } from "../contexts/AuthContext";
 import { addRecentlyWatched } from "../firebase/firestore";
@@ -205,8 +206,8 @@ function Player() {
         server: "Syntherion",
         link:
           mediaType === "tv"
-            ? `https://player.vidsrc.co/embed/tv/${tmdbId}/${season}/${episode}?primarycolor=E50914&secondarycolor=F8F8F8&server=3`
-            : `https://player.vidsrc.co/embed/movie/${tmdbId}?primarycolor=E50914&secondarycolor=F8F8F8&server=3`,
+            ? `https://vidsrc.cc/v2/embed/tv/${tmdbId}/${season}/${episode}`
+            : `https://vidsrc.cc/v2/embed/movie/${tmdbId}`,
         quality: "1080p",
       },
       {
@@ -476,56 +477,58 @@ function Player() {
 
       {/* Player container */}
       <div className="player-container">
-        {loading ? (
-          <div className="player-loading">
-            <div className="modern-loader">
-              <div className="loader-ring"></div>
-              <div className="loader-ring"></div>
-              <div className="loader-ring"></div>
-              <div className="loader-content">
-                <div className="loader-logo">SK</div>
+        <AnimatePresence mode="wait">
+          {loading ? (
+            <motion.div
+              key="loading"
+              className="player-loading"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="loading-message">Loading...</div>
+            </motion.div>
+          ) : error ? (
+            <motion.div
+              key="error"
+              className="player-error"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.5 }}
+            >
+              <FontAwesomeIcon icon={faExclamationTriangle} size="3x" />
+              <div className="error-text">
+                Error loading stream. Please try another server.
               </div>
-            </div>
-            <div className="loading-text">Preparing your stream...</div>
-          </div>
-        ) : error ? (
-          <div className="player-error">
-            <FontAwesomeIcon icon={faExclamationTriangle} size="3x" />
-            <div className="error-text">
-              Error loading stream. Please try another server.
-            </div>
-            <div className="error-actions">
-              <button onClick={handlePrevServer}>Previous Server</button>
-              <button onClick={handleNextServer}>Next Server</button>
-            </div>
-          </div>
-        ) : (
-          <div className="video-responsive">
-            {isLoading && (
-              <div className="player-loading">
-                <div className="modern-loader">
-                  <div className="loader-ring"></div>
-                  <div className="loader-ring"></div>
-                  <div className="loader-ring"></div>
-                  <div className="loader-content">
-                    <div className="loader-logo">SK</div>
-                  </div>
-                </div>
-                <div className="loading-text">Buffering stream...</div>
+              <div className="error-actions">
+                <button onClick={handlePrevServer}>Previous Server</button>
+                <button onClick={handleNextServer}>Next Server</button>
               </div>
-            )}
-            <iframe
-              src={activeServer.link}
-              frameBorder="0"
-              allowFullScreen
-              className="video-player"
-              title={title}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              referrerPolicy="no-referrer"
-              onLoad={() => setIsLoading(false)}
-            ></iframe>
-          </div>
-        )}
+            </motion.div>
+          ) : (
+            <motion.div
+              key="video"
+              className="video-responsive"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+            >
+              <iframe
+                src={activeServer.link}
+                frameBorder="0"
+                allowFullScreen
+                className="video-player"
+                title={title}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                referrerPolicy="no-referrer"
+                onLoad={() => setIsLoading(false)}
+              ></iframe>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Server selection */}
@@ -544,11 +547,6 @@ function Player() {
                 <div className="server-name">{link.server}</div>
                 <div className="server-quality">{link.quality}</div>
               </div>
-              {activeServer.server === link.server && (
-                <div className="server-active-indicator">
-                  <FontAwesomeIcon icon={faCheck} />
-                </div>
-              )}
             </div>
           ))}
         </div>
