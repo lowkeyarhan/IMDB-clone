@@ -59,12 +59,9 @@ This platform supports **4K HDR** streaming for most newer movies and web series
 
 ---
 
-## 📅 ChangeLog – May 26, 2025
+## 📅 ChangeLog – July 23, 2025
 
-- ✅ Changes in profile page.
-- ✅ AI powered recommendation engine is now live, it analyzes your watch history and favourites and suggests content you might like.
-- ✅ Minor changes in the homescreen and detals UI.
-- ✅ Watchlist bug fixed, now uses caching and updates in realtime.
+- ✅ Banner updated
 
 ---
 
